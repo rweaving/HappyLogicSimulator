@@ -10,8 +10,8 @@ class LogicDevice {
   int X;
   int Y;
   bool selected = false;
+  static final int PIND = 7;
   
-  CanvasElement canvas;
   final Circuit circuit;
   
   List<DeviceInput> Input;
@@ -29,7 +29,7 @@ class LogicDevice {
   bool _visible = true;
   bool _updateable = false;
   
-  LogicDevice.fromJson(this.circuit, this.canvas, Map json) : ID = json['id'], X = json['x'], Y = json['y'], Type = json['type']{    
+  LogicDevice.fromJson(this.circuit, Map json) : ID = json['id'], X = json['x'], Y = json['y'], Type = json['type']{    
     Input = new List<DeviceInput>();
     Output = new List<DeviceOutput>();
     Images = new List<ImageElement>();
@@ -37,7 +37,7 @@ class LogicDevice {
     Configure(this);
   }
   
-  LogicDevice(this.circuit, this.canvas, this.ID, this.Type){ 
+  LogicDevice(this.circuit, this.ID, this.Type){ 
     Input = new List<DeviceInput>();
     Output = new List<DeviceOutput>();
     Images = new List<ImageElement>();
@@ -73,6 +73,12 @@ class LogicDevice {
     }
   }
   
+  void remove(){
+    Input.clear();
+    Output.clear();
+    Images.clear();
+  }
+  
   // Get connections
   String GetInputs(){
     List<String> inputList = new List<String>();
@@ -86,7 +92,8 @@ class LogicDevice {
   bool get calculated() => _calculated;
   
   // Has this device been calculated
-  set calculated(bool calc){
+  set calculated(bool calc)
+  {
     _calculated = calc;
     
     if(!_calculated)
@@ -110,109 +117,52 @@ class LogicDevice {
     ImageElement _elem;
     _elem = new Element.tag('img'); 
     _elem.src = image;
-    _elem.on.load.add((event) { drawDevice(); });
+    //_elem.on.load.add((event) { drawDevice(); });
     Images.add(_elem);  
   }
   
-  // Redraw what was updated
-  void drawUpdate(){
-    
-    if(_updated){ // device has been updated
-      if(_updateable) drawDevice();
-      //drawWires();
-    }
-    
-    drawUpdatedWires();
-  }
-  
-  void drawUpdatedWires(){
-      Input.forEach((f) { 
-        if(f.updated) drawWire(f);
-      });
-  }
-  
-  void Paint(){
-    drawDevice();  
-  }
-  
-  void drawDevice(){
-    // TODO: add device type draw function
-    if(Images.length > 1){
-      if(Output[0].value == true)
-        circuit.context.drawImage(Images[1], X, Y);
-      else
-        circuit.context.drawImage(Images[0], X, Y);
-    }
-    else
-      circuit.context.drawImage(Images[0], X, Y);
-  }
-  
-  void drawWires(){
-    for (DeviceInput input in Input) {
-      if(input.connectedOutput != null){
-        drawWire(input);
-      }
-    }
-  }
-
-  // TODO: Add dynamic wire routing
-  void drawWire(DeviceInput input)
-  {
-    input.drawWire();
-  }
-
   // Set the X and Y offsets for the x pin location
-  SetInputPinLocation(int pin, int xPos, int yPos){
+  SetInputPinLocation(int pin, int xPos, int yPos)
+  {
     if(pin >= 0 && pin < Input.length){ 
       Input[pin].SetPinLocation(xPos, yPos); 
     }
   }
+  
   // Set the X and Y offsets for the x pin location
-  SetOutputPinLocation(int pin, int xPos, int yPos){
+  SetOutputPinLocation(int pin, int xPos, int yPos)
+  {
     if(pin >= 0 && pin < Output.length){ 
       Output[pin].SetPinLocation(xPos, yPos); 
     }
   }
   
-  SetInputConnectable(int pin, bool connectable){
+  SetInputConnectable(int pin, bool connectable)
+  {
     if(pin >= 0 && pin < Input.length){ 
       Input[pin].connectable = false;
     }
   }
  
-  DeviceInput InputPinHit(int x, int y){
-    int PIND = 5; // Pin distance to detect a hit
+  DeviceInput InputPinHit(int x, int y)
+  {
+    if(InputCount <= 0) return null;
     
-    if(InputCount > 0){
-      for (DeviceInput input in Input) {
-        if(input.connectable){
-          if(x <= (X + input.pinX + PIND) && x >= (X + input.pinX - PIND)){
-            if(y <= (Y + input.pinY + PIND) && y >= (Y + input.pinY - PIND)){
-              return input;
-              }
-            }
-          }
-       }
-    }
-    return null;
-  }
-  
-  bool DeviceHit(int x, int y){
-    return contains(x, y);
-  }
-    
-  DeviceOutput WireHit(int x, int y){
-    DeviceOutput hitDevice;
     for (DeviceInput input in Input) {
-      hitDevice = input.wireHit(x, y);
-      if(hitDevice != null)
-        return hitDevice; 
+      if(input.connectable){
+        if(x <= (X + input.pinX + PIND) && x >= (X + input.pinX - PIND)){
+          if(y <= (Y + input.pinY + PIND) && y >= (Y + input.pinY - PIND)){
+            return input;
+          }
+        }
+      }
     }
     return null;
   }
   
-  DeviceOutput OutputPinHit(int x, int y){
-    int PIND = 5; // Pin distance to detect a hit
+  DeviceOutput OutputPinHit(int x, int y)
+  {
+    if(OutputCount <= 0) return null;
     
     for (DeviceOutput output in Output) {
       if(x <= (X + output.pinX + PIND) && x >= (X + output.pinX - PIND)){
@@ -223,17 +173,33 @@ class LogicDevice {
     }
     return null;
   }    
+    
+  bool DeviceHit(int x, int y)
+  {
+    return contains(x, y);
+  }
+    
+  DeviceOutput WireHit(int x, int y)
+  {
+    DeviceOutput hitDevice;
+    for (DeviceInput input in Input) {
+      hitDevice = input.wireHit(x, y);
+      if(hitDevice != null)
+        return hitDevice; 
+    }
+    return null;
+  }
+  
   
   // Move the device to a new location
-  // TODO: clear the previous instance of the device
-  MoveDevice(int newX, int newY){ 
+  MoveDevice(int newX, int newY)
+  { 
     if(Images[0] != null){    
         Util.pos(Images[0], newX.toDouble(), newY.toDouble());
         X = newX;
         Y = newY;
-        drawDevice();
       }
-    }
+  }
   
   // the user has click on a logic device
   void clicked()
@@ -242,13 +208,13 @@ class LogicDevice {
       case 'SWITCH': 
         Output[0].value = !Output[0].value; 
         _updated = true; 
-        drawDevice();
         break;
-        
     }
   }
   
-  bool contains(int pointX, int pointY) {
+  // Id the given point within our image
+  bool contains(int pointX, int pointY) 
+  {
     if ((pointX > X && pointX < X + Images[0].width) && 
         (pointY > Y && pointY < Y + Images[0].height)) {
       return true;
@@ -261,31 +227,27 @@ class LogicDevice {
     if(!_calculated){
       _calculated = true;
       
-      bool out0 = Output[0].value;
+      //bool out0 = Output[0].value;
       
       switch (Type){
         case 'AND':     Output[0].value = Input[0].value && Input[1].value; break;
         case 'NAND':    Output[0].value = !(Input[0].value && Input[1].value); break;
         case 'OR':      Output[0].value = Input[0].value || Input[1].value; break;
         case 'NOR':     Output[0].value = !(Input[0].value || Input[1].value); break;
-        
-        
-        case 'XOR':      Output[0].value = (Input[0].value != Input[1].value); break;
-        case 'XNOR':     Output[0].value = !(Input[0].value != Input[1].value); break;
-        
+        case 'XOR':     Output[0].value = (Input[0].value != Input[1].value); break;
+        case 'XNOR':    Output[0].value = !(Input[0].value != Input[1].value); break;
         case 'NOT':     Output[0].value = !(Input[0].value); break;
-        
         case 'SWITCH':  Output[0].value = Output[0].value; break;
         case 'DLOGO':
-        case 'LED':     Output[0].value = Input[0].value; break;
+        case 'LED':     break;
         case 'CLOCK':   CalcClock(this); break;
        }
       
-      if(out0 != Output[0].value) _updated = true;
+      //if(out0 != Output[0].value) 
+      _updated = true;
       
       // Check inputs to see if that have devices connected to them that have updated
       Input.forEach((f) { f.checkUpdate(); });
-      
     }
   }
 }

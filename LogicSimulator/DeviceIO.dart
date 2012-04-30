@@ -36,7 +36,6 @@ class DeviceInput{
       inputMap["SourceDeviceInput"] = _id;
       inputMap["DestinationDevice"] = null;
       inputMap["DestinationDeviceOutput"] = null;
-//      inputMap["wirePoints"] =*/
     }
     return inputMap;
   }
@@ -45,7 +44,6 @@ class DeviceInput{
   int get offsetY() => device.Y + _pinY;  // the corrected absolute X position
   int get pinX()    => _pinX;             // the pins X location on the devices image
   int get pinY()    => _pinY;             // the pins Y location on the devices image
-  
   
   bool get connectable() => _connectable;  // Can you connect to this input pin
   set connectable(bool val){
@@ -56,13 +54,9 @@ class DeviceInput{
     wire = new Wire(this);
   }
   
-  void drawWire(){
-    wire.Draw(value);
-  }  
-  
   DeviceOutput wireHit(int x, int y){
     if(wire != null && connectedOutput != null){
-      if(wire.Contains(x, y, 5))
+      if(wire.Contains(x, y, 1))
         return connectedOutput;
     }
     return null;

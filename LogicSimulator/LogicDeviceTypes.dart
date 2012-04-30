@@ -22,10 +22,7 @@ Function ConfigureSwitch(LogicDevice device)
   device.addImage("images/01Switch_Low.png");
   device.addImage("images/01Switch_High.png");
   
-  device.InputCount = 1;
-  device.SetInputPinLocation(0, 0, 0);
-  device.SetInputConnectable(0, false);
-
+  device.InputCount = 0;
   device.OutputCount = 1;
   device.SetOutputPinLocation(0, 20, 0);
 }
@@ -36,12 +33,9 @@ Function ConfigureDartLogo(LogicDevice device)
   device.addImage("images/dartLogo2.png");
   
   device.InputCount = 1;
-  device.SetInputPinLocation(0, 28, 0);
- 
-  device.OutputCount = 1;
-  device.SetOutputPinLocation(0, 0, 0);
-  
+  device.OutputCount = 0;
   device.updateable = true;
+  device.SetInputPinLocation(0, 28, 0);
 }
 
 Function ConfigureLed(LogicDevice device)
@@ -50,13 +44,9 @@ Function ConfigureLed(LogicDevice device)
   device.addImage("images/01Disp_High.png");
   
   device.InputCount = 1;
+  device.OutputCount = 0;
   device.SetInputPinLocation(0, 15, 0);
- 
-  device.OutputCount = 1;
-  device.SetOutputPinLocation(0, 0, 0);
-  
-  device.updateable = true;
-  
+  device.updateable = true; 
 }
 
 Function ConfigureAnd2(LogicDevice device){

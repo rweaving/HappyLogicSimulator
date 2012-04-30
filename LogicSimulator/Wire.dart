@@ -42,9 +42,6 @@ class Wire {
     print("Add Wire");
     lastX = connectedInput.offsetX;
     lastY = connectedInput.offsetY;
-    
-    //endPoint = new Element.tag('img'); 
-    //endPoint.src = "images/endPoint.png";   
   }
    
   void AddPoint(int x, int y)
@@ -53,63 +50,23 @@ class Wire {
     lastY = y;
     
     wirePoints.add(new WirePoint(x, y));
-    print("Add Point");
-    Draw(0);
+  }
+  
+  void UpdateLast(int x, int y)
+  {
+    lastX = x;
+    lastY = y;
   }
     
   String GetWireString()
   {
     List<String> wireString = new List<String>();
- //   List<String> circuitStrings = new List<String>();
-    
     wirePoints.forEach((f){
       wireString.add(JSON.stringify(f.toMap()));
     });
-    
     return JSON.stringify(wireString);
   }
-  // Draw the wire
-  void Draw(var state){
-   //CanvasRenderingContext2D context = connectedInput.device.circuit.context;
-    
-   connectedInput.device.circuit.context.beginPath();
-   connectedInput.device.circuit.context.lineWidth = NEW_WIRE_WIDTH;
-    
-    switch(state){
-        case 'VALID': connectedInput.device.circuit.context.strokeStyle = NEW_WIRE_VALID; break;
-        case 'INVALID': connectedInput.device.circuit.context.strokeStyle = NEW_WIRE_INVALID; break;
-        
-        case false: connectedInput.device.circuit.context.strokeStyle = WIRE_LOW; break;
-        case true: connectedInput.device.circuit.context.strokeStyle = WIRE_HIGH; break;
-        
-        //default: connectedInput.device.circuit.context.strokeStyle = WIRE_INVALID;
-    }
-    connectedInput.device.circuit.context.fillStyle = connectedInput.device.circuit.context.strokeStyle;
- 
-    //need at least 2 points
-    if(wirePoints.length >= 2){
-      connectedInput.device.circuit.context.moveTo(wirePoints[0].x, wirePoints[0].y); 
-      
-      for (WirePoint point in wirePoints) {
-        connectedInput.device.circuit.context.lineTo(point.x, point.y);
-      }
-    }
-    connectedInput.device.circuit.context.stroke();
-    connectedInput.device.circuit.context.closePath(); 
-    
-    if(drawWireEndpoint){
-      connectedInput.device.circuit.context.beginPath();
-      
-      connectedInput.device.circuit.context.arc(wirePoints[wirePoints.length-1].x, wirePoints[wirePoints.length-1].y, 5, 0, TAU, false);
-      connectedInput.device.circuit.context.fill();
-      
-      connectedInput.device.circuit.context.stroke();
-      connectedInput.device.circuit.context.closePath(); 
-    }
-    
-   
-  }
-      
+  
   // Check to see of the wire contains the point
   bool Contains(int x, int y, var d)
   { 

@@ -14,6 +14,6 @@
 
 void main() {
   
-  new Circuit(document.query('#canvas')).run();
-
+  new Circuit(document.query('#canvas'));
+ 
 }
