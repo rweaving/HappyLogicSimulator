@@ -227,7 +227,7 @@ class LogicDevice {
     if(!_calculated){
       _calculated = true;
       
-      //bool out0 = Output[0].value;
+      bool outputState = Output[0].value;
       
       switch (Type){
         case 'AND':     Output[0].value = Input[0].value && Input[1].value; break;
@@ -239,12 +239,12 @@ class LogicDevice {
         case 'NOT':     Output[0].value = !(Input[0].value); break;
         case 'SWITCH':  Output[0].value = Output[0].value; break;
         case 'DLOGO':
-        case 'LED':     break;
+        case 'LED':     Output[0].value = Input[0].value; break;
         case 'CLOCK':   CalcClock(this); break;
        }
       
-      //if(out0 != Output[0].value) 
-      _updated = true;
+      if(outputState != Output[0].value) 
+        _updated = true;
       
       // Check inputs to see if that have devices connected to them that have updated
       Input.forEach((f) { f.checkUpdate(); });

@@ -343,9 +343,6 @@ class Circuit {
        
      if(selectedOutput  != null){
        UpdateWire(wireEndPoint.x, wireEndPoint.y, 'VALID');
-       
-       //UpdateWire(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID');
-          //drawPinSelectors();
      }
      else{
           UpdateWire(e.offsetX, e.offsetY, 'INVALID');  
@@ -463,26 +460,23 @@ class Circuit {
     Paint();
   }
   
+  //Draw all the wires
   void drawWires()
   {
-    for (LogicDevice device in logicDevices) {
-      for (DeviceInput input in device.Input) {
-        if(input.connectedOutput != null){
-          drawWire(input, input.value);
-        }
-      }
-    }
+    for (LogicDevice device in logicDevices) 
+      for (DeviceInput input in device.Input) 
+        if (input.connectedOutput != null)
+           drawWire(input, input.value);
   }
   
-  void drawUpdatedWires(){
-    for (LogicDevice device in logicDevices) {
-      for (DeviceInput input in device.Input) {
-        if(input.connectedOutput != null){
-          if(input.updated)
+  //Draw the wires that have been updated
+  void drawUpdatedWires()
+  {
+    for (LogicDevice device in logicDevices) 
+      for (DeviceInput input in device.Input) 
+        if (input.connectedOutput != null)
+          if (input.updated) 
             drawWire(input, input.value);
-        }
-      }
-    }
   }
   
   void drawDevices()
@@ -502,15 +496,17 @@ class Circuit {
   void drawUpdatedDevices()
   {
     for (LogicDevice device in logicDevices) {
-      if(device.Images.length > 1 && device.OutputCount > 0){
-        if(device.Output[0].value == true)
-          context.drawImage(device.Images[1], device.X, device.Y);
+      if(device.updateable && device.updated){
+        if(device.Images.length > 1 && device.OutputCount > 0){
+          if(device.Output[0].value == true)
+            context.drawImage(device.Images[1], device.X, device.Y);
+          else
+            context.drawImage(device.Images[0], device.X, device.Y);
+        }
         else
           context.drawImage(device.Images[0], device.X, device.Y);
         }
-      else
-        context.drawImage(device.Images[0], device.X, device.Y);
-    }
+     }
   }
   
   void clearCanvas()
@@ -520,13 +516,8 @@ class Circuit {
   
   void drawUpdate()
   {
-    //for (LogicDevice device in logicDevices) {
-    //  device.drawUpdate();
-    //}  
-    //drawUpdatedDevices();
-    //drawUpdatedWires();
-    
-    Paint();
+    drawUpdatedDevices();
+    drawUpdatedWires();
   }
   
   void Paint()
@@ -551,9 +542,7 @@ class Circuit {
        drawConnectableOutputPins();
     }
     if(selectedInput != null){
-      
-      
-      if(selectedInput.connected)
+     if(selectedInput.connected)
           drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'CONNECTED');
       else
          drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID'); 
@@ -565,6 +554,7 @@ class Circuit {
   {
     for (LogicDevice device in logicDevices) {
       for (DeviceOutput output in device.Output) {
+        if(output.connectable == true)
           drawHighlightPin(output.offsetX, output.offsetY, 'CONNECTABLE'); 
       }
     }      

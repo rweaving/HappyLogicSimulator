@@ -3088,6 +3088,9 @@ LogicDevice.prototype.set$calculated = function(calc) {
   })
   );
 }
+LogicDevice.prototype.get$updateable = function() {
+  return this._updateable;
+}
 LogicDevice.prototype.set$updateable = function(val) {
   this._updateable = val;
 }
@@ -3184,6 +3187,7 @@ LogicDevice.prototype.contains = function(pointX, pointY) {
 LogicDevice.prototype.Calculate = function() {
   if (!this._calculated) {
     this._calculated = true;
+    var outputState = this.Output.$index((0)).get$value();
     switch (this.Type) {
       case "AND":
 
@@ -3228,6 +3232,7 @@ LogicDevice.prototype.Calculate = function() {
       case "DLOGO":
       case "LED":
 
+        this.Output.$index((0)).set$value(this.Input.$index((0)).get$value());
         break;
 
       case "CLOCK":
@@ -3236,7 +3241,7 @@ LogicDevice.prototype.Calculate = function() {
         break;
 
     }
-    this._updated = true;
+    if ($ne$(outputState, this.Output.$index((0)).get$value())) this._updated = true;
     this.Input.forEach((function (f) {
       f.checkUpdate();
     })
@@ -3254,6 +3259,13 @@ function DeviceInput(device, _id) {
 }
 DeviceInput.prototype.set$connectedOutput = function(value) { return this.connectedOutput = value; };
 DeviceInput.prototype.get$wire = function() { return this.wire; };
+DeviceInput.prototype.get$connectable = function() {
+  if (this._pinX < (0)) return false;
+  else return this._connectable;
+}
+DeviceInput.prototype.set$connectable = function(val) {
+  this._connectable = val;
+}
 DeviceInput.prototype.set$updated = function(value) { return this.updated = value; };
 DeviceInput.prototype.toJson = function() {
   var inputMap = new HashMapImplementation_dart_core_String$Object();
@@ -3283,12 +3295,6 @@ DeviceInput.prototype.get$pinX = function() {
 }
 DeviceInput.prototype.get$pinY = function() {
   return this._pinY;
-}
-DeviceInput.prototype.get$connectable = function() {
-  return this._connectable;
-}
-DeviceInput.prototype.set$connectable = function(val) {
-  this._connectable = val;
 }
 DeviceInput.prototype.createWire = function() {
   this.wire = new Wire(this);
@@ -3327,9 +3333,17 @@ DeviceInput.prototype.SetPinLocation = function(x, y) {
 }
 // ********** Code for DeviceOutput **************
 function DeviceOutput(device, _id) {
+  this._connectable = true;
   this.device = device;
   this._id = _id;
   this.set$value(false);
+}
+DeviceOutput.prototype.get$connectable = function() {
+  if (this._pinX < (0)) return false;
+  else return this._connectable;
+}
+DeviceOutput.prototype.set$connectable = function(val) {
+  this._connectable = val;
 }
 DeviceOutput.prototype.get$calculated = function() {
   return this.device.get$calculated();
@@ -3729,9 +3743,7 @@ Circuit.prototype.drawWires = function() {
     var $list0 = device.Input;
     for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
       var input = $i0.next();
-      if (input.connectedOutput != null) {
-        this.drawWire(input, input.get$value());
-      }
+      if (input.connectedOutput != null) this.drawWire(input, input.get$value());
     }
   }
 }
@@ -3742,9 +3754,7 @@ Circuit.prototype.drawUpdatedWires = function() {
     var $list0 = device.Input;
     for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
       var input = $i0.next();
-      if (input.connectedOutput != null) {
-        if (input.updated) this.drawWire(input, input.get$value());
-      }
+      if (input.connectedOutput != null) if (input.updated) this.drawWire(input, input.get$value());
     }
   }
 }
@@ -3763,11 +3773,13 @@ Circuit.prototype.drawUpdatedDevices = function() {
   var $$list = this.logicDevices;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
     var device = $$i.next();
-    if (device.Images.get$length() > (1) && device.get$OutputCount() > (0)) {
-      if ($eq$(device.Output.$index((0)).get$value(), true)) this.context.drawImage(device.Images.$index((1)), device.X, device.Y);
+    if (device.get$updateable() && device.get$updated()) {
+      if (device.Images.get$length() > (1) && device.get$OutputCount() > (0)) {
+        if ($eq$(device.Output.$index((0)).get$value(), true)) this.context.drawImage(device.Images.$index((1)), device.X, device.Y);
+        else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
+      }
       else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
     }
-    else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
   }
 }
 Circuit.prototype.clearCanvas = function() {
@@ -3805,7 +3817,7 @@ Circuit.prototype.drawConnectableOutputPins = function() {
     var $list0 = device.Output;
     for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
       var output = $i0.next();
-      this.drawHighlightPin(output.get$offsetX(), output.get$offsetY(), "CONNECTABLE");
+      if ($eq$(output.get$connectable(), true)) this.drawHighlightPin(output.get$offsetX(), output.get$offsetY(), "CONNECTABLE");
     }
   }
 }
@@ -3985,24 +3997,27 @@ function Configure(device) {
 function ConfigureSwitch(device) {
   device.addImage("images/01Switch_Low.png");
   device.addImage("images/01Switch_High.png");
-  device.set$InputCount((0));
+  device.set$InputCount((1));
   device.set$OutputCount((1));
+  device.SetInputPinLocation((0), (-1), (-1));
   device.SetOutputPinLocation((0), (20), (0));
 }
 function ConfigureDartLogo(device) {
   device.addImage("images/dartLogo.png");
   device.addImage("images/dartLogo2.png");
   device.set$InputCount((1));
-  device.set$OutputCount((0));
+  device.set$OutputCount((1));
   device.set$updateable(true);
+  device.SetOutputPinLocation((0), (-1), (-1));
   device.SetInputPinLocation((0), (28), (0));
 }
 function ConfigureLed(device) {
   device.addImage("images/01Disp_Low.png");
   device.addImage("images/01Disp_High.png");
   device.set$InputCount((1));
-  device.set$OutputCount((0));
+  device.set$OutputCount((1));
   device.SetInputPinLocation((0), (15), (0));
+  device.SetOutputPinLocation((0), (-1), (-1));
   device.set$updateable(true);
 }
 function ConfigureAnd2(device) {

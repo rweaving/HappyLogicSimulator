@@ -9,10 +9,19 @@ class DeviceInput{
   Wire wire;
   
   bool _value = false;  
-  bool _connectable = true;
   int _pinX;
   int _pinY;
   var _id;
+  
+  // Can you connect to this input pin
+  bool _connectable = true;
+  bool get connectable(){
+    if (_pinX < 0) return false;  
+    else return _connectable;
+  }
+  set connectable(bool val){
+    _connectable = val;
+  }
   
   bool updated;
   
@@ -44,11 +53,6 @@ class DeviceInput{
   int get offsetY() => device.Y + _pinY;  // the corrected absolute X position
   int get pinX()    => _pinX;             // the pins X location on the devices image
   int get pinY()    => _pinY;             // the pins Y location on the devices image
-  
-  bool get connectable() => _connectable;  // Can you connect to this input pin
-  set connectable(bool val){
-    _connectable = val;
-  }
   
   void createWire(){
     wire = new Wire(this);
@@ -115,6 +119,16 @@ class DeviceOutput{
   int _pinX;
   int _pinY;
   String _id;
+  
+  // Can you connect to this output pin
+  bool _connectable = true;
+  bool get connectable(){
+    if (_pinX < 0) return false;  
+    else return _connectable;
+  }
+  set connectable(bool val){
+    _connectable = val;
+  }
   
   final LogicDevice device;
   
