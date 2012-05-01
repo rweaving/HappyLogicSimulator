@@ -11,9 +11,7 @@ class LogicDevice {
   int Y;
   bool selected = false;
   static final int PIND = 7;
-  
-  final Circuit circuit;
-  
+
   List<DeviceInput> Input;
   List<DeviceOutput> Output;
   List<ImageElement> Images;
@@ -29,7 +27,7 @@ class LogicDevice {
   bool _visible = true;
   bool _updateable = false;
   
-  LogicDevice.fromJson(this.circuit, Map json) : ID = json['id'], X = json['x'], Y = json['y'], Type = json['type']{    
+  LogicDevice.fromJson(Map json) : ID = json['id'], X = json['x'], Y = json['y'], Type = json['type']{    
     Input = new List<DeviceInput>();
     Output = new List<DeviceOutput>();
     Images = new List<ImageElement>();
@@ -37,7 +35,7 @@ class LogicDevice {
     Configure(this);
   }
   
-  LogicDevice(this.circuit, this.ID, this.Type){ 
+  LogicDevice(this.ID, this.Type){ 
     Input = new List<DeviceInput>();
     Output = new List<DeviceOutput>();
     Images = new List<ImageElement>();

@@ -79,14 +79,14 @@ class Circuit {
     
     wireEndPoint = new WirePoint(-1, -1); 
     
-    // Create a timer to update the simulation
-    window.setInterval(f() => updateTime(), 50);
+    // Create a timer to update the simulation tick
+    window.setInterval(f() => tick(), 50);
     
     // Add handlers to buttons that add the devices
     buttons = document.queryAll('.newdevice');
     buttons.forEach((f){
       f.on.click.add((MouseEvent e) {
-        LogicDevice newDevice = new LogicDevice(this, getNewId(), f.name); 
+        LogicDevice newDevice = new LogicDevice(getNewId(), f.name); 
         logicDevices.add(newDevice);
         moveDevice = newDevice;
       });});
@@ -169,7 +169,7 @@ class Circuit {
     circuitStrings = JSON.parse(loadedCircuit);
     
     circuitStrings.forEach((f) {
-      LogicDevice newDevice = new LogicDevice.fromJson(this, JSON.parse(f)); 
+      LogicDevice newDevice = new LogicDevice.fromJson(JSON.parse(f)); 
       logicDevices.add(newDevice);
     });
     
@@ -222,7 +222,8 @@ class Circuit {
         }
       }
     });
-    Paint();    
+    Paint(); 
+    
  }
   
   void drawBorder() {
@@ -250,7 +251,7 @@ class Circuit {
     context.closePath(); 
   }
  
-  void updateTime(){
+  void tick(){
     if(logicDevices.length <= 0) return;
     
     for (LogicDevice device in logicDevices) {

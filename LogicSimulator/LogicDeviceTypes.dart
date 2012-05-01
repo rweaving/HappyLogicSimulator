@@ -1,5 +1,29 @@
 /** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
 /   By: Ryan C. Weaving  &  Athhur Liu                           */
+class LogicDeviceType{
+  var type;
+  
+  List<ImageElement> images;
+  
+  LogicDeviceType(this.type){
+    images = new List<ImageElement>();
+  }
+  
+}
+
+class LogicDeviceTypes{
+  List<LogicDeviceType> devicetypes;
+  
+  LogicDeviceTypes(){
+    devicetypes = new List<LogicDeviceType>();
+  }
+  
+  AddNewType(var type){
+    devicetypes.add(new LogicDeviceType(type));
+  }
+  
+}
+
 
 Function Configure(LogicDevice device){
   switch(device.Type){
