@@ -145,14 +145,10 @@ class LogicDevice {
   DeviceInput InputPinHit(int x, int y)
   {
     if(InputCount <= 0) return null;
-    
     for (DeviceInput input in Input) {
       if(input.connectable){
-        if(x <= (X + input.pinX + PIND) && x >= (X + input.pinX - PIND)){
-          if(y <= (Y + input.pinY + PIND) && y >= (Y + input.pinY - PIND)){
-            return input;
-          }
-        }
+        if(input.pinHit(x, y))
+          return input; 
       }
     }
     return null;
@@ -161,12 +157,10 @@ class LogicDevice {
   DeviceOutput OutputPinHit(int x, int y)
   {
     if(OutputCount <= 0) return null;
-    
     for (DeviceOutput output in Output) {
-      if(x <= (X + output.pinX + PIND) && x >= (X + output.pinX - PIND)){
-        if(y <= (Y + output.pinY + PIND) && y >= (Y + output.pinY - PIND)){
-          return output;
-        }
+      if(output.connectable){
+        if(output.pinHit(x, y))
+          return output; 
       }
     }
     return null;

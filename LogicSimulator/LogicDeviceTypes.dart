@@ -49,7 +49,7 @@ Function ConfigureSwitch(LogicDevice device)
   device.InputCount = 1;
   device.OutputCount = 1;
   device.SetInputPinLocation(0, -1, -1);
-  device.SetOutputPinLocation(0, 20, 0);
+  device.SetOutputPinLocation(0, 21, 0);
 }
 
 Function ConfigureDartLogo(LogicDevice device)
@@ -71,7 +71,7 @@ Function ConfigureLed(LogicDevice device)
   
   device.InputCount = 1;
   device.OutputCount = 1;
-  device.SetInputPinLocation(0, 15, 0);
+  device.SetInputPinLocation(0, 16, 0);
   device.SetOutputPinLocation(0, -1, -1);
   device.updateable = true; 
 }
@@ -147,10 +147,10 @@ Function ConfigureNot(LogicDevice device){
     device.addImage("images/not.png");
     
     device.InputCount = 1;
-    device.SetInputPinLocation(0, 5, 24);
+    device.SetInputPinLocation(0, 5, 25);
   
     device.OutputCount = 1;
-    device.SetOutputPinLocation(0, 94, 24);
+    device.SetOutputPinLocation(0, 94, 25);
 }
 
 Function ConfigureClock(LogicDevice device)
@@ -162,6 +162,6 @@ Function ConfigureClock(LogicDevice device)
   device.SetInputConnectable(0, false);
   
   device.OutputCount = 2;
-  device.SetOutputPinLocation(0, 64, 13);
-  device.SetOutputPinLocation(1, 64, 38);
+  device.SetOutputPinLocation(0, 64, 14);
+  device.SetOutputPinLocation(1, 64, 39);
 }

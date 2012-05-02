@@ -19,6 +19,7 @@ class Circuit {
   static final int GRID_SIZE = 10;
   static final int GRID_POINT_SIZE = 1;
   static final String GRID_COLOR = '#999493';
+  static final String GRID_BACKGROUND_COLOR = '#eeeeee';
   static final int PIN_INDICATOR_OFFSET = 5;
   static final TAU = Math.PI * 2;
   
@@ -40,22 +41,26 @@ class Circuit {
   int lastTime;
   List<LogicDevice> logicDevices;
   
-  bool addingWire = false;
   bool showGrid = true;
   
   WirePoint wireEndPoint; 
+
+  DeviceOutput selectedOutput;
   
-  DeviceInput wireStart = null;
-  DeviceOutput wireEnd = null;
-  DeviceOutput selectedOutput = null;
-  DeviceInput tempInput = null;
-  
-  LogicDevice startDevice = null;
-  LogicDevice endDevice = null;
-  LogicDevice moveDevice = null;
+  DeviceOutput tempOutput;
+  DeviceInput tempInput;
+
+  LogicDevice moveDevice;
   
   ButtonElement addNandButton;
   ElementList buttons;
+  
+  Wire dummyWire;
+  
+  var connectionMode = null;
+  
+  bool connectingOutputToInput = false;
+  bool connectingInputToOutput = false;
   
   Circuit(this.canvas) : 
     lastTime = Util.currentTimeMillis(), 
@@ -64,6 +69,9 @@ class Circuit {
     context = canvas.getContext('2d');
     _width = canvas.width;
     _height = canvas.height;
+    
+    //dummyInput = new DeviceInput(null, 'dummy'); 
+    dummyWire = new Wire();
     
     validPinImage = new Element.tag('img'); 
     validPinImage.src = "images/SelectPinGreen.png";
@@ -77,7 +85,7 @@ class Circuit {
     connectablePinImage = new Element.tag('img');
     connectablePinImage.src = "images/SelectPinPurple.png";   
     
-    wireEndPoint = new WirePoint(-1, -1); 
+    //wireEndPoint = new WirePoint(-1, -1); 
     
     // Create a timer to update the simulation tick
     window.setInterval(f() => tick(), 50);
@@ -207,7 +215,7 @@ class Circuit {
         
         if(wirePointList.length >= 2){
           
-          device.Input[sinout].createWire();
+          //device.Input[sinout].createWire();
           int pointCount = wirePointList.length;
           
           for(int t1=0; t1<pointCount; t1++){
@@ -215,21 +223,24 @@ class Circuit {
             
             int x = json2['x'];
             int y = json2['y'];
-            
-            if(sinout < device.InputCount && sinout >= 0)
+              
+            if(sinout < device.InputCount && sinout >= 0){
+              if(device.Input[sinout].wire == null)
+                device.Input[sinout].createWire(x, y);
+              
               device.Input[sinout].wire.AddPoint(x, y);
+            }
           }
         }
       }
     });
     Paint(); 
-    
  }
   
   void drawBorder() {
     context.beginPath();
     context.rect(0, 0, width, height);
-    context.fillStyle = "#eeeeee";
+    context.fillStyle = GRID_BACKGROUND_COLOR;
     context.lineWidth = BORDER_LINE_WIDTH;
     context.strokeStyle = BORDER_LINE_COLOR;
     context.fillRect(0, 0, width, height);
@@ -276,26 +287,25 @@ class Circuit {
    if(moveDevice != null) 
      moveDevice = null;
    
-   if(addingWire){
-     if(selectedOutput  != null){
-       EndWire(selectedOutput);
-     }
-     else{
-       selectedInput.wire.AddPoint(e.offsetX, e.offsetY);  
-    }
-   }
-   else{
-     if(selectedInput  != null){
-       StartWire(selectedInput);
-       }
-     else{
-       for (LogicDevice device in logicDevices) {
-         if(device.contains(e.offsetX, e.offsetY)){
-           device.clicked();
-           break;
-         }
-       }
-     }
+   switch(connectionMode){
+     case 'InputToOutput':    
+     case 'OutputToInput':   AddWirePoint(_mouseX, _mouseY); 
+                             if(checkGoodConnection())
+                               EndWire();
+                             return;
+                                                         
+     case 'InputSelected' :  StartWire(_mouseX, _mouseY); return; //selectedInput.offsetX, selectedInput.offsetY
+                             
+     case 'OutputSelected' : StartWire(_mouseX, _mouseY); return;
+                        
+                                                       
+     case null:              for (LogicDevice device in logicDevices) {
+                               if(device.contains(e.offsetX, e.offsetY)){
+                                 device.clicked();
+                                 break;
+                               }
+                             } break;
+             
    }
  }
 
@@ -303,8 +313,6 @@ class Circuit {
  {
    e.stopPropagation();
    e.preventDefault();
-   
-   if(addingWire) return;
  }
  
  void onMouseMove(MouseEvent e) 
@@ -312,107 +320,203 @@ class Circuit {
    _mouseX = e.offsetX;
    _mouseY = e.offsetY; 
    
+   print('MouseMove() $connectionMode');
+   
    if(moveDevice != null){
      moveDevice.MoveDevice(_mouseX, _mouseY);
      Paint();
      return;
    }
-   
-   // If the user is adding a wire to the simulation
-   // We are in the process of connecting two devices
-   if(addingWire){ 
-     wireEndPoint.x = -1;
-     wireEndPoint.y = -1;
      
-     for (LogicDevice device in logicDevices) {
-       selectedOutput = device.OutputPinHit(e.offsetX, e.offsetY);
-       
-       if(selectedOutput != null){ // Check to see if we are hitting an output pin 
-         wireEndPoint.x = selectedOutput.offsetX; //Snap to output pin
-         wireEndPoint.y = selectedOutput.offsetY;
-         break;
-       }
-       else{
-         selectedOutput = device.WireHit(e.offsetX, e.offsetY); // Check to see if we are hitting a wire
-         if(selectedOutput != null){
-           wireEndPoint.x = e.offsetX;
-           wireEndPoint.y = e.offsetY;
-           break; 
-         }
-       }
-     }
-       
-     if(selectedOutput  != null){
-       UpdateWire(wireEndPoint.x, wireEndPoint.y, 'VALID');
-     }
-     else{
-          UpdateWire(e.offsetX, e.offsetY, 'INVALID');  
-     }
-    }
+   switch(connectionMode){
+     case 'OutputToInput':    selectedInput = checkForInputPinHit(e.offsetX, e.offsetY);
+                              if(selectedInput != null){ // Check to see if we are hitting an input pin 
+                                _mouseX = selectedInput.offsetX; //Snap to output pin
+                                _mouseY = selectedInput.offsetY; 
+                              }
+                              dummyWire.UpdateLast(_mouseX, _mouseY);
+                              Paint();
+                              return; 
+                             
+     case 'InputToOutput':    selectedOutput = checkForOutputPinHit(e.offsetX, e.offsetY);
+                              if(selectedOutput != null){ // Check to see if we are hitting an output pin 
+                                _mouseX = selectedOutput.offsetX; //Snap to output pin
+                                _mouseY = selectedOutput.offsetY;
+                              }
+                              dummyWire.UpdateLast(_mouseX, _mouseY);
+                              Paint();
+                              return;
+     default:
+   }
+
+   // Check to see if mouse is over an input pin if so select it
+   selectedInput = checkForInputPinHit(e.offsetX, e.offsetY);
+   if(selectedInput != null){
+     connectionMode = 'InputSelected';
+     _mouseX = selectedInput.offsetX;
+     _mouseY = selectedInput.offsetY;
+     Paint();
+     return;
+   }
    
-    if (!addingWire){
-        for (LogicDevice device in logicDevices) {
-          tempInput = device.InputPinHit(e.offsetX, e.offsetY);
-          if(tempInput  != null){
-            SelectInput(tempInput);
-            break;
-            }
-         }
-         if(tempInput == null){
-           if(selectedInput != null){
-             selectedInput = null;
-             Paint();
-           }
-        }
-     }
-  }
+   // Check to see if mouse is over an output pin if so select it
+   selectedOutput = checkForOutputPinHit(e.offsetX, e.offsetY);
+   if(selectedOutput != null){
+     connectionMode = 'OutputSelected';
+     _mouseX = selectedOutput.offsetX;
+     _mouseY = selectedOutput.offsetY;
+     Paint();
+     return;
+   }
+   
+   if(connectionMode != null){
+     connectionMode = null;
+     Paint();
+   }
+ }
+ 
+ bool checkGoodConnection(){
+ // If we have a good connection
+   if(selectedOutput  != null && selectedInput != null){
+     return true;
+   }
+   return false;
+ }
+ 
+ // Check to see if we are hitting an output pin return first hit
+ DeviceOutput checkForOutputPinHit(int x, int y){
+   for (LogicDevice device in logicDevices)
+     if(device.OutputPinHit(x, y) != null)
+       return device.OutputPinHit(x, y);
+ }
+ 
+// Check to see if we are hitting an input pin return first hit
+ DeviceInput checkForInputPinHit(int x, int y){
+   for (LogicDevice device in logicDevices)
+     if(device.InputPinHit(x, y) != null)
+       return device.InputPinHit(x, y);
+ }
+ 
+ bool SelectInput(DeviceInput input)
+ {
+   if(selectedInput !== input){
+     selectedInput = input;
+     return true; 
+   }
+   return false;
+ }
+ 
+ bool SelectOutput(DeviceOutput output)
+ {
+   if(selectedOutput !== output){
+     selectedOutput = output;
+     return true; 
+   }
+   return false;
+ }
   
-  //Start Adding a wire
-  void StartWire(DeviceInput input)
+ void AddWirePoint(int x, int y){
+   dummyWire.AddPoint(x, y);
+   print('AddWirePoint($x, $y) $connectionMode');
+ }
+ 
+  //Start Adding a wire from an input
+  void StartWire(int x, int y)
   {
-    addingWire = true;
-    wireStart = input;
-    input.createWire();
-    drawPinSelectors();
-  }
-  
-  void EndWire(DeviceOutput output)
-  {
-    wireStart.connectedOutput = output;
+    dummyWire.clear();
+    dummyWire.AddPoint(x, y);
     
-    if(wireEndPoint.x > 0 && wireEndPoint.y > 0){
-      wireStart.wire.AddPoint(wireEndPoint.x, wireEndPoint.y);
-      wireEndPoint.x = 1;
-      wireEndPoint.y = 1;
+    switch(connectionMode){
+      case 'InputSelected' :  connectionMode = 'InputToOutput'; break;
+                              
+      case 'OutputSelected' : connectionMode = 'OutputToInput'; break;
     }
-    else
-      wireStart.wire.AddPoint(output.offsetX, output.offsetY); 
     
-    addingWire = false;
-    wireStart = null;
+    print('StartWire($x, $y) $connectionMode');
+    drawPinSelectors();  
+  }
+  
+  void EndWire()
+  {
+    if(selectedOutput  == null || selectedInput == null){ // No Vaild connection
+      selectedInput = null;
+      selectedOutput = null;
+      connectionMode = null;
+      return;
+    }
+
+    selectedInput.connectedOutput = selectedOutput;
+    
+    switch(connectionMode){
+      case 'OutputToInput': 
+    
+      case 'InputToOutput':   
+        
+    }
+    // Add Dummy Wire to real wire
+    selectedInput.addWire(dummyWire.wirePoints);
+    
+    // Clear selected IO and get ready for a new connection
     selectedInput = null;
     selectedOutput = null;
+    connectionMode = null;
+    dummyWire.clear();
     Paint();
   }
   
-  // Draw the wire being added to the current cursor position
-  UpdateWire(int x, int y, var mode)
+  // Abort the connection of two devices
+  void abortWire()
   {
+    selectedInput = null;
+    selectedOutput = null;
+    connectionMode = null;
+    dummyWire.clear();
     Paint();
-    if(wireStart != null){
-      if(wireStart.wire != null)
-        wireStart.wire.UpdateLast(x, y);
-        drawWire(wireStart, mode);
-    }
   }
-  
-  void drawWire(DeviceInput input, state){
-    if(input.wire == null) return;  
+
+  // Draw the dummy Wire
+  void drawDummyWire(state){
+    context.fillStyle = context.strokeStyle;
+    context.beginPath();
+    context.lineWidth = WIRE_WIDTH;
     
     switch(state){
       case 'VALID':   context.strokeStyle = NEW_WIRE_VALID; break;
       case 'INVALID': context.strokeStyle = NEW_WIRE_INVALID; break;
+      case 'ERASE':   context.strokeStyle = GRID_BACKGROUND_COLOR; 
+                      context.lineWidth = WIRE_WIDTH + 1; break;
+ 
+      case true:      context.strokeStyle = WIRE_HIGH; break;
+      case false:     context.strokeStyle = WIRE_LOW; break;
            
+      default:        context.strokeStyle = WIRE_INVALID;
+    }
+    
+    context.moveTo(dummyWire.startX, dummyWire.startY); 
+    
+    for (WirePoint wirePoint in dummyWire.wirePoints) 
+      context.lineTo(wirePoint.x, wirePoint.y);
+      
+    context.lineTo(dummyWire.lastX, dummyWire.lastY); 
+    context.stroke();
+    context.closePath(); 
+  }
+  
+  
+  void drawWire(DeviceInput input, state){
+    if(input.wire == null) return;  
+
+    context.fillStyle = context.strokeStyle;
+    context.beginPath();
+    context.lineWidth = WIRE_WIDTH;
+
+    switch(state){
+      case 'VALID':   context.strokeStyle = NEW_WIRE_VALID; break;
+      case 'INVALID': context.strokeStyle = NEW_WIRE_INVALID; break;
+      
+      case 'ERASE':   context.strokeStyle = GRID_BACKGROUND_COLOR; 
+                      context.lineWidth = WIRE_WIDTH + 1; break;
+                      
       case false:     context.strokeStyle = WIRE_LOW; break;
       case true:      context.strokeStyle = WIRE_HIGH; break;
            
@@ -420,9 +524,7 @@ class Circuit {
     }
     
     context.fillStyle = context.strokeStyle;
-    context.beginPath();
-    context.lineWidth = WIRE_WIDTH;
-
+    
     //need at least 2 points
     if(input.wire.wirePoints.length >= 2){
       context.moveTo(input.wire.wirePoints[0].x, input.wire.wirePoints[0].y); 
@@ -445,6 +547,7 @@ class Circuit {
       if(input.connectedOutput.offsetX != input.wire.wirePoints.last().x &&
           input.connectedOutput.offsetY != input.wire.wirePoints.last().y){
           context.beginPath();
+          context.lineWidth = 2;
           context.arc(input.wire.wirePoints[input.wire.wirePoints.length-1].x, input.wire.wirePoints[input.wire.wirePoints.length-1].y, 5, 0, TAU, false);
           context.fill();
           context.stroke();
@@ -453,14 +556,6 @@ class Circuit {
     }
   }    
   
-  
-  void abortWire()
-  {
-    addingWire = false;
-    wireStart = null;
-    Paint();
-  }
-  
   //Draw all the wires
   void drawWires()
   {
@@ -468,6 +563,14 @@ class Circuit {
       for (DeviceInput input in device.Input) 
         if (input.connectedOutput != null)
            drawWire(input, input.value);
+          
+          
+     if(dummyWire.wirePoints.length > 0) 
+       if(checkGoodConnection())
+         drawDummyWire('VALID');
+       else
+         drawDummyWire('INVAILD');
+     
   }
   
   //Draw the wires that have been updated
@@ -476,10 +579,13 @@ class Circuit {
     for (LogicDevice device in logicDevices) 
       for (DeviceInput input in device.Input) 
         if (input.connectedOutput != null)
-          if (input.updated) 
+          if (input.updated){
+            drawWire(input, 'ERASE');
             drawWire(input, input.value);
+          }
   }
   
+  // Redraw all of the devices
   void drawDevices()
   {
     for (LogicDevice device in logicDevices) {
@@ -494,6 +600,7 @@ class Circuit {
     }
   }
   
+  // Draw the devices that have been updated
   void drawUpdatedDevices()
   {
     for (LogicDevice device in logicDevices) {
@@ -528,25 +635,23 @@ class Circuit {
     drawGrid();
     drawDevices();
     drawWires();
+    
+    
     drawPinSelectors();
   }
    
+  // Draw the device visual pin indicators
   void drawPinSelectors()
   {
-    if(wireStart != null){
-      if(selectedOutput != null){
-          if(wireEndPoint.x > 0)
-            drawHighlightPin(wireEndPoint.x, wireEndPoint.y, 'VALID');
-          else
-            drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID');
-       }
-       drawConnectableOutputPins();
-    }
-    if(selectedInput != null){
-     if(selectedInput.connected)
-          drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'CONNECTED');
-      else
-         drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID'); 
+    switch(connectionMode){
+      case 'InputToOutput':  drawConnectableOutputPins(); break;
+        
+      case 'OutputToInput':  drawConnectableInputPins(); break;
+        
+      case 'InputSelected':  drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID'); break;
+      
+      case 'OutputSelected':  drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID'); break;
+      
     }
   }
   
@@ -570,22 +675,6 @@ class Circuit {
           drawHighlightPin(input.offsetX, input.offsetY, 'CONNECTABLE'); 
       }
     }      
-  }
-  
-  void SelectInput(DeviceInput input)
-  {
-    if(selectedInput !== input){
-      selectedInput = input;
-      Paint(); 
-    }
-  }
-  
-  void SelectOutput(DeviceOutput output)
-  {
-    if(selectedOutput !== output){
-      selectedOutput = output;
-      Paint(); 
-    }
   }
   
   void drawHighlightPin(int x, int y, var highlightMode)

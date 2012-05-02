@@ -31,17 +31,19 @@ class Wire {
   int lastY;
   bool drawWireEndpoint = false;
   
-  DeviceInput connectedInput;
-  //ImageElement endPoint;
-  
   List<WirePoint> wirePoints;
   
-  Wire(this.connectedInput){
+  Wire(){
     wirePoints = new List<WirePoint>();
-    wirePoints.add(new WirePoint(connectedInput.offsetX, connectedInput.offsetY));
-    print("Add Wire");
-    lastX = connectedInput.offsetX;
-    lastY = connectedInput.offsetY;
+  }
+  
+  void clear()
+  {
+    wirePoints.clear();
+    startX = null;
+    startY = null;
+    lastX = null;
+    lastY = null;
   }
    
   void AddPoint(int x, int y)
@@ -49,6 +51,10 @@ class Wire {
     lastX = x;
     lastY = y;
     
+    if(startX == null){
+      startX = x;
+      startY = y;
+    }
     wirePoints.add(new WirePoint(x, y));
   }
   

@@ -69,19 +69,6 @@ function $eq$(x, y) {
 $defProp(Object.prototype, '$eq', function(other) {
   return this === other;
 });
-function $lte$complex$(x, y) {
-  if (typeof(x) == 'number') {
-    $throw(new IllegalArgumentException(y));
-  } else if (typeof(x) == 'object') {
-    return x.$lte(y);
-  } else {
-    $throw(new NoSuchMethodException(x, "operator <=", [y]));
-  }
-}
-function $lte$(x, y) {
-  if (typeof(x) == 'number' && typeof(y) == 'number') return x <= y;
-  return $lte$complex$(x, y);
-}
 function $ne$(x, y) {
   if (x == null) return y != null;
   return (typeof(x) != 'object') ? x !== y : !x.$eq(y);
@@ -3001,7 +2988,7 @@ Util.currentTimeMillis = function() {
   return (new DateImplementation.now$ctor()).value;
 }
 // ********** Code for LogicDevice **************
-LogicDevice.fromJson$ctor = function(circuit, json) {
+LogicDevice.fromJson$ctor = function(json) {
   this.selected = false;
   this.SelectedInputPin = (-1);
   this.acc = (0);
@@ -3011,7 +2998,6 @@ LogicDevice.fromJson$ctor = function(circuit, json) {
   this._updated = false;
   this._visible = true;
   this._updateable = false;
-  this.circuit = circuit;
   this.ID = json.$index("id");
   this.X = json.$index("x");
   this.Y = json.$index("y");
@@ -3022,7 +3008,7 @@ LogicDevice.fromJson$ctor = function(circuit, json) {
   Configure(this);
 }
 LogicDevice.fromJson$ctor.prototype = LogicDevice.prototype;
-function LogicDevice(circuit, ID, Type) {
+function LogicDevice(ID, Type) {
   this.selected = false;
   this.SelectedInputPin = (-1);
   this.acc = (0);
@@ -3032,7 +3018,6 @@ function LogicDevice(circuit, ID, Type) {
   this._updated = false;
   this._visible = true;
   this._updateable = false;
-  this.circuit = circuit;
   this.ID = ID;
   this.Type = Type;
   this.Input = new Array();
@@ -3127,11 +3112,7 @@ LogicDevice.prototype.InputPinHit = function(x, y) {
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
     var input = $$i.next();
     if (input.get$connectable()) {
-      if (x <= (this.X + input.get$pinX() + (7)) && x >= (this.X + input.get$pinX() - (7))) {
-        if (y <= (this.Y + input.get$pinY() + (7)) && y >= (this.Y + input.get$pinY() - (7))) {
-          return input;
-        }
-      }
+      if (input.pinHit(x, y)) return input;
     }
   }
   return null;
@@ -3141,21 +3122,9 @@ LogicDevice.prototype.OutputPinHit = function(x, y) {
   var $$list = this.Output;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
     var output = $$i.next();
-    if (x <= (this.X + output.get$pinX() + (7)) && x >= (this.X + output.get$pinX() - (7))) {
-      if (y <= (this.Y + output.get$pinY() + (7)) && y >= (this.Y + output.get$pinY() - (7))) {
-        return output;
-      }
+    if (output.get$connectable()) {
+      if (output.pinHit(x, y)) return output;
     }
-  }
-  return null;
-}
-LogicDevice.prototype.WireHit = function(x, y) {
-  var hitDevice;
-  var $$list = this.Input;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var input = $$i.next();
-    hitDevice = input.wireHit(x, y);
-    if (hitDevice != null) return hitDevice;
   }
   return null;
 }
@@ -3256,6 +3225,7 @@ function DeviceInput(device, _id) {
   this._id = _id;
   this.set$value(false);
   this.connectedOutput = null;
+  this.wire = new Wire();
 }
 DeviceInput.prototype.set$connectedOutput = function(value) { return this.connectedOutput = value; };
 DeviceInput.prototype.get$wire = function() { return this.wire; };
@@ -3290,20 +3260,18 @@ DeviceInput.prototype.get$offsetX = function() {
 DeviceInput.prototype.get$offsetY = function() {
   return this.device.Y + this._pinY;
 }
-DeviceInput.prototype.get$pinX = function() {
-  return this._pinX;
+DeviceInput.prototype.createWire = function(x, y) {
+  this.wire.AddPoint(x, y);
 }
-DeviceInput.prototype.get$pinY = function() {
-  return this._pinY;
-}
-DeviceInput.prototype.createWire = function() {
-  this.wire = new Wire(this);
-}
-DeviceInput.prototype.wireHit = function(x, y) {
-  if (this.wire != null && this.connectedOutput != null) {
-    if (this.wire.Contains(x, y, (1))) return this.connectedOutput;
+DeviceInput.prototype.addWire = function(wirePoints) {
+  this.clearWire();
+  for (var $$i = wirePoints.iterator(); $$i.hasNext(); ) {
+    var point = $$i.next();
+    this.wire.AddPoint(point.x, point.y);
   }
-  return null;
+}
+DeviceInput.prototype.clearWire = function() {
+  this.wire.clear$_();
 }
 DeviceInput.prototype.checkUpdate = function() {
   if (this.connectedOutput != null) {
@@ -3331,6 +3299,14 @@ DeviceInput.prototype.SetPinLocation = function(x, y) {
   this._pinX = x;
   this._pinY = y;
 }
+DeviceInput.prototype.pinHit = function(x, y) {
+  if (x <= (this.get$offsetX() + (7)) && x >= (this.get$offsetX() - (7))) {
+    if (y <= (this.get$offsetY() + (7)) && y >= (this.get$offsetY() - (7))) {
+      return true;
+    }
+  }
+  return false;
+}
 // ********** Code for DeviceOutput **************
 function DeviceOutput(device, _id) {
   this._connectable = true;
@@ -3357,12 +3333,6 @@ DeviceOutput.prototype.get$offsetX = function() {
 DeviceOutput.prototype.get$offsetY = function() {
   return this.device.Y + this._pinY;
 }
-DeviceOutput.prototype.get$pinX = function() {
-  return this._pinX;
-}
-DeviceOutput.prototype.get$pinY = function() {
-  return this._pinY;
-}
 DeviceOutput.prototype.get$id = function() {
   return this._id;
 }
@@ -3376,24 +3346,28 @@ DeviceOutput.prototype.SetPinLocation = function(x, y) {
   this._pinX = x;
   this._pinY = y;
 }
+DeviceOutput.prototype.pinHit = function(x, y) {
+  if (x <= (this.get$offsetX() + (7)) && x >= (this.get$offsetX() - (7))) {
+    if (y <= (this.get$offsetY() + (7)) && y >= (this.get$offsetY() - (7))) {
+      return true;
+    }
+  }
+  return false;
+}
 // ********** Code for Circuit **************
 function Circuit(canvas) {
   var $this = this; // closure support
-  this.addingWire = false;
   this.showGrid = true;
-  this.wireStart = null;
-  this.wireEnd = null;
-  this.selectedOutput = null;
-  this.tempInput = null;
-  this.startDevice = null;
-  this.endDevice = null;
-  this.moveDevice = null;
+  this.connectionMode = null;
+  this.connectingOutputToInput = false;
+  this.connectingInputToOutput = false;
   this.canvas = canvas;
   this.lastTime = Util.currentTimeMillis();
   this.logicDevices = new Array();
   this.context = this.canvas.getContext("2d");
   this._width = this.canvas.width;
   this._height = this.canvas.height;
+  this.dummyWire = new Wire();
   this.validPinImage = _ElementFactoryProvider.Element$tag$factory("img");
   this.validPinImage.src = "images/SelectPinGreen.png";
   this.selectPin = _ElementFactoryProvider.Element$tag$factory("img");
@@ -3402,15 +3376,14 @@ function Circuit(canvas) {
   this.startWireImage.src = "images/SelectPinBlack.png";
   this.connectablePinImage = _ElementFactoryProvider.Element$tag$factory("img");
   this.connectablePinImage.src = "images/SelectPinPurple.png";
-  this.wireEndPoint = new WirePoint((-1), (-1));
   get$$window().setInterval(function f() {
-    return $this.updateTime();
+    return $this.tick();
   }
   , (50));
   this.buttons = get$$document().queryAll(".newdevice");
   this.buttons.forEach((function (f) {
     f.get$on().get$click().add$1((function (e) {
-      var newDevice = new LogicDevice($this, $this.getNewId(), f.get$name());
+      var newDevice = new LogicDevice($this.getNewId(), f.get$name());
       $this.logicDevices.add(newDevice);
       $this.moveDevice = newDevice;
     })
@@ -3476,7 +3449,7 @@ Circuit.prototype.LoadCircuit = function(name) {
   var circuitStrings = new Array();
   circuitStrings = json_JSON.parse(loadedCircuit);
   circuitStrings.forEach((function (f) {
-    var newDevice = new LogicDevice.fromJson$ctor($this, json_JSON.parse(f));
+    var newDevice = new LogicDevice.fromJson$ctor(json_JSON.parse(f));
     $this.logicDevices.add(newDevice);
   })
   );
@@ -3503,14 +3476,16 @@ Circuit.prototype.LoadCircuit = function(name) {
       var wirePointList = new Array();
       wirePointList = json_JSON.parse(wirePoints);
       if (wirePointList.get$length() >= (2)) {
-        device.Input.$index(sinout).createWire();
         var pointCount = wirePointList.get$length();
         for (var t1 = (0);
          t1 < pointCount; t1++) {
           var json2 = json_JSON.parse(wirePointList.$index(t1));
           var x = json2.$index("x");
           var y = json2.$index("y");
-          if (sinout < device.get$InputCount() && sinout >= (0)) device.Input.$index(sinout).get$wire().AddPoint(x, y);
+          if (sinout < device.get$InputCount() && sinout >= (0)) {
+            if (device.Input.$index(sinout).get$wire() == null) device.Input.$index(sinout).createWire(x, y);
+            device.Input.$index(sinout).get$wire().AddPoint(x, y);
+          }
         }
       }
     }
@@ -3542,7 +3517,7 @@ Circuit.prototype.drawGrid = function() {
   this.context.stroke();
   this.context.closePath();
 }
-Circuit.prototype.updateTime = function() {
+Circuit.prototype.tick = function() {
   if (this.logicDevices.get$length() <= (0)) return;
   var $$list = this.logicDevices;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
@@ -3562,19 +3537,26 @@ Circuit.prototype.getNewId = function() {
 Circuit.prototype.onMouseDown = function(e) {
   e.preventDefault();
   if (this.moveDevice != null) this.moveDevice = null;
-  if (this.addingWire) {
-    if (this.selectedOutput != null) {
-      this.EndWire(this.selectedOutput);
-    }
-    else {
-      this.selectedInput.wire.AddPoint(e.offsetX, e.offsetY);
-    }
-  }
-  else {
-    if (this.selectedInput != null) {
-      this.StartWire(this.selectedInput);
-    }
-    else {
+  switch (this.connectionMode) {
+    case "InputToOutput":
+    case "OutputToInput":
+
+      this.AddWirePoint(this._mouseX, this._mouseY);
+      if (this.checkGoodConnection()) this.EndWire();
+      return;
+
+    case "InputSelected":
+
+      this.StartWire(this._mouseX, this._mouseY);
+      return;
+
+    case "OutputSelected":
+
+      this.StartWire(this._mouseX, this._mouseY);
+      return;
+
+    case null:
+
       var $$list = this.logicDevices;
       for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
         var device = $$i.next();
@@ -3583,7 +3565,8 @@ Circuit.prototype.onMouseDown = function(e) {
           break;
         }
       }
-    }
+      break;
+
   }
 }
 Circuit.prototype.get$onMouseDown = function() {
@@ -3592,7 +3575,6 @@ Circuit.prototype.get$onMouseDown = function() {
 Circuit.prototype.onMouseDoubleClick = function(e) {
   e.stopPropagation();
   e.preventDefault();
-  if (this.addingWire) return;
 }
 Circuit.prototype.get$onMouseDoubleClick = function() {
   return this.onMouseDoubleClick.bind(this);
@@ -3600,89 +3582,130 @@ Circuit.prototype.get$onMouseDoubleClick = function() {
 Circuit.prototype.onMouseMove = function(e) {
   this._mouseX = e.offsetX;
   this._mouseY = e.offsetY;
+  print$(("MouseMove() " + this.connectionMode));
   if (this.moveDevice != null) {
     this.moveDevice.MoveDevice(this._mouseX, this._mouseY);
     this.Paint();
     return;
   }
-  if (this.addingWire) {
-    this.wireEndPoint.x = (-1);
-    this.wireEndPoint.y = (-1);
-    var $$list = this.logicDevices;
-    for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-      var device = $$i.next();
-      this.selectedOutput = device.OutputPinHit(e.offsetX, e.offsetY);
-      if (this.selectedOutput != null) {
-        this.wireEndPoint.x = this.selectedOutput.get$offsetX();
-        this.wireEndPoint.y = this.selectedOutput.get$offsetY();
-        break;
-      }
-      else {
-        this.selectedOutput = device.WireHit(e.offsetX, e.offsetY);
-        if (this.selectedOutput != null) {
-          this.wireEndPoint.x = e.offsetX;
-          this.wireEndPoint.y = e.offsetY;
-          break;
-        }
-      }
-    }
-    if (this.selectedOutput != null) {
-      this.UpdateWire(this.wireEndPoint.x, this.wireEndPoint.y, "VALID");
-    }
-    else {
-      this.UpdateWire(e.offsetX, e.offsetY, "INVALID");
-    }
-  }
-  if (!this.addingWire) {
-    var $$list = this.logicDevices;
-    for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-      var device = $$i.next();
-      this.tempInput = device.InputPinHit(e.offsetX, e.offsetY);
-      if (this.tempInput != null) {
-        this.SelectInput(this.tempInput);
-        break;
-      }
-    }
-    if (this.tempInput == null) {
+  switch (this.connectionMode) {
+    case "OutputToInput":
+
+      this.selectedInput = this.checkForInputPinHit(e.offsetX, e.offsetY);
       if (this.selectedInput != null) {
-        this.selectedInput = null;
-        this.Paint();
+        this._mouseX = this.selectedInput.get$offsetX();
+        this._mouseY = this.selectedInput.get$offsetY();
       }
-    }
+      this.dummyWire.UpdateLast(this._mouseX, this._mouseY);
+      this.Paint();
+      return;
+
+    case "InputToOutput":
+
+      this.selectedOutput = this.checkForOutputPinHit(e.offsetX, e.offsetY);
+      if (this.selectedOutput != null) {
+        this._mouseX = this.selectedOutput.get$offsetX();
+        this._mouseY = this.selectedOutput.get$offsetY();
+      }
+      this.dummyWire.UpdateLast(this._mouseX, this._mouseY);
+      this.Paint();
+      return;
+
+    default:
+
+
+  }
+  this.selectedInput = this.checkForInputPinHit(e.offsetX, e.offsetY);
+  if (this.selectedInput != null) {
+    this.connectionMode = "InputSelected";
+    this._mouseX = this.selectedInput.get$offsetX();
+    this._mouseY = this.selectedInput.get$offsetY();
+    this.Paint();
+    return;
+  }
+  this.selectedOutput = this.checkForOutputPinHit(e.offsetX, e.offsetY);
+  if (this.selectedOutput != null) {
+    this.connectionMode = "OutputSelected";
+    this._mouseX = this.selectedOutput.get$offsetX();
+    this._mouseY = this.selectedOutput.get$offsetY();
+    this.Paint();
+    return;
+  }
+  if ($ne$(this.connectionMode)) {
+    this.connectionMode = null;
+    this.Paint();
   }
 }
 Circuit.prototype.get$onMouseMove = function() {
   return this.onMouseMove.bind(this);
 }
-Circuit.prototype.StartWire = function(input) {
-  this.addingWire = true;
-  this.wireStart = input;
-  input.createWire();
+Circuit.prototype.checkGoodConnection = function() {
+  if (this.selectedOutput != null && this.selectedInput != null) {
+    return true;
+  }
+  return false;
+}
+Circuit.prototype.checkForOutputPinHit = function(x, y) {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    if (device.OutputPinHit(x, y) != null) return device.OutputPinHit(x, y);
+  }
+}
+Circuit.prototype.checkForInputPinHit = function(x, y) {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    if (device.InputPinHit(x, y) != null) return device.InputPinHit(x, y);
+  }
+}
+Circuit.prototype.AddWirePoint = function(x, y) {
+  this.dummyWire.AddPoint(x, y);
+  print$(("AddWirePoint(" + x + ", " + y + ") " + this.connectionMode));
+}
+Circuit.prototype.StartWire = function(x, y) {
+  this.dummyWire.clear$_();
+  this.dummyWire.AddPoint(x, y);
+  switch (this.connectionMode) {
+    case "InputSelected":
+
+      this.connectionMode = "InputToOutput";
+      break;
+
+    case "OutputSelected":
+
+      this.connectionMode = "OutputToInput";
+      break;
+
+  }
+  print$(("StartWire(" + x + ", " + y + ") " + this.connectionMode));
   this.drawPinSelectors();
 }
-Circuit.prototype.EndWire = function(output) {
-  this.wireStart.connectedOutput = output;
-  if (this.wireEndPoint.x > (0) && this.wireEndPoint.y > (0)) {
-    this.wireStart.wire.AddPoint(this.wireEndPoint.x, this.wireEndPoint.y);
-    this.wireEndPoint.x = (1);
-    this.wireEndPoint.y = (1);
+Circuit.prototype.EndWire = function() {
+  if (this.selectedOutput == null || this.selectedInput == null) {
+    this.selectedInput = null;
+    this.selectedOutput = null;
+    this.connectionMode = null;
+    return;
   }
-  else this.wireStart.wire.AddPoint(output.get$offsetX(), output.get$offsetY());
-  this.addingWire = false;
-  this.wireStart = null;
+  this.selectedInput.connectedOutput = this.selectedOutput;
+  switch (this.connectionMode) {
+    case "OutputToInput":
+    case "InputToOutput":
+
+
+  }
+  this.selectedInput.addWire(this.dummyWire.wirePoints);
   this.selectedInput = null;
   this.selectedOutput = null;
+  this.connectionMode = null;
+  this.dummyWire.clear$_();
   this.Paint();
 }
-Circuit.prototype.UpdateWire = function(x, y, mode) {
-  this.Paint();
-  if (this.wireStart != null) {
-    if (this.wireStart.wire != null) this.wireStart.wire.UpdateLast(x, y);
-    this.drawWire(this.wireStart, mode);
-  }
-}
-Circuit.prototype.drawWire = function(input, state) {
-  if (input.wire == null) return;
+Circuit.prototype.drawDummyWire = function(state) {
+  this.context.fillStyle = this.context.strokeStyle;
+  this.context.beginPath();
+  this.context.lineWidth = (3);
   switch (state) {
     case "VALID":
 
@@ -3692,6 +3715,59 @@ Circuit.prototype.drawWire = function(input, state) {
     case "INVALID":
 
       this.context.strokeStyle = "#999999";
+      break;
+
+    case "ERASE":
+
+      this.context.strokeStyle = "#eeeeee";
+      this.context.lineWidth = (4);
+      break;
+
+    case true:
+
+      this.context.strokeStyle = "#ff4444";
+      break;
+
+    case false:
+
+      this.context.strokeStyle = "#550091";
+      break;
+
+    default:
+
+      this.context.strokeStyle = "#999999";
+
+  }
+  this.context.moveTo(this.dummyWire.startX, this.dummyWire.startY);
+  var $$list = this.dummyWire.wirePoints;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var wirePoint = $$i.next();
+    this.context.lineTo(wirePoint.x, wirePoint.y);
+  }
+  this.context.lineTo(this.dummyWire.lastX, this.dummyWire.lastY);
+  this.context.stroke();
+  this.context.closePath();
+}
+Circuit.prototype.drawWire = function(input, state) {
+  if (input.wire == null) return;
+  this.context.fillStyle = this.context.strokeStyle;
+  this.context.beginPath();
+  this.context.lineWidth = (3);
+  switch (state) {
+    case "VALID":
+
+      this.context.strokeStyle = "#009900";
+      break;
+
+    case "INVALID":
+
+      this.context.strokeStyle = "#999999";
+      break;
+
+    case "ERASE":
+
+      this.context.strokeStyle = "#eeeeee";
+      this.context.lineWidth = (4);
       break;
 
     case false:
@@ -3710,8 +3786,6 @@ Circuit.prototype.drawWire = function(input, state) {
 
   }
   this.context.fillStyle = this.context.strokeStyle;
-  this.context.beginPath();
-  this.context.lineWidth = (3);
   if (input.wire.wirePoints.get$length() >= (2)) {
     this.context.moveTo(input.wire.wirePoints.$index((0)).get$x(), input.wire.wirePoints.$index((0)).get$y());
     var $$list = input.wire.wirePoints;
@@ -3729,6 +3803,7 @@ Circuit.prototype.drawWire = function(input, state) {
   if (input.connectedOutput != null) {
     if (input.connectedOutput.get$offsetX() != input.wire.wirePoints.last().get$x() && input.connectedOutput.get$offsetY() != input.wire.wirePoints.last().get$y()) {
       this.context.beginPath();
+      this.context.lineWidth = (2);
       this.context.arc(input.wire.wirePoints.$index(input.wire.wirePoints.get$length() - (1)).get$x(), input.wire.wirePoints.$index(input.wire.wirePoints.get$length() - (1)).get$y(), (5), (0), (6.283185307179586), false);
       this.context.fill();
       this.context.stroke();
@@ -3746,6 +3821,8 @@ Circuit.prototype.drawWires = function() {
       if (input.connectedOutput != null) this.drawWire(input, input.get$value());
     }
   }
+  if (this.dummyWire.wirePoints.get$length() > (0)) if (this.checkGoodConnection()) this.drawDummyWire("VALID");
+  else this.drawDummyWire("INVAILD");
 }
 Circuit.prototype.drawUpdatedWires = function() {
   var $$list = this.logicDevices;
@@ -3754,7 +3831,10 @@ Circuit.prototype.drawUpdatedWires = function() {
     var $list0 = device.Input;
     for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
       var input = $i0.next();
-      if (input.connectedOutput != null) if (input.updated) this.drawWire(input, input.get$value());
+      if (input.connectedOutput != null) if (input.updated) {
+        this.drawWire(input, "ERASE");
+        this.drawWire(input, input.get$value());
+      }
     }
   }
 }
@@ -3798,16 +3878,27 @@ Circuit.prototype.Paint = function() {
   this.drawPinSelectors();
 }
 Circuit.prototype.drawPinSelectors = function() {
-  if (this.wireStart != null) {
-    if (this.selectedOutput != null) {
-      if (this.wireEndPoint.x > (0)) this.drawHighlightPin(this.wireEndPoint.x, this.wireEndPoint.y, "VALID");
-      else this.drawHighlightPin(this.selectedOutput.get$offsetX(), this.selectedOutput.get$offsetY(), "VALID");
-    }
-    this.drawConnectableOutputPins();
-  }
-  if (this.selectedInput != null) {
-    if (this.selectedInput.get$connected()) this.drawHighlightPin(this.selectedInput.get$offsetX(), this.selectedInput.get$offsetY(), "CONNECTED");
-    else this.drawHighlightPin(this.selectedInput.get$offsetX(), this.selectedInput.get$offsetY(), "VALID");
+  switch (this.connectionMode) {
+    case "InputToOutput":
+
+      this.drawConnectableOutputPins();
+      break;
+
+    case "OutputToInput":
+
+      this.drawConnectableInputPins();
+      break;
+
+    case "InputSelected":
+
+      this.drawHighlightPin(this.selectedInput.get$offsetX(), this.selectedInput.get$offsetY(), "VALID");
+      break;
+
+    case "OutputSelected":
+
+      this.drawHighlightPin(this.selectedOutput.get$offsetX(), this.selectedOutput.get$offsetY(), "VALID");
+      break;
+
   }
 }
 Circuit.prototype.drawConnectableOutputPins = function() {
@@ -3821,11 +3912,15 @@ Circuit.prototype.drawConnectableOutputPins = function() {
     }
   }
 }
-Circuit.prototype.SelectInput = function(input) {
-  var $0;
-  if ((($0 = this.selectedInput) == null ? null != (input) : $0 !== input)) {
-    this.selectedInput = input;
-    this.Paint();
+Circuit.prototype.drawConnectableInputPins = function() {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    var $list0 = device.Input;
+    for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
+      var input = $i0.next();
+      if ($eq$(input.get$connected(), false) && $eq$(input.get$connectable(), true)) this.drawHighlightPin(input.get$offsetX(), input.get$offsetY(), "CONNECTABLE");
+    }
   }
 }
 Circuit.prototype.drawHighlightPin = function(x, y, highlightMode) {
@@ -3877,18 +3972,24 @@ WirePoint.prototype.toMap = function() {
   return wirePoints;
 }
 // ********** Code for Wire **************
-function Wire(connectedInput) {
+function Wire() {
   this.drawWireEndpoint = false;
-  this.connectedInput = connectedInput;
   this.wirePoints = new Array();
-  this.wirePoints.add(new WirePoint(this.connectedInput.get$offsetX(), this.connectedInput.get$offsetY()));
-  print$("Add Wire");
-  this.lastX = this.connectedInput.get$offsetX();
-  this.lastY = this.connectedInput.get$offsetY();
+}
+Wire.prototype.clear$_ = function() {
+  this.wirePoints.clear$_();
+  this.startX = null;
+  this.startY = null;
+  this.lastX = null;
+  this.lastY = null;
 }
 Wire.prototype.AddPoint = function(x, y) {
   this.lastX = x;
   this.lastY = y;
+  if (this.startX == null) {
+    this.startX = x;
+    this.startY = y;
+  }
   this.wirePoints.add(new WirePoint(x, y));
 }
 Wire.prototype.UpdateLast = function(x, y) {
@@ -3902,26 +4003,6 @@ Wire.prototype.GetWireString = function() {
   })
   );
   return json_JSON.stringify(wireString);
-}
-Wire.prototype.Contains = function(x, y, d) {
-  if (this.wirePoints.get$length() >= (2)) {
-    var x1, x2, x3, y1, y2, y3;
-    var d1;
-    x3 = x;
-    y3 = y;
-    for (var t = (0);
-     t < this.wirePoints.get$length() - (1); t++) {
-      x1 = this.wirePoints.$index(t).get$x();
-      x2 = this.wirePoints.$index(t + (1)).get$x();
-      y1 = this.wirePoints.$index(t).get$y();
-      y2 = this.wirePoints.$index(t + (1)).get$y();
-      d1 = (Math.sqrt((y3 - y1) * (y3 - y1) + (x3 - x1) * (x3 - x1)) + Math.sqrt((y3 - y2) * (y3 - y2) + (x3 - x2) * (x3 - x2))) - Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
-      if ($lte$(d1, d)) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 // ********** Code for top level **************
 function main() {
@@ -4000,7 +4081,7 @@ function ConfigureSwitch(device) {
   device.set$InputCount((1));
   device.set$OutputCount((1));
   device.SetInputPinLocation((0), (-1), (-1));
-  device.SetOutputPinLocation((0), (20), (0));
+  device.SetOutputPinLocation((0), (21), (0));
 }
 function ConfigureDartLogo(device) {
   device.addImage("images/dartLogo.png");
@@ -4016,7 +4097,7 @@ function ConfigureLed(device) {
   device.addImage("images/01Disp_High.png");
   device.set$InputCount((1));
   device.set$OutputCount((1));
-  device.SetInputPinLocation((0), (15), (0));
+  device.SetInputPinLocation((0), (16), (0));
   device.SetOutputPinLocation((0), (-1), (-1));
   device.set$updateable(true);
 }
@@ -4071,9 +4152,9 @@ function ConfigureXnor2(device) {
 function ConfigureNot(device) {
   device.addImage("images/not.png");
   device.set$InputCount((1));
-  device.SetInputPinLocation((0), (5), (24));
+  device.SetInputPinLocation((0), (5), (25));
   device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (94), (24));
+  device.SetOutputPinLocation((0), (94), (25));
 }
 function ConfigureClock(device) {
   device.addImage("images/Clock.png");
@@ -4081,8 +4162,8 @@ function ConfigureClock(device) {
   device.SetInputPinLocation((0), (0), (0));
   device.SetInputConnectable((0), false);
   device.set$OutputCount((2));
-  device.SetOutputPinLocation((0), (64), (13));
-  device.SetOutputPinLocation((1), (64), (38));
+  device.SetOutputPinLocation((0), (64), (14));
+  device.SetOutputPinLocation((1), (64), (39));
 }
 // 198 dynamic types.
 // 310 types

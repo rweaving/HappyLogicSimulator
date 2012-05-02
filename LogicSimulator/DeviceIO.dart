@@ -2,7 +2,7 @@
 /   By: Ryan C. Weaving  &  Athhur Liu                           */
 
 class DeviceInput{
-  
+  static final int PIND = 7; // Pin hit margin 
   final LogicDevice device;  
 
   DeviceOutput connectedOutput;
@@ -28,6 +28,7 @@ class DeviceInput{
   DeviceInput(this.device, this._id){
     value = false;
     connectedOutput = null;
+    wire = new Wire();
    }
   
   Map<String, Object> toJson() {
@@ -53,9 +54,23 @@ class DeviceInput{
   int get offsetY() => device.Y + _pinY;  // the corrected absolute X position
   int get pinX()    => _pinX;             // the pins X location on the devices image
   int get pinY()    => _pinY;             // the pins Y location on the devices image
+  set pinX(int x)   => _pinX;             // the pins X location on the devices image
+  set pinY(int y)   => _pinY;             // the pins Y location on the devices image
+   
+  void createWire(int x, int y){
+     
+     wire.AddPoint(x, y);
+  }
   
-  void createWire(){
-    wire = new Wire(this);
+  void addWire(List<WirePoint> wirePoints){
+    clearWire();
+    for(WirePoint point in wirePoints){
+      wire.AddPoint(point.x, point.y);
+    }
+  }
+  
+  void clearWire(){
+      wire.clear();
   }
   
   DeviceOutput wireHit(int x, int y){
@@ -110,11 +125,20 @@ class DeviceInput{
     _pinX = x;
     _pinY = y;
   } 
+  
+  bool pinHit(int x, int y){
+    if(x <= (offsetX + PIND) && x >= (offsetX - PIND)){
+      if(y <= (offsetY + PIND) && y >= (offsetY - PIND)){
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 
 class DeviceOutput{ 
-  
+  static final int PIND = 7; // Pin hit margin
   bool _value;  
   int _pinX;
   int _pinY;
@@ -149,6 +173,8 @@ class DeviceOutput{
   int get offsetY() => device.Y + _pinY;
   int get pinX() => _pinX;
   int get pinY() => _pinY;
+  set pinX(int x) => _pinX;             // the pins X location on the devices image
+  set pinY(int y) => _pinY;             // the pins Y location on the devices image
   
   String get id() => _id;
   
@@ -162,4 +188,14 @@ class DeviceOutput{
     _pinX = x;
     _pinY = y;
   }
+  
+  bool pinHit(int x, int y){
+    if(x <= (offsetX + PIND) && x >= (offsetX - PIND)){
+      if(y <= (offsetY + PIND) && y >= (offsetY - PIND)){
+        return true;
+      }
+    }
+    return false;
+  }
+  
 }
