@@ -19,13 +19,13 @@ class LogicDevice {
   int SelectedInputPin = -1;
 
   int acc=0;
-  int rset=10;
+  int rset=5;
   
-  bool _CreateWire = false;
   bool _calculated = false; 
   bool _updated = false;
   bool _visible = true;
   bool _updateable = false;
+  bool CloneMode = false;
   
   LogicDevice.fromJson(Map json) : ID = json['id'], X = json['x'], Y = json['y'], Type = json['type']{    
     Input = new List<DeviceInput>();
@@ -144,6 +144,8 @@ class LogicDevice {
  
   DeviceInput InputPinHit(int x, int y)
   {
+    if(CloneMode) return null;
+    
     if(InputCount <= 0) return null;
     for (DeviceInput input in Input) {
       if(input.connectable){
@@ -156,6 +158,8 @@ class LogicDevice {
   
   DeviceOutput OutputPinHit(int x, int y)
   {
+    if(CloneMode) return null;
+    
     if(OutputCount <= 0) return null;
     for (DeviceOutput output in Output) {
       if(output.connectable){

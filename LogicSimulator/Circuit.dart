@@ -22,6 +22,7 @@ class Circuit {
   static final String GRID_BACKGROUND_COLOR = '#eeeeee';
   static final int PIN_INDICATOR_OFFSET = 5;
   static final TAU = Math.PI * 2;
+  static final int TOOLBAR_WIDTH = 115;
   
   CanvasElement canvas;
   CanvasRenderingContext2D context;
@@ -41,7 +42,7 @@ class Circuit {
   int lastTime;
   List<LogicDevice> logicDevices;
   
-  bool showGrid = true;
+  bool showGrid = false;
   
   WirePoint wireEndPoint; 
 
@@ -51,13 +52,14 @@ class Circuit {
   DeviceInput tempInput;
 
   LogicDevice moveDevice;
+  LogicDevice cloneDevice;
   
   ButtonElement addNandButton;
   ElementList buttons;
   
   Wire dummyWire;
   
-  var connectionMode = null;
+  var connectionMode = 'INIT';
   
   bool connectingOutputToInput = false;
   bool connectingInputToOutput = false;
@@ -70,7 +72,6 @@ class Circuit {
     _width = canvas.width;
     _height = canvas.height;
     
-    //dummyInput = new DeviceInput(null, 'dummy'); 
     dummyWire = new Wire();
     
     validPinImage = new Element.tag('img'); 
@@ -85,11 +86,9 @@ class Circuit {
     connectablePinImage = new Element.tag('img');
     connectablePinImage.src = "images/SelectPinPurple.png";   
     
-    //wireEndPoint = new WirePoint(-1, -1); 
-    
     // Create a timer to update the simulation tick
-    window.setInterval(f() => tick(), 50);
-    
+    window.setInterval(f() => tick(), 100);
+    /***
     // Add handlers to buttons that add the devices
     buttons = document.queryAll('.newdevice');
     buttons.forEach((f){
@@ -117,10 +116,14 @@ class Circuit {
     loadButton.on.click.add((MouseEvent e) {
       ClearCircuit();
     });
-    
+     */
     canvas.on.mouseDown.add(onMouseDown);
     canvas.on.doubleClick.add(onMouseDoubleClick);
     canvas.on.mouseMove.add(onMouseMove);
+    
+    window.on.resize.add((event) => onResize(), true);
+   
+    createSelectorBar();
     
     Paint();
   }
@@ -128,37 +131,59 @@ class Circuit {
   int get width() => _width;
   int get height() => _height;
   
-  void set width(int width) 
+  void set width(int val) 
   {
-    _width = width;
-    canvas.width = width;
+    _width = val;
+    canvas.width = val;
   }
   
-  void set height(int height) 
+  void set height(int val) 
   {
-    _height = height;
-    canvas.height = height;
+    _height = val;
+    canvas.height = val;
   }
   
-  void ClearCircuit()
-  {
-    logicDevices.clear();
+  void onResize() {
+    height = window.innerHeight - 25;
+    width = window.innerWidth - 25;
     Paint();
   }
   
-  // Save the circuit to local storage
-  void SaveCircuit(String name)
+  void start(){
+    onResize();
+  }
+  
+  void createSelectorBar()
   {
-    List<String> circuitStrings = new List<String>();
-    List<String> connectionList = new List<String>();
+    addNewCloneableDevice('Clock', 'CLOCK', 0, 0);
+    addNewCloneableDevice('Switch', 'SWITCH', 0, 60);
+    addNewCloneableDevice('Not', 'NOT', 0, 120);
+    addNewCloneableDevice('And', 'AND', 0, 180);
+    addNewCloneableDevice('Nand', 'NAND', 0, 240);
+    addNewCloneableDevice('Or', 'OR', 0, 300);
+    addNewCloneableDevice('Nor', 'NOR', 0, 360);
+    addNewCloneableDevice('XOR', 'XOR', 0, 420);
+    addNewCloneableDevice('XNOR', 'XNOR', 0, 480);
+    addNewCloneableDevice('LED', 'LED', 50, 60);
+    Paint();
+  }
+  
+  LogicDevice addNewCloneableDevice(var id, var type, int x, int y) 
+  {
+    LogicDevice newDevice = new LogicDevice(id, type); 
+    logicDevices.add(newDevice);
+    newDevice.CloneMode = true;
+    newDevice.MoveDevice(x, y);
+    return newDevice;
+  }
+  
+  NewDeviceFrom(LogicDevice device){
+    LogicDevice newDevice = new LogicDevice(getNewId(), device.Type); 
+    logicDevices.add(newDevice);
+    newDevice.MoveDevice(device.X, device.Y);
     
-    logicDevices.forEach((f) {
-      circuitStrings.add(JSON.stringify(f.toJson()));
-      connectionList.add(f.GetInputs());
-    });
-    
-    window.localStorage[name] = JSON.stringify(circuitStrings);
-    window.localStorage["ABC"] = JSON.stringify(connectionList);
+    connectionMode = null;
+    moveDevice = newDevice;
   }
   
   LogicDevice GetDeviceByID(var id){
@@ -168,9 +193,34 @@ class Circuit {
     return null;
   }
   
+  void ClearCircuit()
+  {
+    logicDevices.clear();
+    Paint();
+  }
+  
+  // TODO: Cleanup save code
+  // Save the circuit to local storage
+  void SaveCircuit(String name)
+  { /**
+    List<String> circuitStrings = new List<String>();
+    List<String> connectionList = new List<String>();
+    
+    logicDevices.forEach((f) {
+      circuitStrings.add(JSON.stringify(f.toJson()));
+      connectionList.add(f.GetInputs());
+    });
+    
+    window.localStorage[name] = JSON.stringify(circuitStrings);
+    window.localStorage["ABC"] = JSON.stringify(connectionList); */
+  }
+  
+ 
+  
+  // TODO: Cleanup load code
   // Load the circuit from local storage
   void LoadCircuit(String name)
-  {
+  { /***
     String loadedCircuit = window.localStorage[name];
     
     List<String> circuitStrings = new List<String>();
@@ -214,8 +264,6 @@ class Circuit {
         wirePointList = JSON.parse(wirePoints);
         
         if(wirePointList.length >= 2){
-          
-          //device.Input[sinout].createWire();
           int pointCount = wirePointList.length;
           
           for(int t1=0; t1<pointCount; t1++){
@@ -234,16 +282,16 @@ class Circuit {
         }
       }
     });
-    Paint(); 
+    Paint(); */
  }
   
   void drawBorder() {
     context.beginPath();
-    context.rect(0, 0, width, height);
+    context.rect(TOOLBAR_WIDTH, 0, width, height);
     context.fillStyle = GRID_BACKGROUND_COLOR;
     context.lineWidth = BORDER_LINE_WIDTH;
-    context.strokeStyle = BORDER_LINE_COLOR;
-    context.fillRect(0, 0, width, height);
+    context.strokeStyle = GRID_BACKGROUND_COLOR;//BORDER_LINE_COLOR;
+    context.fillRect(TOOLBAR_WIDTH, 0, width, height);
     context.stroke();
     context.closePath();
   }
@@ -253,7 +301,7 @@ class Circuit {
     context.lineWidth = 1;
     context.strokeStyle = GRID_COLOR;
     
-    for(int x=GRID_SIZE; x < width; x+=GRID_SIZE){
+    for(int x=TOOLBAR_WIDTH; x < width; x+=GRID_SIZE){
       for(int y=GRID_SIZE; y < height; y+=GRID_SIZE){
         context.rect(x, y, GRID_POINT_SIZE, GRID_POINT_SIZE);
       }
@@ -263,7 +311,7 @@ class Circuit {
   }
  
   void tick(){
-    if(logicDevices.length <= 0) return;
+    if(logicDevices.length <= 0)return;
     
     for (LogicDevice device in logicDevices) {
       device.calculated = false;
@@ -271,6 +319,9 @@ class Circuit {
     for (LogicDevice device in logicDevices) {
       device.Calculate();
     }
+    
+    if(logicDevices.length <= 10) Paint(); //Hack
+   
     drawUpdate(); // Draw devices and wires that have updated
   }
   
@@ -283,21 +334,22 @@ class Circuit {
  void onMouseDown(MouseEvent e) 
  {
    e.preventDefault();
-   
+   Paint();
    if(moveDevice != null) 
      moveDevice = null;
    
    switch(connectionMode){
      case 'InputToOutput':    
      case 'OutputToInput':   AddWirePoint(_mouseX, _mouseY); 
-                             if(checkGoodConnection())
+                             if(checkValidConnection())
                                EndWire();
                              return;
                                                          
-     case 'InputSelected' :  StartWire(_mouseX, _mouseY); return; //selectedInput.offsetX, selectedInput.offsetY
+     case 'InputSelected' :  StartWire(_mouseX, _mouseY); return;
                              
      case 'OutputSelected' : StartWire(_mouseX, _mouseY); return;
-                        
+      
+     case 'CloneDevice' :    NewDeviceFrom(cloneDevice); return;
                                                        
      case null:              for (LogicDevice device in logicDevices) {
                                if(device.contains(e.offsetX, e.offsetY)){
@@ -320,7 +372,7 @@ class Circuit {
    _mouseX = e.offsetX;
    _mouseY = e.offsetY; 
    
-   print('MouseMove() $connectionMode');
+   //print('MouseMove() $connectionMode');
    
    if(moveDevice != null){
      moveDevice.MoveDevice(_mouseX, _mouseY);
@@ -342,6 +394,9 @@ class Circuit {
                               if(selectedOutput != null){ // Check to see if we are hitting an output pin 
                                 _mouseX = selectedOutput.offsetX; //Snap to output pin
                                 _mouseY = selectedOutput.offsetY;
+                              }
+                              else{
+                                selectedOutput = checkForWireHit(e.offsetX, e.offsetY);      
                               }
                               dummyWire.UpdateLast(_mouseX, _mouseY);
                               Paint();
@@ -369,17 +424,30 @@ class Circuit {
      return;
    }
    
+   cloneDevice = checkCloneableDevices(e.offsetX, e.offsetY);
+   if(cloneDevice != null){
+     connectionMode = 'CloneDevice';
+     return;
+   }
+   
    if(connectionMode != null){
      connectionMode = null;
      Paint();
    }
  }
+
+ LogicDevice checkCloneableDevices(int x, int y){
+  // Check to see if we 
+   for (LogicDevice device in logicDevices)
+     if(device.CloneMode)
+       if(device.contains(x, y))
+         return device;
+ }
  
- bool checkGoodConnection(){
- // If we have a good connection
-   if(selectedOutput  != null && selectedInput != null){
-     return true;
-   }
+ 
+ bool checkValidConnection(){
+ // If we have a valid connection
+   if(selectedOutput  != null && selectedInput != null) return true;
    return false;
  }
  
@@ -390,6 +458,13 @@ class Circuit {
        return device.OutputPinHit(x, y);
  }
  
+// Check to see if we are hitting a wire
+ DeviceOutput checkForWireHit(int x, int y){
+   for (LogicDevice device in logicDevices)
+     if(device.WireHit(x, y) != null)
+       return device.WireHit(x, y); 
+ }
+       
 // Check to see if we are hitting an input pin return first hit
  DeviceInput checkForInputPinHit(int x, int y){
    for (LogicDevice device in logicDevices)
@@ -417,7 +492,7 @@ class Circuit {
   
  void AddWirePoint(int x, int y){
    dummyWire.AddPoint(x, y);
-   print('AddWirePoint($x, $y) $connectionMode');
+   //print('AddWirePoint($x, $y) $connectionMode');
  }
  
   //Start Adding a wire from an input
@@ -431,8 +506,7 @@ class Circuit {
                               
       case 'OutputSelected' : connectionMode = 'OutputToInput'; break;
     }
-    
-    print('StartWire($x, $y) $connectionMode');
+    //print('StartWire($x, $y) $connectionMode');
     drawPinSelectors();  
   }
   
@@ -446,13 +520,7 @@ class Circuit {
     }
 
     selectedInput.connectedOutput = selectedOutput;
-    
-    switch(connectionMode){
-      case 'OutputToInput': 
-    
-      case 'InputToOutput':   
-        
-    }
+
     // Add Dummy Wire to real wire
     selectedInput.addWire(dummyWire.wirePoints);
     
@@ -566,7 +634,7 @@ class Circuit {
           
           
      if(dummyWire.wirePoints.length > 0) 
-       if(checkGoodConnection())
+       if(checkValidConnection())
          drawDummyWire('VALID');
        else
          drawDummyWire('INVAILD');
@@ -632,11 +700,9 @@ class Circuit {
   {
     clearCanvas();  
     drawBorder();
-    drawGrid();
+    //drawGrid();
     drawDevices();
     drawWires();
-    
-    
     drawPinSelectors();
   }
    
@@ -644,21 +710,28 @@ class Circuit {
   void drawPinSelectors()
   {
     switch(connectionMode){
-      case 'InputToOutput':  drawConnectableOutputPins(); break;
-        
-      case 'OutputToInput':  drawConnectableInputPins(); break;
-        
+      case 'InputToOutput':  drawConnectableOutputPins(); 
+                             if(selectedOutput != null)
+                               drawHighlightPin(_mouseX, _mouseY, 'VALID'); break;
+                                     
+      case 'OutputToInput':  drawConnectableInputPins(); 
+                             if(selectedInput != null)
+                               drawHighlightPin(_mouseX, _mouseY, 'VALID'); break;
+                                     
       case 'InputSelected':  drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID'); break;
       
       case 'OutputSelected':  drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID'); break;
       
     }
+    
+    
   }
   
   // Draw the output pins that we can connect to
   void drawConnectableOutputPins()
   {
     for (LogicDevice device in logicDevices) {
+      if(device.CloneMode) continue;
       for (DeviceOutput output in device.Output) {
         if(output.connectable == true)
           drawHighlightPin(output.offsetX, output.offsetY, 'CONNECTABLE'); 
@@ -670,6 +743,7 @@ class Circuit {
   void drawConnectableInputPins()
   {
     for (LogicDevice device in logicDevices) {
+      if(device.CloneMode) continue;     
       for (DeviceInput input in device.Input) {
         if(input.connected == false && input.connectable == true)    
           drawHighlightPin(input.offsetX, input.offsetY, 'CONNECTABLE'); 
