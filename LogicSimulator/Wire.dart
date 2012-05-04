@@ -1,3 +1,6 @@
+/** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
+/   By: Ryan C. Weaving  &  Arthur Liu                           */
+
 class WirePoint {
   int x;
   int y;
@@ -56,6 +59,15 @@ class Wire {
       startY = y;
     }
     wirePoints.add(new WirePoint(x, y));
+  }
+  
+  // Check to see if first or last point is here
+  bool HasStartEndPoint(int x, int y)
+  {
+    if(wirePoints.length >= 2){
+      if(wirePoints[0].x == x && wirePoints[0].y == y) return true;
+      if(wirePoints.last().x == x && wirePoints.last().y == y) return true;
+    }
   }
   
   void UpdateLast(int x, int y)

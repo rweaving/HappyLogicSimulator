@@ -1,5 +1,5 @@
 /** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
-/   By: Ryan C. Weaving  &  Athhur Liu                           */
+/   By: Ryan C. Weaving  &  Arthur Liu                           */
 
 class Circuit {
 
@@ -37,20 +37,24 @@ class Circuit {
   int _height;
   int _mouseX;
   int _mouseY;
+  int _touchX;
+  int _touchY;
   
   DivElement root;
   int lastTime;
   List<LogicDevice> logicDevices;
   
   bool showGrid = false;
+  bool gridSnap = false;
   
   WirePoint wireEndPoint; 
 
   DeviceOutput selectedOutput;
-  
   DeviceOutput tempOutput;
   DeviceInput tempInput;
 
+  LogicDeviceTypes deviceTypes;
+  
   LogicDevice moveDevice;
   LogicDevice cloneDevice;
   
@@ -65,7 +69,7 @@ class Circuit {
   bool connectingInputToOutput = false;
   
   Circuit(this.canvas) : 
-    lastTime = Util.currentTimeMillis(), 
+    deviceTypes = new LogicDeviceTypes(), 
     logicDevices = new List<LogicDevice>(){
 
     context = canvas.getContext('2d');
@@ -87,45 +91,22 @@ class Circuit {
     connectablePinImage.src = "images/SelectPinPurple.png";   
     
     // Create a timer to update the simulation tick
-    window.setInterval(f() => tick(), 100);
-    /***
-    // Add handlers to buttons that add the devices
-    buttons = document.queryAll('.newdevice');
-    buttons.forEach((f){
-      f.on.click.add((MouseEvent e) {
-        LogicDevice newDevice = new LogicDevice(getNewId(), f.name); 
-        logicDevices.add(newDevice);
-        moveDevice = newDevice;
-      });});
+    window.setInterval(f() => tick(), 50);
     
-    ButtonElement saveButton;
-    saveButton = document.query('#saveButton');
-    saveButton.on.click.add((MouseEvent e) {
-      SaveCircuit("Test");
-    });
-
-    ButtonElement loadButton;
-    loadButton = document.query('#loadButton');
-    loadButton.on.click.add((MouseEvent e) {
-      ClearCircuit();
-      LoadCircuit("Test");
-    });
-    
-    ButtonElement clearButton;
-    loadButton = document.query('#clearButton');
-    loadButton.on.click.add((MouseEvent e) {
-      ClearCircuit();
-    });
-     */
     canvas.on.mouseDown.add(onMouseDown);
     canvas.on.doubleClick.add(onMouseDoubleClick);
     canvas.on.mouseMove.add(onMouseMove);
     
-    window.on.resize.add((event) => onResize(), true);
-   
-    createSelectorBar();
+    // Touch Events
+    canvas.on.touchEnter.add((event) => onTouchEnter(event), false);
+    canvas.on.touchStart.add((event) => onTouchStart(event), false);
+    canvas.on.touchMove.add((event) => onTouchMove(event), false);
+    canvas.on.touchEnd.add((event) => onTouchEnd(event), false);
+    canvas.on.touchCancel.add((event) => onTouchCancel(event), false);
+    canvas.on.touchLeave.add((event) => onTouchLeave(event), false); 
     
-    Paint();
+    window.on.resize.add((event) => onResize(), true);
+
   }
   
   int get width() => _width;
@@ -150,6 +131,7 @@ class Circuit {
   }
   
   void start(){
+    createSelectorBar();
     onResize();
   }
   
@@ -165,20 +147,24 @@ class Circuit {
     addNewCloneableDevice('XOR', 'XOR', 0, 420);
     addNewCloneableDevice('XNOR', 'XNOR', 0, 480);
     addNewCloneableDevice('LED', 'LED', 50, 60);
+    
     Paint();
   }
   
   LogicDevice addNewCloneableDevice(var id, var type, int x, int y) 
   {
-    LogicDevice newDevice = new LogicDevice(id, type); 
-    logicDevices.add(newDevice);
-    newDevice.CloneMode = true;
-    newDevice.MoveDevice(x, y);
-    return newDevice;
+    LogicDeviceType deviceType = deviceTypes.getDeviceType(type);
+    if(deviceType != null){
+        LogicDevice newDevice = new LogicDevice(id, type, deviceType); 
+        logicDevices.add(newDevice);
+        newDevice.CloneMode = true;
+        newDevice.MoveDevice(x, y);
+        return newDevice;
+    }
   }
   
   NewDeviceFrom(LogicDevice device){
-    LogicDevice newDevice = new LogicDevice(getNewId(), device.Type); 
+    LogicDevice newDevice = new LogicDevice(getNewId(), device.Type, device.deviceType); 
     logicDevices.add(newDevice);
     newDevice.MoveDevice(device.X, device.Y);
     
@@ -199,91 +185,6 @@ class Circuit {
     Paint();
   }
   
-  // TODO: Cleanup save code
-  // Save the circuit to local storage
-  void SaveCircuit(String name)
-  { /**
-    List<String> circuitStrings = new List<String>();
-    List<String> connectionList = new List<String>();
-    
-    logicDevices.forEach((f) {
-      circuitStrings.add(JSON.stringify(f.toJson()));
-      connectionList.add(f.GetInputs());
-    });
-    
-    window.localStorage[name] = JSON.stringify(circuitStrings);
-    window.localStorage["ABC"] = JSON.stringify(connectionList); */
-  }
-  
- 
-  
-  // TODO: Cleanup load code
-  // Load the circuit from local storage
-  void LoadCircuit(String name)
-  { /***
-    String loadedCircuit = window.localStorage[name];
-    
-    List<String> circuitStrings = new List<String>();
-    circuitStrings = JSON.parse(loadedCircuit);
-    
-    circuitStrings.forEach((f) {
-      LogicDevice newDevice = new LogicDevice.fromJson(JSON.parse(f)); 
-      logicDevices.add(newDevice);
-    });
-    
-    List<String> connectionStrings = new List<String>();
-    String loadedConnections = window.localStorage["ABC"];
-    connectionStrings = JSON.parse(loadedConnections);
-    
-    connectionStrings.forEach((f) {
-      List<String> connections = new List<String>();
-      connections = JSON.parse(f);
-      
-      for(int t=0; t<connections.length; t++){
-        Map json = JSON.parse(connections[t]);
-        
-        var SourceDevice = json['SourceDevice'];
-        var SourceDeviceInput = json['SourceDeviceInput'];
-        
-        var DestinationDevice = json['DestinationDevice'];
-        var DestinationDeviceOutput = json['DestinationDeviceOutput'];
-        
-        if(DestinationDevice == null)
-          continue;
-            
-        int sinout = Math.parseInt(SourceDeviceInput);
-        int dpin = Math.parseInt(DestinationDeviceOutput);
-        
-        LogicDevice outputDevice = GetDeviceByID(json['DestinationDevice']);
-        LogicDevice device = GetDeviceByID(json['SourceDevice']);
-        
-        device.Input[sinout].connectedOutput = outputDevice.Output[dpin]; 
-        
-        String wirePoints = json['wirePoints'];
-        List<String> wirePointList = new List<String>();
-        wirePointList = JSON.parse(wirePoints);
-        
-        if(wirePointList.length >= 2){
-          int pointCount = wirePointList.length;
-          
-          for(int t1=0; t1<pointCount; t1++){
-            Map json2 = JSON.parse(wirePointList[t1]);
-            
-            int x = json2['x'];
-            int y = json2['y'];
-              
-            if(sinout < device.InputCount && sinout >= 0){
-              if(device.Input[sinout].wire == null)
-                device.Input[sinout].createWire(x, y);
-              
-              device.Input[sinout].wire.AddPoint(x, y);
-            }
-          }
-        }
-      }
-    });
-    Paint(); */
- }
   
   void drawBorder() {
     context.beginPath();
@@ -311,7 +212,7 @@ class Circuit {
   }
  
   void tick(){
-    if(logicDevices.length <= 0)return;
+    if(logicDevices.length <= 0) return;
     
     for (LogicDevice device in logicDevices) {
       device.calculated = false;
@@ -320,9 +221,7 @@ class Circuit {
       device.Calculate();
     }
     
-    if(logicDevices.length <= 10) Paint(); //Hack
-   
-    drawUpdate(); // Draw devices and wires that have updated
+    Paint();   
   }
   
   // add new id number
@@ -330,13 +229,187 @@ class Circuit {
     return logicDevices.length;
   }
   
+  LogicDevice tryDeviceSelect(int x, int y)
+  {
+    for (LogicDevice device in logicDevices) 
+      if(device.contains(x, y))
+        return device;
+            
+    return null;
+  }
+  
+  DeviceInput tryInputSelect(int x, int y)
+  {
+    for (LogicDevice device in logicDevices) 
+      if(device.InputPinHit(x, y) != null)
+        return device.InputPinHit(x, y);
+        
+    return null;
+  }
+  
+  DeviceOutput tryOutputSelect(int x, int y)
+  {
+    for (LogicDevice device in logicDevices) 
+      if(device.OutputPinHit(x, y) != null)
+        return device.OutputPinHit(x, y);
+        
+    return null;
+  }
+  
+  Wire tryWireSelect(int x, int y)
+  {
+    for (LogicDevice device in logicDevices) 
+      if(device.WireHit(x, y) != null)
+        return device.WireSelect(x, y);
+        
+    return null;
+  }  
+
+  
+  void onTouchEnter(TouchEvent e)
+  {
+    e.preventDefault();
+    e.stopPropagation();
+    _touchX = e.targetTouches[0].pageX;// Use first point
+    _touchY = e.targetTouches[0].pageY;
+    
+    if(connectionMode == null){
+      // Check to see if we are touching in input
+      selectedInput = tryInputSelect(_touchX, _touchY);
+      if(selectedInput != null){
+        connectionMode = 'InputSelected'; 
+        Paint();
+        return;
+      }
+      // Check to see if we are touching in Output
+      selectedOutput = tryOutputSelect(_touchX, _touchY);
+      if(selectedOutput != null){
+        connectionMode = 'OutputSelected';
+        Paint();
+        return;
+      } 
+    }
+  }
+  
+  void onTouchStart(TouchEvent e)
+  {
+    e.preventDefault();
+    e.stopPropagation();
+    _touchX = e.targetTouches[0].pageX;// Use first point
+    _touchY = e.targetTouches[0].pageY;
+
+    
+    //Check to see if we are touching a device
+    LogicDevice selectedDevice = tryDeviceSelect(_touchX, _touchY);
+    if(selectedDevice != null){
+
+        
+        if(selectedDevice.CloneMode){ // If we start dragging on cloneable device make a new one and start moving it
+          NewDeviceFrom(selectedDevice);
+          Paint();
+          return;
+        }
+        selectedDevice.clicked(); // Send click to touched device
+        Paint();
+     }
+    
+    // Check to see if we are touching in input
+    DeviceInput _selectedInput = tryInputSelect(_touchX, _touchY);
+    if(_selectedInput != null){
+      selectedInput = _selectedInput;
+      connectionMode = 'InputSelected';  
+      StartWire(_touchX, _touchY);
+      return;
+    }
+    
+    // Check to see if we are touching in Output
+    DeviceOutput _selectedOutput = tryOutputSelect(_touchX, _touchY);
+    if(_selectedOutput != null){
+      selectedOutput = _selectedOutput;
+      connectionMode = 'OutputSelected';  
+      StartWire(_touchX, _touchY); 
+      return;
+    } 
+    
+
+ }
+  
+  void onTouchMove(TouchEvent e)
+  {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    _touchX = e.targetTouches[0].pageX;// Use first point
+    _touchY = e.targetTouches[0].pageY;
+    
+    if(moveDevice != null){ // We are moving a device
+      if (e.targetTouches.length >= 1){
+        moveDevice.MoveDevice(_touchX, _touchY);
+        Paint();
+        return;
+      }
+    }
+    
+
+    Paint();
+  }
+  
+  void onTouchEnd(TouchEvent e)
+  {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    _touchX = e.targetTouches[0].pageX;// Use first point
+    _touchY = e.targetTouches[0].pageY;
+    
+    if(moveDevice != null){ 
+      moveDevice = null;
+      Paint();
+      return;
+    }  
+    
+    switch(connectionMode){
+      case 'InputToOutput':    
+      case 'OutputToInput':   AddWirePoint(_touchX, _touchY); 
+                              if(checkValidConnection())
+                                EndWire();
+                              return;
+    }
+  }  
+  
+  void onTouchCancel(TouchEvent e)
+  {
+    if(moveDevice != null){ 
+      moveDevice = null;
+      Paint();
+      return;
+    }  
+  }
+  
+  
+  void onTouchLeave(TouchEvent e)
+  {
+    if(moveDevice != null){ 
+      moveDevice = null;
+      Paint();
+      return;
+    } 
+  }
+  
  // Mouse events 
  void onMouseDown(MouseEvent e) 
  {
    e.preventDefault();
-   Paint();
-   if(moveDevice != null) 
+   
+   //Paint();
+   LogicDevice selectedDevice = tryDeviceSelect(_mouseX, _mouseY);
+   if(selectedDevice != null)
+     print(selectedDevice.deviceType.type);
+   
+   if(moveDevice != null){ 
      moveDevice = null;
+     return;
+   }
    
    switch(connectionMode){
      case 'InputToOutput':    
@@ -351,13 +424,10 @@ class Circuit {
       
      case 'CloneDevice' :    NewDeviceFrom(cloneDevice); return;
                                                        
-     case null:              for (LogicDevice device in logicDevices) {
-                               if(device.contains(e.offsetX, e.offsetY)){
-                                 device.clicked();
-                                 break;
-                               }
-                             } break;
-             
+     case null:              LogicDevice device = tryDeviceSelect(_mouseX, _mouseY);
+                             if(device != null)        
+                                device.clicked();
+                             break;  
    }
  }
 
@@ -372,7 +442,13 @@ class Circuit {
    _mouseX = e.offsetX;
    _mouseY = e.offsetY; 
    
-   //print('MouseMove() $connectionMode');
+   if(gridSnap){  // Snap mouse cursor to grid
+    double x1 = _mouseX.toDouble() / GRID_SIZE.toDouble();
+    double y1 = _mouseY.toDouble() / GRID_SIZE.toDouble();
+  
+    _mouseX = x1.toInt() * GRID_SIZE;
+    _mouseY = y1.toInt() * GRID_SIZE;
+   }
    
    if(moveDevice != null){
      moveDevice.MoveDevice(_mouseX, _mouseY);
@@ -492,7 +568,6 @@ class Circuit {
   
  void AddWirePoint(int x, int y){
    dummyWire.AddPoint(x, y);
-   //print('AddWirePoint($x, $y) $connectionMode');
  }
  
   //Start Adding a wire from an input
@@ -542,6 +617,53 @@ class Circuit {
     Paint();
   }
 
+
+//  
+//  //Draw the wires that have been updated
+//  void drawUpdatedWires()
+//  {
+//    for (LogicDevice device in logicDevices) 
+//      for (DeviceInput input in device.Input) 
+//        if (input.connectedOutput != null)
+//          if (input.updated){
+//            drawWire(input, 'ERASE');
+//            drawWire(input, input.value);
+//          }
+//  }
+  
+
+
+  
+//  void drawUpdate()
+//  {
+//    Paint();
+//    //drawUpdatedDevices();
+//    //drawUpdatedWires();
+//  }
+//  
+  void Paint()
+  {
+    clearCanvas();  
+    drawBorder();
+    //drawGrid();
+    drawDevices();
+    drawWires();
+    drawPinSelectors();
+  }
+  
+  void clearCanvas()
+  {
+    context.clearRect(0, 0, _width, _height);
+  }
+  
+  // Redraw all of the devices
+  void drawDevices()
+  {
+    for (LogicDevice device in logicDevices) {
+      context.drawImage(device.deviceType.getImage(device.Output[0].value), device.X, device.Y);  
+    }
+  }
+   
   // Draw the dummy Wire
   void drawDummyWire(state){
     context.fillStyle = context.strokeStyle;
@@ -631,8 +753,7 @@ class Circuit {
       for (DeviceInput input in device.Input) 
         if (input.connectedOutput != null)
            drawWire(input, input.value);
-          
-          
+         
      if(dummyWire.wirePoints.length > 0) 
        if(checkValidConnection())
          drawDummyWire('VALID');
@@ -641,71 +762,6 @@ class Circuit {
      
   }
   
-  //Draw the wires that have been updated
-  void drawUpdatedWires()
-  {
-    for (LogicDevice device in logicDevices) 
-      for (DeviceInput input in device.Input) 
-        if (input.connectedOutput != null)
-          if (input.updated){
-            drawWire(input, 'ERASE');
-            drawWire(input, input.value);
-          }
-  }
-  
-  // Redraw all of the devices
-  void drawDevices()
-  {
-    for (LogicDevice device in logicDevices) {
-      if(device.Images.length > 1 && device.OutputCount > 0){
-        if(device.Output[0].value == true)
-          context.drawImage(device.Images[1], device.X, device.Y);
-        else
-          context.drawImage(device.Images[0], device.X, device.Y);
-        }
-      else
-        context.drawImage(device.Images[0], device.X, device.Y);
-    }
-  }
-  
-  // Draw the devices that have been updated
-  void drawUpdatedDevices()
-  {
-    for (LogicDevice device in logicDevices) {
-      if(device.updateable && device.updated){
-        if(device.Images.length > 1 && device.OutputCount > 0){
-          if(device.Output[0].value == true)
-            context.drawImage(device.Images[1], device.X, device.Y);
-          else
-            context.drawImage(device.Images[0], device.X, device.Y);
-        }
-        else
-          context.drawImage(device.Images[0], device.X, device.Y);
-        }
-     }
-  }
-  
-  void clearCanvas()
-  {
-    context.clearRect(0, 0, _width, _height);
-  }
-  
-  void drawUpdate()
-  {
-    drawUpdatedDevices();
-    drawUpdatedWires();
-  }
-  
-  void Paint()
-  {
-    clearCanvas();  
-    drawBorder();
-    //drawGrid();
-    drawDevices();
-    drawWires();
-    drawPinSelectors();
-  }
-   
   // Draw the device visual pin indicators
   void drawPinSelectors()
   {
@@ -723,8 +779,6 @@ class Circuit {
       case 'OutputSelected':  drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID'); break;
       
     }
-    
-    
   }
   
   // Draw the output pins that we can connect to

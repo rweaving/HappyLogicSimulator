@@ -1,5 +1,5 @@
 /** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
-/   By: Ryan C. Weaving  &  Athhur Liu                           */
+/   By: Ryan C. Weaving  &  Arthur Liu                           */
 
 #import('dart:html');
 #import('dart:json');

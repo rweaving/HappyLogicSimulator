@@ -1,5 +1,5 @@
 /** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
-/   By: Ryan C. Weaving  &  Athhur Liu                           */
+/   By: Ryan C. Weaving  &  Arthur Liu                           */
 
 class DeviceInput{
   static final int PIND = 7; // Pin hit margin 
@@ -8,12 +8,15 @@ class DeviceInput{
   DeviceOutput connectedOutput;
   Wire wire;
   
-  bool _value = false;  
+  bool _value = false;
+  
+  DevicePin devicePin;
+  
   int _pinX;
   int _pinY;
   var _id;
   
-  // Can you connect to this input pin
+  // Can you connect to this input pin?
   bool _connectable = true;
   bool get connectable(){
     if (_pinX < 0) return false;  
@@ -25,30 +28,34 @@ class DeviceInput{
   
   bool updated;
   
-  DeviceInput(this.device, this._id){
+  DeviceInput(this.device, this._id, this.devicePin){
     value = false;
     connectedOutput = null;
+    
+    _pinX = devicePin.x;
+    _pinY = devicePin.y;
+    
     wire = new Wire();
    }
   
-  Map<String, Object> toJson() {
-    Map<String, Object> inputMap = new Map<String, Object>();
-    
-    if(connectedOutput != null){
-      inputMap["SourceDevice"] = device.ID;
-      inputMap["SourceDeviceInput"] = _id;
-      inputMap["DestinationDevice"] = connectedOutput.device.ID;
-      inputMap["DestinationDeviceOutput"] = connectedOutput.id;
-      inputMap["wirePoints"] = wire.GetWireString();
-    }
-    else{
-      inputMap["SourceDevice"] = device.ID;
-      inputMap["SourceDeviceInput"] = _id;
-      inputMap["DestinationDevice"] = null;
-      inputMap["DestinationDeviceOutput"] = null;
-    }
-    return inputMap;
-  }
+//  Map<String, Object> toJson() {
+//    Map<String, Object> inputMap = new Map<String, Object>();
+//    
+//    if(connectedOutput != null){
+//      inputMap["SourceDevice"] = device.ID;
+//      inputMap["SourceDeviceInput"] = _id;
+//      inputMap["DestinationDevice"] = connectedOutput.device.ID;
+//      inputMap["DestinationDeviceOutput"] = connectedOutput.id;
+//      inputMap["wirePoints"] = wire.GetWireString();
+//    }
+//    else{
+//      inputMap["SourceDevice"] = device.ID;
+//      inputMap["SourceDeviceInput"] = _id;
+//      inputMap["DestinationDevice"] = null;
+//      inputMap["DestinationDeviceOutput"] = null;
+//    }
+//    return inputMap;
+//  }
   
   int get offsetX() => device.X + _pinX;  // the corrected absolute X position 
   int get offsetY() => device.Y + _pinY;  // the corrected absolute X position
@@ -57,12 +64,13 @@ class DeviceInput{
   set pinX(int x)   => _pinX;             // the pins X location on the devices image
   set pinY(int y)   => _pinY;             // the pins Y location on the devices image
    
-  void createWire(int x, int y){
-     
-     wire.AddPoint(x, y);
+  void createWire(int x, int y)
+  {
+      wire.AddPoint(x, y);
   }
   
-  void addWire(List<WirePoint> wirePoints){
+  void addWire(List<WirePoint> wirePoints)
+  {
     clearWire();
     for(WirePoint point in wirePoints){
       wire.AddPoint(point.x, point.y);
@@ -142,7 +150,10 @@ class DeviceOutput{
   bool _value;  
   int _pinX;
   int _pinY;
-  String _id;
+  
+  var _id;
+  
+  DevicePin devicePin;
   
   // Can you connect to this output pin
   bool _connectable = true;
@@ -156,8 +167,12 @@ class DeviceOutput{
   
   final LogicDevice device;
   
-  DeviceOutput(this.device, this._id){
+  DeviceOutput(this.device, this._id, this.devicePin){
     value = false;
+    
+    _pinX = devicePin.x;
+    _pinY = devicePin.y;
+    
   }
   
   // Has this device been calculated

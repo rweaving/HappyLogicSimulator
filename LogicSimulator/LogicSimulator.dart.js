@@ -74,29 +74,6 @@ function $ne$(x, y) {
   if (x == null) return y != null;
   return (typeof(x) != 'object') ? x !== y : !x.$eq(y);
 }
-Function.prototype.bind = Function.prototype.bind ||
-  function(thisObj) {
-    var func = this;
-    var funcLength = func.$length || func.length;
-    var argsLength = arguments.length;
-    if (argsLength > 1) {
-      var boundArgs = Array.prototype.slice.call(arguments, 1);
-      var bound = function() {
-        // Prepend the bound arguments to the current arguments.
-        var newArgs = Array.prototype.slice.call(arguments);
-        Array.prototype.unshift.apply(newArgs, boundArgs);
-        return func.apply(thisObj, newArgs);
-      };
-      bound.$length = Math.max(0, funcLength - (argsLength - 1));
-      return bound;
-    } else {
-      var bound = function() {
-        return func.apply(thisObj, arguments);
-      };
-      bound.$length = funcLength;
-      return bound;
-    }
-  };
 /** Implements extends for Dart classes on JavaScript prototypes. */
 function $inherits(child, parent) {
   if (child.prototype.__proto__) {
@@ -214,6 +191,29 @@ function $dynamic(name) {
   return methods;
 }
 if (typeof $dynamicMetadata == 'undefined') $dynamicMetadata = [];
+Function.prototype.bind = Function.prototype.bind ||
+  function(thisObj) {
+    var func = this;
+    var funcLength = func.$length || func.length;
+    var argsLength = arguments.length;
+    if (argsLength > 1) {
+      var boundArgs = Array.prototype.slice.call(arguments, 1);
+      var bound = function() {
+        // Prepend the bound arguments to the current arguments.
+        var newArgs = Array.prototype.slice.call(arguments);
+        Array.prototype.unshift.apply(newArgs, boundArgs);
+        return func.apply(thisObj, newArgs);
+      };
+      bound.$length = Math.max(0, funcLength - (argsLength - 1));
+      return bound;
+    } else {
+      var bound = function() {
+        return func.apply(thisObj, arguments);
+      };
+      bound.$length = funcLength;
+      return bound;
+    }
+  };
 function $dynamicSetMetadata(inputTable) {
   // TODO: Deal with light isolates.
   var table = [];
@@ -296,6 +296,13 @@ IllegalArgumentException.prototype.is$IllegalArgumentException = function(){retu
 IllegalArgumentException.prototype.toString = function() {
   return ("Illegal argument(s): " + this._arg);
 }
+// ********** Code for BadNumberFormatException **************
+function BadNumberFormatException(_s) {
+  this._s = _s;
+}
+BadNumberFormatException.prototype.toString = function() {
+  return ("BadNumberFormatException: '" + this._s + "'");
+}
 // ********** Code for NoMoreElementsException **************
 function NoMoreElementsException() {
 
@@ -340,6 +347,18 @@ Function.prototype.call$2 = function($0, $1) {
 function to$call$2(f) { return f && f.to$call$2(); }
 // ********** Code for Math **************
 // ********** Code for top level **************
+function print$(obj) {
+  return _print(obj);
+}
+function _print(obj) {
+  if (typeof console == 'object') {
+    if (obj) obj = obj.toString();
+    console.log(obj);
+  } else if (typeof write === 'function') {
+    write(obj);
+    write('\n');
+  }
+}
 //  ********** Library dart:coreimpl **************
 // ********** Code for ListFactory **************
 var ListFactory = Array;
@@ -395,8 +414,16 @@ JSSyntaxRegExp.prototype.hasMatch = function(str) {
 }
 // ********** Code for NumImplementation **************
 var NumImplementation = Number;
-NumImplementation.prototype.abs = function() {
-  'use strict'; return Math.abs(this);
+NumImplementation.prototype.toInt = function() {
+  
+    'use strict';
+    if (isNaN(this)) $throw(new BadNumberFormatException("NaN"));
+    if ((this == Infinity) || (this == -Infinity)) {
+      $throw(new BadNumberFormatException("Infinity"));
+    }
+    var truncated = (this < 0) ? Math.ceil(this) : Math.floor(this);
+    if (truncated == -0.0) return 0;
+    return truncated;
 }
 NumImplementation.prototype.toDouble = function() {
   'use strict'; return this + 0;
@@ -471,12 +498,6 @@ HashMapImplementation.prototype.toString = function() {
 // ********** Code for HashSetImplementation **************
 function HashSetImplementation() {}
 HashSetImplementation.prototype.is$Collection = function(){return true};
-HashSetImplementation.prototype.forEach = function(f) {
-  this._backingMap.forEach(function _(key, value) {
-    f(key);
-  }
-  );
-}
 HashSetImplementation.prototype.iterator = function() {
   return new HashSetIterator(this);
 }
@@ -546,14 +567,6 @@ Maps._emitMap = function(m, result, visiting) {
 // ********** Code for DoubleLinkedQueue **************
 function DoubleLinkedQueue() {}
 DoubleLinkedQueue.prototype.is$Collection = function(){return true};
-DoubleLinkedQueue.prototype.forEach = function(f) {
-  var entry = this._sentinel._next;
-  while ((null == entry ? null != (this._sentinel) : entry !== this._sentinel)) {
-    var nextEntry = entry._next;
-    f(entry._element);
-    entry = nextEntry;
-  }
-}
 DoubleLinkedQueue.prototype.iterator = function() {
   return new _DoubleLinkedQueueIterator(this._sentinel);
 }
@@ -620,110 +633,6 @@ var StringImplementation = String;
 StringImplementation.prototype.isEmpty = function() {
   return this.length == (0);
 }
-// ********** Code for DateImplementation **************
-DateImplementation.now$ctor = function() {
-  this.timeZone = new TimeZoneImplementation.local$ctor();
-  this.value = DateImplementation._now();
-  this._asJs();
-}
-DateImplementation.now$ctor.prototype = DateImplementation.prototype;
-function DateImplementation() {}
-DateImplementation.prototype.get$value = function() { return this.value; };
-DateImplementation.prototype.get$timeZone = function() { return this.timeZone; };
-DateImplementation.prototype.$eq = function(other) {
-  if (!((other instanceof DateImplementation))) return false;
-  return (this.value == other.get$value()) && ($eq$(this.timeZone, other.get$timeZone()));
-}
-DateImplementation.prototype.get$year = function() {
-  return this.isUtc() ? this._asJs().getUTCFullYear() :
-      this._asJs().getFullYear();
-}
-DateImplementation.prototype.get$month = function() {
-  return this.isUtc() ? this._asJs().getUTCMonth() + 1 :
-        this._asJs().getMonth() + 1;
-}
-DateImplementation.prototype.get$day = function() {
-  return this.isUtc() ? this._asJs().getUTCDate() :
-        this._asJs().getDate();
-}
-DateImplementation.prototype.get$hours = function() {
-  return this.isUtc() ? this._asJs().getUTCHours() :
-        this._asJs().getHours();
-}
-DateImplementation.prototype.get$minutes = function() {
-  return this.isUtc() ? this._asJs().getUTCMinutes() :
-        this._asJs().getMinutes();
-}
-DateImplementation.prototype.get$seconds = function() {
-  return this.isUtc() ? this._asJs().getUTCSeconds() :
-        this._asJs().getSeconds();
-}
-DateImplementation.prototype.get$milliseconds = function() {
-  return this.isUtc() ? this._asJs().getUTCMilliseconds() :
-      this._asJs().getMilliseconds();
-}
-DateImplementation.prototype.isUtc = function() {
-  return this.timeZone.isUtc;
-}
-DateImplementation.prototype.get$isUtc = function() {
-  return this.isUtc.bind(this);
-}
-DateImplementation.prototype.toString = function() {
-  function fourDigits(n) {
-    var absN = n.abs();
-    var sign = n < (0) ? "-" : "";
-    if (absN >= (1000)) return ("" + n);
-    if (absN >= (100)) return ("" + sign + "0" + absN);
-    if (absN >= (10)) return ("" + sign + "00" + absN);
-    if (absN >= (1)) return ("" + sign + "000" + absN);
-  }
-  function threeDigits(n) {
-    if (n >= (100)) return ("" + n);
-    if (n > (10)) return ("0" + n);
-    return ("00" + n);
-  }
-  function twoDigits(n) {
-    if (n >= (10)) return ("" + n);
-    return ("0" + n);
-  }
-  var y = fourDigits(this.get$year());
-  var m = twoDigits(this.get$month());
-  var d = twoDigits(this.get$day());
-  var h = twoDigits(this.get$hours());
-  var min = twoDigits(this.get$minutes());
-  var sec = twoDigits(this.get$seconds());
-  var ms = threeDigits(this.get$milliseconds());
-  if (this.timeZone.isUtc) {
-    return ("" + y + "-" + m + "-" + d + " " + h + ":" + min + ":" + sec + "." + ms + "Z");
-  }
-  else {
-    return ("" + y + "-" + m + "-" + d + " " + h + ":" + min + ":" + sec + "." + ms);
-  }
-}
-DateImplementation._now = function() {
-  return new Date().valueOf();
-}
-DateImplementation.prototype._asJs = function() {
-    if (!this.date) {
-      this.date = new Date(this.value);
-    }
-    return this.date;
-}
-// ********** Code for TimeZoneImplementation **************
-TimeZoneImplementation.local$ctor = function() {
-  this.isUtc = false;
-}
-TimeZoneImplementation.local$ctor.prototype = TimeZoneImplementation.prototype;
-function TimeZoneImplementation() {}
-TimeZoneImplementation.prototype.$eq = function(other) {
-  if (!((other instanceof TimeZoneImplementation))) return false;
-  return $eq$(this.isUtc, other.get$isUtc());
-}
-TimeZoneImplementation.prototype.toString = function() {
-  if (this.isUtc) return "TimeZone (UTC)";
-  return "TimeZone (Local)";
-}
-TimeZoneImplementation.prototype.get$isUtc = function() { return this.isUtc; };
 // ********** Code for _ArgumentMismatchException **************
 $inherits(_ArgumentMismatchException, ClosureArgumentMismatchException);
 function _ArgumentMismatchException(_message) {
@@ -883,6 +792,24 @@ _ElementEventsImpl.prototype.get$mouseDown = function() {
 _ElementEventsImpl.prototype.get$mouseMove = function() {
   return this._get("mousemove");
 }
+_ElementEventsImpl.prototype.get$touchCancel = function() {
+  return this._get("touchcancel");
+}
+_ElementEventsImpl.prototype.get$touchEnd = function() {
+  return this._get("touchend");
+}
+_ElementEventsImpl.prototype.get$touchEnter = function() {
+  return this._get("touchenter");
+}
+_ElementEventsImpl.prototype.get$touchLeave = function() {
+  return this._get("touchleave");
+}
+_ElementEventsImpl.prototype.get$touchMove = function() {
+  return this._get("touchmove");
+}
+_ElementEventsImpl.prototype.get$touchStart = function() {
+  return this._get("touchstart");
+}
 // ********** Code for _BodyElementEventsImpl **************
 $inherits(_BodyElementEventsImpl, _ElementEventsImpl);
 function _BodyElementEventsImpl(_ptr) {
@@ -942,9 +869,6 @@ $dynamic("iterator").CanvasPixelArray = function() {
 }
 $dynamic("add").CanvasPixelArray = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
-}
-$dynamic("forEach").CanvasPixelArray = function(f) {
-  return _Collections.forEach(this, f);
 }
 $dynamic("last").CanvasPixelArray = function() {
   return this.$index(this.length - (1));
@@ -1034,6 +958,18 @@ _DocumentEventsImpl.prototype.get$mouseDown = function() {
 _DocumentEventsImpl.prototype.get$mouseMove = function() {
   return this._get("mousemove");
 }
+_DocumentEventsImpl.prototype.get$touchCancel = function() {
+  return this._get("touchcancel");
+}
+_DocumentEventsImpl.prototype.get$touchEnd = function() {
+  return this._get("touchend");
+}
+_DocumentEventsImpl.prototype.get$touchMove = function() {
+  return this._get("touchmove");
+}
+_DocumentEventsImpl.prototype.get$touchStart = function() {
+  return this._get("touchstart");
+}
 // ********** Code for _DocumentFragmentImpl **************
 $dynamic("get$style").DocumentFragment = function() {
   return _ElementFactoryProvider.Element$tag$factory("div").get$style();
@@ -1097,9 +1033,6 @@ $dynamic("iterator").Float32Array = function() {
 $dynamic("add").Float32Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").Float32Array = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").Float32Array = function() {
   return this.$index(this.length - (1));
 }
@@ -1118,9 +1051,6 @@ $dynamic("iterator").Float64Array = function() {
 }
 $dynamic("add").Float64Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
-}
-$dynamic("forEach").Float64Array = function(f) {
-  return _Collections.forEach(this, f);
 }
 $dynamic("last").Float64Array = function() {
   return this.$index(this.length - (1));
@@ -1159,9 +1089,6 @@ $dynamic("iterator").HTMLCollection = function() {
 }
 $dynamic("add").HTMLCollection = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
-}
-$dynamic("forEach").HTMLCollection = function(f) {
-  return _Collections.forEach(this, f);
 }
 $dynamic("last").HTMLCollection = function() {
   return this.$index(this.get$length() - (1));
@@ -1229,9 +1156,6 @@ $dynamic("iterator").Int16Array = function() {
 $dynamic("add").Int16Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").Int16Array = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").Int16Array = function() {
   return this.$index(this.length - (1));
 }
@@ -1251,9 +1175,6 @@ $dynamic("iterator").Int32Array = function() {
 $dynamic("add").Int32Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").Int32Array = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").Int32Array = function() {
   return this.$index(this.length - (1));
 }
@@ -1272,9 +1193,6 @@ $dynamic("iterator").Int8Array = function() {
 }
 $dynamic("add").Int8Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
-}
-$dynamic("forEach").Int8Array = function(f) {
-  return _Collections.forEach(this, f);
 }
 $dynamic("last").Int8Array = function() {
   return this.$index(this.length - (1));
@@ -1322,9 +1240,6 @@ $dynamic("iterator").MediaList = function() {
 $dynamic("add").MediaList = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").MediaList = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").MediaList = function() {
   return this.$index(this.length - (1));
 }
@@ -1367,9 +1282,6 @@ $dynamic("iterator").NamedNodeMap = function() {
 $dynamic("add").NamedNodeMap = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").NamedNodeMap = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").NamedNodeMap = function() {
   return this.$index(this.length - (1));
 }
@@ -1386,9 +1298,6 @@ _ListWrapper.prototype.is$List = function(){return true};
 _ListWrapper.prototype.is$Collection = function(){return true};
 _ListWrapper.prototype.iterator = function() {
   return this._html_list.iterator();
-}
-_ListWrapper.prototype.forEach = function(f) {
-  return this._html_list.forEach(f);
 }
 _ListWrapper.prototype.get$length = function() {
   return this._html_list.get$length();
@@ -1426,9 +1335,6 @@ $dynamic("removeLast").NodeList = function() {
 }
 $dynamic("clear$_").NodeList = function() {
   this._parent.set$text("");
-}
-$dynamic("forEach").NodeList = function(f) {
-  return _Collections.forEach(this, f);
 }
 $dynamic("last").NodeList = function() {
   return this.$index(this.length - (1));
@@ -1860,9 +1766,6 @@ $dynamic("iterator").StyleSheetList = function() {
 $dynamic("add").StyleSheetList = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").StyleSheetList = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").StyleSheetList = function() {
   return this.$index(this.length - (1));
 }
@@ -1906,9 +1809,6 @@ $dynamic("iterator").TouchList = function() {
 $dynamic("add").TouchList = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").TouchList = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").TouchList = function() {
   return this.$index(this.length - (1));
 }
@@ -1933,9 +1833,6 @@ $dynamic("iterator").Uint16Array = function() {
 $dynamic("add").Uint16Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").Uint16Array = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").Uint16Array = function() {
   return this.$index(this.length - (1));
 }
@@ -1955,9 +1852,6 @@ $dynamic("iterator").Uint32Array = function() {
 $dynamic("add").Uint32Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
 }
-$dynamic("forEach").Uint32Array = function(f) {
-  return _Collections.forEach(this, f);
-}
 $dynamic("last").Uint32Array = function() {
   return this.$index(this.length - (1));
 }
@@ -1976,9 +1870,6 @@ $dynamic("iterator").Uint8Array = function() {
 }
 $dynamic("add").Uint8Array = function(value) {
   $throw(new UnsupportedOperationException("Cannot add to immutable List."));
-}
-$dynamic("forEach").Uint8Array = function(f) {
-  return _Collections.forEach(this, f);
 }
 $dynamic("last").Uint8Array = function() {
   return this.$index(this.length - (1));
@@ -2040,6 +1931,18 @@ _WindowEventsImpl.prototype.get$mouseMove = function() {
 _WindowEventsImpl.prototype.get$resize = function() {
   return this._get("resize");
 }
+_WindowEventsImpl.prototype.get$touchCancel = function() {
+  return this._get("touchcancel");
+}
+_WindowEventsImpl.prototype.get$touchEnd = function() {
+  return this._get("touchend");
+}
+_WindowEventsImpl.prototype.get$touchMove = function() {
+  return this._get("touchmove");
+}
+_WindowEventsImpl.prototype.get$touchStart = function() {
+  return this._get("touchstart");
+}
 // ********** Code for _WorkerImpl **************
 // ********** Code for _WorkerLocationImpl **************
 // ********** Code for _WorkerNavigatorImpl **************
@@ -2054,14 +1957,6 @@ _WindowEventsImpl.prototype.get$resize = function() {
 // ********** Code for _XPathNSResolverImpl **************
 // ********** Code for _XPathResultImpl **************
 // ********** Code for _XSLTProcessorImpl **************
-// ********** Code for _Collections **************
-function _Collections() {}
-_Collections.forEach = function(iterable, f) {
-  for (var $$i = iterable.iterator(); $$i.hasNext(); ) {
-    var e = $$i.next();
-    f(e);
-  }
-}
 // ********** Code for _VariableSizeListIterator **************
 function _VariableSizeListIterator() {}
 _VariableSizeListIterator.prototype.hasNext = function() {
@@ -2170,15 +2065,11 @@ Util.pos = function(elem, x, y) {
   elem.get$style().set$left(("" + x + "PX"));
   elem.get$style().set$top(("" + y + "PX"));
 }
-Util.currentTimeMillis = function() {
-  return (new DateImplementation.now$ctor()).value;
-}
 // ********** Code for LogicDevice **************
-function LogicDevice(ID, Type) {
+function LogicDevice(ID, Type, deviceType) {
   this.selected = false;
-  this.SelectedInputPin = (-1);
   this.acc = (0);
-  this.rset = (5);
+  this.rset = (4);
   this._calculated = false;
   this._updated = false;
   this._visible = true;
@@ -2186,31 +2077,18 @@ function LogicDevice(ID, Type) {
   this.CloneMode = false;
   this.ID = ID;
   this.Type = Type;
+  this.deviceType = deviceType;
   this.Input = new Array();
   this.Output = new Array();
-  this.Images = new Array();
-  Configure(this);
-}
-LogicDevice.prototype.get$InputCount = function() {
-  return this.Input.get$length();
-}
-LogicDevice.prototype.set$InputCount = function(count) {
-  if (this.get$InputCount() < count) {
-    do {
-      this.Input.add(new DeviceInput(this, this.get$InputCount().toString()));
-    }
-    while (this.get$InputCount() < count)
+  var $$list = this.deviceType.inputPins;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var devicePin = $$i.next();
+    this.Input.add(new DeviceInput(this, devicePin.id, devicePin));
   }
-}
-LogicDevice.prototype.get$OutputCount = function() {
-  return this.Output.get$length();
-}
-LogicDevice.prototype.set$OutputCount = function(count) {
-  if (this.get$OutputCount() < count) {
-    do {
-      this.Output.add(new DeviceOutput(this, this.get$OutputCount().toString()));
-    }
-    while (this.get$OutputCount() < count)
+  var $$list = this.deviceType.outputPins;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var devicePin = $$i.next();
+    this.Output.add(new DeviceOutput(this, devicePin.id, devicePin));
   }
 }
 LogicDevice.prototype.get$calculated = function() {
@@ -2218,47 +2096,17 @@ LogicDevice.prototype.get$calculated = function() {
 }
 LogicDevice.prototype.set$calculated = function(calc) {
   this._calculated = calc;
-  if (!this._calculated) this.Input.forEach((function (f) {
-    f.set$updated(false);
-  })
-  );
-}
-LogicDevice.prototype.get$updateable = function() {
-  return this._updateable;
-}
-LogicDevice.prototype.set$updateable = function(val) {
-  this._updateable = val;
+  if (!this._calculated) var $$list = this.Input;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var input = $$i.next();
+    input.updated = false;
+  }
 }
 LogicDevice.prototype.get$updated = function() {
   return this._updated;
 }
-LogicDevice.prototype.set$updated = function(ud) {
-  this._updated = ud;
-}
-LogicDevice.prototype.addImage = function(image) {
-  var _elem;
-  _elem = _ElementFactoryProvider.Element$tag$factory("img");
-  _elem.src = image;
-  this.Images.add(_elem);
-}
-LogicDevice.prototype.SetInputPinLocation = function(pin, xPos, yPos) {
-  if (pin >= (0) && pin < this.Input.get$length()) {
-    this.Input.$index(pin).SetPinLocation(xPos, yPos);
-  }
-}
-LogicDevice.prototype.SetOutputPinLocation = function(pin, xPos, yPos) {
-  if (pin >= (0) && pin < this.Output.get$length()) {
-    this.Output.$index(pin).SetPinLocation(xPos, yPos);
-  }
-}
-LogicDevice.prototype.SetInputConnectable = function(pin, connectable) {
-  if (pin >= (0) && pin < this.Input.get$length()) {
-    this.Input.$index(pin).set$connectable(false);
-  }
-}
 LogicDevice.prototype.InputPinHit = function(x, y) {
   if (this.CloneMode) return null;
-  if (this.get$InputCount() <= (0)) return null;
   var $$list = this.Input;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
     var input = $$i.next();
@@ -2270,7 +2118,6 @@ LogicDevice.prototype.InputPinHit = function(x, y) {
 }
 LogicDevice.prototype.OutputPinHit = function(x, y) {
   if (this.CloneMode) return null;
-  if (this.get$OutputCount() <= (0)) return null;
   var $$list = this.Output;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
     var output = $$i.next();
@@ -2281,18 +2128,16 @@ LogicDevice.prototype.OutputPinHit = function(x, y) {
   return null;
 }
 LogicDevice.prototype.WireHit = function(x, y) {
-  var hitDevice;
   var $$list = this.Input;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
     var input = $$i.next();
-    hitDevice = input.wireHit(x, y);
-    if (hitDevice != null) return hitDevice;
+    if (input.wireHit(x, y) != null) return input.wireHit(x, y);
   }
   return null;
 }
 LogicDevice.prototype.MoveDevice = function(newX, newY) {
-  if ($ne$(this.Images.$index((0)))) {
-    Util.pos(this.Images.$index((0)), newX.toDouble(), newY.toDouble());
+  if ($ne$(this.deviceType.images.$index((0)))) {
+    Util.pos(this.deviceType.images.$index((0)), newX.toDouble(), newY.toDouble());
     this.X = newX;
     this.Y = newY;
   }
@@ -2308,7 +2153,7 @@ LogicDevice.prototype.clicked = function() {
   }
 }
 LogicDevice.prototype.contains = function(pointX, pointY) {
-  if ((pointX > this.X && pointX < $add$(this.X, this.Images.$index((0)).get$width())) && (pointY > this.Y && pointY < $add$(this.Y, this.Images.$index((0)).get$height()))) {
+  if ((pointX > this.X && pointX < $add$(this.X, this.deviceType.images.$index((0)).get$width())) && (pointY > this.Y && pointY < $add$(this.Y, this.deviceType.images.$index((0)).get$height()))) {
     return true;
   }
   else {
@@ -2368,35 +2213,43 @@ LogicDevice.prototype.Calculate = function() {
 
       case "CLOCK":
 
-        CalcClock(this);
+        this.CalcClock(this);
         break;
 
     }
     if ($ne$(outputState, this.Output.$index((0)).get$value())) this._updated = true;
-    this.Input.forEach((function (f) {
-      f.checkUpdate();
-    })
-    );
+    var $$list = this.Input;
+    for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+      var input = $$i.next();
+      input.checkUpdate();
+    }
   }
 }
+LogicDevice.prototype.CalcClock = function(device) {
+  if (device.acc > device.rset) {
+    device.acc = (0);
+    device.Output.$index((0)).set$value(!device.Output.$index((0)).get$value());
+    device.Output.$index((1)).set$value(!device.Output.$index((0)).get$value());
+  }
+  else device.acc = device.acc + (1);
+}
 // ********** Code for DeviceInput **************
-function DeviceInput(device, _id) {
+function DeviceInput(device, _id, devicePin) {
   this._value = false;
   this._connectable = true;
   this.device = device;
   this._id = _id;
+  this.devicePin = devicePin;
   this.set$value(false);
   this.connectedOutput = null;
+  this._pinX = this.devicePin.x;
+  this._pinY = this.devicePin.y;
   this.wire = new Wire();
 }
 DeviceInput.prototype.get$connectable = function() {
   if (this._pinX < (0)) return false;
   else return this._connectable;
 }
-DeviceInput.prototype.set$connectable = function(val) {
-  this._connectable = val;
-}
-DeviceInput.prototype.set$updated = function(value) { return this.updated = value; };
 DeviceInput.prototype.get$offsetX = function() {
   return this.device.X + this._pinX;
 }
@@ -2441,10 +2294,6 @@ DeviceInput.prototype.get$value = function() {
 DeviceInput.prototype.set$value = function(val) {
   this._value = val;
 }
-DeviceInput.prototype.SetPinLocation = function(x, y) {
-  this._pinX = x;
-  this._pinY = y;
-}
 DeviceInput.prototype.pinHit = function(x, y) {
   if (x <= (this.get$offsetX() + (7)) && x >= (this.get$offsetX() - (7))) {
     if (y <= (this.get$offsetY() + (7)) && y >= (this.get$offsetY() - (7))) {
@@ -2454,18 +2303,18 @@ DeviceInput.prototype.pinHit = function(x, y) {
   return false;
 }
 // ********** Code for DeviceOutput **************
-function DeviceOutput(device, _id) {
+function DeviceOutput(device, _id, devicePin) {
   this._connectable = true;
   this.device = device;
   this._id = _id;
+  this.devicePin = devicePin;
   this.set$value(false);
+  this._pinX = this.devicePin.x;
+  this._pinY = this.devicePin.y;
 }
 DeviceOutput.prototype.get$connectable = function() {
   if (this._pinX < (0)) return false;
   else return this._connectable;
-}
-DeviceOutput.prototype.set$connectable = function(val) {
-  this._connectable = val;
 }
 DeviceOutput.prototype.get$calculated = function() {
   return this.device.get$calculated();
@@ -2485,10 +2334,6 @@ DeviceOutput.prototype.get$value = function() {
 DeviceOutput.prototype.set$value = function(val) {
   this._value = val;
 }
-DeviceOutput.prototype.SetPinLocation = function(x, y) {
-  this._pinX = x;
-  this._pinY = y;
-}
 DeviceOutput.prototype.pinHit = function(x, y) {
   if (x <= (this.get$offsetX() + (7)) && x >= (this.get$offsetX() - (7))) {
     if (y <= (this.get$offsetY() + (7)) && y >= (this.get$offsetY() - (7))) {
@@ -2497,15 +2342,136 @@ DeviceOutput.prototype.pinHit = function(x, y) {
   }
   return false;
 }
+// ********** Code for DevicePin **************
+function DevicePin(id, x, y) {
+  this.id = id;
+  this.x = x;
+  this.y = y;
+}
+DevicePin.prototype.get$x = function() { return this.x; };
+DevicePin.prototype.get$y = function() { return this.y; };
+// ********** Code for LogicDeviceType **************
+function LogicDeviceType(type) {
+  this.updateable = false;
+  this.type = type;
+  this.images = new Array();
+  this.inputPins = new Array();
+  this.outputPins = new Array();
+}
+LogicDeviceType.prototype.AddInput = function(id, x, y) {
+  this.inputPins.add(new DevicePin(id, x, y));
+}
+LogicDeviceType.prototype.AddOutput = function(id, x, y) {
+  this.outputPins.add(new DevicePin(id, x, y));
+}
+LogicDeviceType.prototype.AddImage = function(imageSrc) {
+  var _elem;
+  _elem = _ElementFactoryProvider.Element$tag$factory("img");
+  _elem.src = imageSrc;
+  this.images.add(_elem);
+}
+LogicDeviceType.prototype.getImage = function(state) {
+  if (this.images.get$length() == (1)) return this.images.$index((0));
+  switch (state) {
+    case (0):
+
+      return this.images.$index((0));
+
+    case (1):
+
+      return this.images.$index((1));
+
+    case true:
+
+      return this.images.$index((0));
+
+    case false:
+
+      return this.images.$index((1));
+
+  }
+}
+// ********** Code for LogicDeviceTypes **************
+function LogicDeviceTypes() {
+  this.deviceTypes = new Array();
+  this.LoadDefaultTypes();
+}
+LogicDeviceTypes.prototype.AddNewType = function(type) {
+  var newType = new LogicDeviceType(type);
+  this.deviceTypes.add(newType);
+  return newType;
+}
+LogicDeviceTypes.prototype.getDeviceType = function(type) {
+  var $$list = this.deviceTypes;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var deviceType = $$i.next();
+    if ($eq$(deviceType.type, type)) return deviceType;
+  }
+  return null;
+}
+LogicDeviceTypes.prototype.LoadDefaultTypes = function() {
+  var _and = this.AddNewType("AND");
+  _and.AddImage("images/and2.png");
+  _and.AddInput((0), (5), (15));
+  _and.AddInput((1), (5), (35));
+  _and.AddOutput((0), (95), (25));
+  var _nand = this.AddNewType("NAND");
+  _nand.AddImage("images/nand2.png");
+  _nand.AddInput((0), (5), (15));
+  _nand.AddInput((1), (5), (35));
+  _nand.AddOutput((0), (95), (25));
+  var _switch = this.AddNewType("SWITCH");
+  _switch.AddImage("images/01Switch_Low.png");
+  _switch.AddImage("images/01Switch_High.png");
+  _switch.AddInput((0), (-1), (-1));
+  _switch.AddOutput((0), (21), (0));
+  _switch.updateable = true;
+  var _led = this.AddNewType("LED");
+  _led.AddImage("images/01Disp_Low.png");
+  _led.AddImage("images/01Disp_High.png");
+  _led.AddInput((0), (16), (0));
+  _led.AddOutput((0), (-1), (-1));
+  _led.updateable = true;
+  var _or = this.AddNewType("OR");
+  _or.AddImage("images/or.png");
+  _or.AddInput((0), (5), (15));
+  _or.AddInput((1), (5), (35));
+  _or.AddOutput((0), (95), (25));
+  var _nor = this.AddNewType("NOR");
+  _nor.AddImage("images/nor.png");
+  _nor.AddInput((0), (5), (15));
+  _nor.AddInput((1), (5), (35));
+  _nor.AddOutput((0), (95), (25));
+  var _xor = this.AddNewType("XOR");
+  _xor.AddImage("images/xor.png");
+  _xor.AddInput((0), (5), (15));
+  _xor.AddInput((1), (5), (35));
+  _xor.AddOutput((0), (95), (25));
+  var _xnor = this.AddNewType("XNOR");
+  _xnor.AddImage("images/xnor.png");
+  _xnor.AddInput((0), (5), (15));
+  _xnor.AddInput((1), (5), (35));
+  _xnor.AddOutput((0), (95), (25));
+  var _not = this.AddNewType("NOT");
+  _not.AddImage("images/not.png");
+  _not.AddInput((0), (5), (25));
+  _not.AddOutput((0), (94), (25));
+  var _clock = this.AddNewType("CLOCK");
+  _clock.AddImage("images/Clock.png");
+  _clock.AddInput((0), (-1), (-1));
+  _clock.AddOutput((0), (64), (14));
+  _clock.AddOutput((1), (64), (39));
+}
 // ********** Code for Circuit **************
 function Circuit(canvas) {
   var $this = this; // closure support
   this.showGrid = false;
+  this.gridSnap = false;
   this.connectionMode = "INIT";
   this.connectingOutputToInput = false;
   this.connectingInputToOutput = false;
   this.canvas = canvas;
-  this.lastTime = Util.currentTimeMillis();
+  this.deviceTypes = new LogicDeviceTypes();
   this.logicDevices = new Array();
   this.context = this.canvas.getContext("2d");
   this._width = this.canvas.width;
@@ -2522,16 +2488,38 @@ function Circuit(canvas) {
   get$$window().setInterval(function f() {
     return $this.tick();
   }
-  , (100));
+  , (50));
   this.canvas.get$on().get$mouseDown().add(this.get$onMouseDown(), false);
   this.canvas.get$on().get$doubleClick().add(this.get$onMouseDoubleClick(), false);
   this.canvas.get$on().get$mouseMove().add(this.get$onMouseMove(), false);
+  this.canvas.get$on().get$touchEnter().add((function (event) {
+    return $this.onTouchEnter(event);
+  })
+  , false);
+  this.canvas.get$on().get$touchStart().add((function (event) {
+    return $this.onTouchStart(event);
+  })
+  , false);
+  this.canvas.get$on().get$touchMove().add((function (event) {
+    return $this.onTouchMove(event);
+  })
+  , false);
+  this.canvas.get$on().get$touchEnd().add((function (event) {
+    return $this.onTouchEnd(event);
+  })
+  , false);
+  this.canvas.get$on().get$touchCancel().add((function (event) {
+    return $this.onTouchCancel(event);
+  })
+  , false);
+  this.canvas.get$on().get$touchLeave().add((function (event) {
+    return $this.onTouchLeave(event);
+  })
+  , false);
   get$$window().get$on().get$resize().add((function (event) {
     return $this.onResize();
   })
   , true);
-  this.createSelectorBar();
-  this.Paint();
 }
 Circuit.prototype.get$width = function() {
   return this._width;
@@ -2553,6 +2541,7 @@ Circuit.prototype.onResize = function() {
   this.Paint();
 }
 Circuit.prototype.start = function() {
+  this.createSelectorBar();
   this.onResize();
 }
 Circuit.prototype.createSelectorBar = function() {
@@ -2569,14 +2558,17 @@ Circuit.prototype.createSelectorBar = function() {
   this.Paint();
 }
 Circuit.prototype.addNewCloneableDevice = function(id, type, x, y) {
-  var newDevice = new LogicDevice(id, type);
-  this.logicDevices.add(newDevice);
-  newDevice.CloneMode = true;
-  newDevice.MoveDevice(x, y);
-  return newDevice;
+  var deviceType = this.deviceTypes.getDeviceType(type);
+  if (deviceType != null) {
+    var newDevice = new LogicDevice(id, type, deviceType);
+    this.logicDevices.add(newDevice);
+    newDevice.CloneMode = true;
+    newDevice.MoveDevice(x, y);
+    return newDevice;
+  }
 }
 Circuit.prototype.NewDeviceFrom = function(device) {
-  var newDevice = new LogicDevice(this.getNewId(), device.Type);
+  var newDevice = new LogicDevice(this.getNewId(), device.Type, device.deviceType);
   this.logicDevices.add(newDevice);
   newDevice.MoveDevice(device.X, device.Y);
   this.connectionMode = null;
@@ -2604,16 +2596,141 @@ Circuit.prototype.tick = function() {
     var device = $$i.next();
     device.Calculate();
   }
-  if (this.logicDevices.get$length() <= (10)) this.Paint();
-  this.drawUpdate();
+  this.Paint();
 }
 Circuit.prototype.getNewId = function() {
   return this.logicDevices.get$length();
 }
+Circuit.prototype.tryDeviceSelect = function(x, y) {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    if (device.contains(x, y)) return device;
+  }
+  return null;
+}
+Circuit.prototype.tryInputSelect = function(x, y) {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    if (device.InputPinHit(x, y) != null) return device.InputPinHit(x, y);
+  }
+  return null;
+}
+Circuit.prototype.tryOutputSelect = function(x, y) {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    if (device.OutputPinHit(x, y) != null) return device.OutputPinHit(x, y);
+  }
+  return null;
+}
+Circuit.prototype.onTouchEnter = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  this._touchX = e.targetTouches.$index((0)).pageX;
+  this._touchY = e.targetTouches.$index((0)).pageY;
+  if ($eq$(this.connectionMode)) {
+    this.selectedInput = this.tryInputSelect(this._touchX, this._touchY);
+    if (this.selectedInput != null) {
+      this.connectionMode = "InputSelected";
+      this.Paint();
+      return;
+    }
+    this.selectedOutput = this.tryOutputSelect(this._touchX, this._touchY);
+    if (this.selectedOutput != null) {
+      this.connectionMode = "OutputSelected";
+      this.Paint();
+      return;
+    }
+  }
+}
+Circuit.prototype.onTouchStart = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  this._touchX = e.targetTouches.$index((0)).pageX;
+  this._touchY = e.targetTouches.$index((0)).pageY;
+  var selectedDevice = this.tryDeviceSelect(this._touchX, this._touchY);
+  if (selectedDevice != null) {
+    if (selectedDevice.CloneMode) {
+      this.NewDeviceFrom(selectedDevice);
+      this.Paint();
+      return;
+    }
+    selectedDevice.clicked();
+    this.Paint();
+  }
+  var _selectedInput = this.tryInputSelect(this._touchX, this._touchY);
+  if (_selectedInput != null) {
+    this.selectedInput = _selectedInput;
+    this.connectionMode = "InputSelected";
+    this.StartWire(this._touchX, this._touchY);
+    return;
+  }
+  var _selectedOutput = this.tryOutputSelect(this._touchX, this._touchY);
+  if (_selectedOutput != null) {
+    this.selectedOutput = _selectedOutput;
+    this.connectionMode = "OutputSelected";
+    this.StartWire(this._touchX, this._touchY);
+    return;
+  }
+}
+Circuit.prototype.onTouchMove = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  this._touchX = e.targetTouches.$index((0)).pageX;
+  this._touchY = e.targetTouches.$index((0)).pageY;
+  if (this.moveDevice != null) {
+    if (e.targetTouches.length >= (1)) {
+      this.moveDevice.MoveDevice(this._touchX, this._touchY);
+      this.Paint();
+      return;
+    }
+  }
+  this.Paint();
+}
+Circuit.prototype.onTouchEnd = function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  this._touchX = e.targetTouches.$index((0)).pageX;
+  this._touchY = e.targetTouches.$index((0)).pageY;
+  if (this.moveDevice != null) {
+    this.moveDevice = null;
+    this.Paint();
+    return;
+  }
+  switch (this.connectionMode) {
+    case "InputToOutput":
+    case "OutputToInput":
+
+      this.AddWirePoint(this._touchX, this._touchY);
+      if (this.checkValidConnection()) this.EndWire();
+      return;
+
+  }
+}
+Circuit.prototype.onTouchCancel = function(e) {
+  if (this.moveDevice != null) {
+    this.moveDevice = null;
+    this.Paint();
+    return;
+  }
+}
+Circuit.prototype.onTouchLeave = function(e) {
+  if (this.moveDevice != null) {
+    this.moveDevice = null;
+    this.Paint();
+    return;
+  }
+}
 Circuit.prototype.onMouseDown = function(e) {
   e.preventDefault();
-  this.Paint();
-  if (this.moveDevice != null) this.moveDevice = null;
+  var selectedDevice = this.tryDeviceSelect(this._mouseX, this._mouseY);
+  if (selectedDevice != null) print$(selectedDevice.deviceType.type);
+  if (this.moveDevice != null) {
+    this.moveDevice = null;
+    return;
+  }
   switch (this.connectionMode) {
     case "InputToOutput":
     case "OutputToInput":
@@ -2639,14 +2756,8 @@ Circuit.prototype.onMouseDown = function(e) {
 
     case null:
 
-      var $$list = this.logicDevices;
-      for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-        var device = $$i.next();
-        if (device.contains(e.offsetX, e.offsetY)) {
-          device.clicked();
-          break;
-        }
-      }
+      var device = this.tryDeviceSelect(this._mouseX, this._mouseY);
+      if (device != null) device.clicked();
       break;
 
   }
@@ -2664,6 +2775,12 @@ Circuit.prototype.get$onMouseDoubleClick = function() {
 Circuit.prototype.onMouseMove = function(e) {
   this._mouseX = e.offsetX;
   this._mouseY = e.offsetY;
+  if (this.gridSnap) {
+    var x1 = this._mouseX.toDouble() / (10).toDouble();
+    var y1 = this._mouseY.toDouble() / (10).toDouble();
+    this._mouseX = x1.toInt() * (10);
+    this._mouseY = y1.toInt() * (10);
+  }
   if (this.moveDevice != null) {
     this.moveDevice.MoveDevice(this._mouseX, this._mouseY);
     this.Paint();
@@ -2795,6 +2912,23 @@ Circuit.prototype.EndWire = function() {
   this.dummyWire.clear$_();
   this.Paint();
 }
+Circuit.prototype.Paint = function() {
+  this.clearCanvas();
+  this.drawBorder();
+  this.drawDevices();
+  this.drawWires();
+  this.drawPinSelectors();
+}
+Circuit.prototype.clearCanvas = function() {
+  this.context.clearRect((0), (0), this._width, this._height);
+}
+Circuit.prototype.drawDevices = function() {
+  var $$list = this.logicDevices;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var device = $$i.next();
+    this.context.drawImage(device.deviceType.getImage(device.Output.$index((0)).get$value()), device.X, device.Y);
+  }
+}
 Circuit.prototype.drawDummyWire = function(state) {
   this.context.fillStyle = this.context.strokeStyle;
   this.context.beginPath();
@@ -2916,58 +3050,6 @@ Circuit.prototype.drawWires = function() {
   }
   if (this.dummyWire.wirePoints.get$length() > (0)) if (this.checkValidConnection()) this.drawDummyWire("VALID");
   else this.drawDummyWire("INVAILD");
-}
-Circuit.prototype.drawUpdatedWires = function() {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    var $list0 = device.Input;
-    for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
-      var input = $i0.next();
-      if (input.connectedOutput != null) if (input.updated) {
-        this.drawWire(input, "ERASE");
-        this.drawWire(input, input.get$value());
-      }
-    }
-  }
-}
-Circuit.prototype.drawDevices = function() {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    if (device.Images.get$length() > (1) && device.get$OutputCount() > (0)) {
-      if ($eq$(device.Output.$index((0)).get$value(), true)) this.context.drawImage(device.Images.$index((1)), device.X, device.Y);
-      else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
-    }
-    else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
-  }
-}
-Circuit.prototype.drawUpdatedDevices = function() {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    if (device.get$updateable() && device.get$updated()) {
-      if (device.Images.get$length() > (1) && device.get$OutputCount() > (0)) {
-        if ($eq$(device.Output.$index((0)).get$value(), true)) this.context.drawImage(device.Images.$index((1)), device.X, device.Y);
-        else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
-      }
-      else this.context.drawImage(device.Images.$index((0)), device.X, device.Y);
-    }
-  }
-}
-Circuit.prototype.clearCanvas = function() {
-  this.context.clearRect((0), (0), this._width, this._height);
-}
-Circuit.prototype.drawUpdate = function() {
-  this.drawUpdatedDevices();
-  this.drawUpdatedWires();
-}
-Circuit.prototype.Paint = function() {
-  this.clearCanvas();
-  this.drawBorder();
-  this.drawDevices();
-  this.drawWires();
-  this.drawPinSelectors();
 }
 Circuit.prototype.drawPinSelectors = function() {
   switch (this.connectionMode) {
@@ -3109,163 +3191,6 @@ Wire.prototype.Contains = function(x, y, d) {
 // ********** Code for top level **************
 function main() {
   new Circuit(get$$document().query("#canvas")).start();
-}
-function CalcClock(device) {
-  if (device.acc > device.rset) {
-    device.acc = (0);
-    device.Output.$index((0)).set$value(!device.Output.$index((0)).get$value());
-    device.Output.$index((1)).set$value(!device.Output.$index((0)).get$value());
-  }
-  else device.acc = device.acc + (1);
-}
-function Configure(device) {
-  switch (device.Type) {
-    case "AND":
-
-      ConfigureAnd2(device);
-      break;
-
-    case "NAND":
-
-      ConfigureNand2(device);
-      break;
-
-    case "OR":
-
-      ConfigureOr2(device);
-      break;
-
-    case "NOR":
-
-      ConfigureNor2(device);
-      break;
-
-    case "XOR":
-
-      ConfigureXor2(device);
-      break;
-
-    case "XNOR":
-
-      ConfigureXnor2(device);
-      break;
-
-    case "NOT":
-
-      ConfigureNot(device);
-      break;
-
-    case "SWITCH":
-
-      ConfigureSwitch(device);
-      break;
-
-    case "LED":
-
-      ConfigureLed(device);
-      break;
-
-    case "DLOGO":
-
-      ConfigureDartLogo(device);
-      break;
-
-    case "CLOCK":
-
-      ConfigureClock(device);
-      break;
-
-  }
-}
-function ConfigureSwitch(device) {
-  device.addImage("images/01Switch_Low.png");
-  device.addImage("images/01Switch_High.png");
-  device.set$InputCount((1));
-  device.set$OutputCount((1));
-  device.SetInputPinLocation((0), (-1), (-1));
-  device.SetOutputPinLocation((0), (21), (0));
-}
-function ConfigureDartLogo(device) {
-  device.addImage("images/dartLogo.png");
-  device.addImage("images/dartLogo2.png");
-  device.set$InputCount((1));
-  device.set$OutputCount((1));
-  device.set$updateable(true);
-  device.SetOutputPinLocation((0), (-1), (-1));
-  device.SetInputPinLocation((0), (28), (0));
-}
-function ConfigureLed(device) {
-  device.addImage("images/01Disp_Low.png");
-  device.addImage("images/01Disp_High.png");
-  device.set$InputCount((1));
-  device.set$OutputCount((1));
-  device.SetInputPinLocation((0), (16), (0));
-  device.SetOutputPinLocation((0), (-1), (-1));
-  device.set$updateable(true);
-}
-function ConfigureAnd2(device) {
-  device.addImage("images/and2.png");
-  device.set$InputCount((2));
-  device.SetInputPinLocation((0), (5), (15));
-  device.SetInputPinLocation((1), (5), (35));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (95), (25));
-}
-function ConfigureNand2(device) {
-  device.addImage("images/nand2.png");
-  device.set$InputCount((2));
-  device.SetInputPinLocation((0), (5), (15));
-  device.SetInputPinLocation((1), (5), (35));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (95), (25));
-}
-function ConfigureOr2(device) {
-  device.addImage("images/or.png");
-  device.set$InputCount((2));
-  device.SetInputPinLocation((0), (5), (15));
-  device.SetInputPinLocation((1), (5), (35));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (95), (25));
-}
-function ConfigureNor2(device) {
-  device.addImage("images/nor.png");
-  device.set$InputCount((2));
-  device.SetInputPinLocation((0), (5), (15));
-  device.SetInputPinLocation((1), (5), (35));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (95), (25));
-}
-function ConfigureXor2(device) {
-  device.addImage("images/xor.png");
-  device.set$InputCount((2));
-  device.SetInputPinLocation((0), (5), (15));
-  device.SetInputPinLocation((1), (5), (35));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (95), (25));
-}
-function ConfigureXnor2(device) {
-  device.addImage("images/xnor.png");
-  device.set$InputCount((2));
-  device.SetInputPinLocation((0), (5), (15));
-  device.SetInputPinLocation((1), (5), (35));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (95), (25));
-}
-function ConfigureNot(device) {
-  device.addImage("images/not.png");
-  device.set$InputCount((1));
-  device.SetInputPinLocation((0), (5), (25));
-  device.set$OutputCount((1));
-  device.SetOutputPinLocation((0), (94), (25));
-}
-function ConfigureClock(device) {
-  device.addImage("images/Clock.png");
-  device.set$InputCount((1));
-  device.SetInputPinLocation((0), (0), (0));
-  device.SetInputConnectable((0), false);
-  device.set$OutputCount((2));
-  device.SetOutputPinLocation((0), (64), (14));
-  device.SetOutputPinLocation((1), (64), (39));
 }
 // 115 dynamic types.
 // 226 types

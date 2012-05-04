@@ -1,5 +1,5 @@
 /** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
-/   By: Ryan C. Weaving  &  Athhur Liu                           */
+/   By: Ryan C. Weaving  &  Arthur Liu                           */
 
 // there is one instance of the logic device for each logic device that is displayed
 class LogicDevice {
@@ -14,76 +14,34 @@ class LogicDevice {
 
   List<DeviceInput> Input;
   List<DeviceOutput> Output;
-  List<ImageElement> Images;
   
-  int SelectedInputPin = -1;
+  LogicDeviceType deviceType;
 
   int acc=0;
-  int rset=5;
+  int rset=4;
   
   bool _calculated = false; 
   bool _updated = false;
   bool _visible = true;
   bool _updateable = false;
   bool CloneMode = false;
-  
-  LogicDevice.fromJson(Map json) : ID = json['id'], X = json['x'], Y = json['y'], Type = json['type']{    
+
+  LogicDevice(this.ID, this.Type, this.deviceType){ 
     Input = new List<DeviceInput>();
     Output = new List<DeviceOutput>();
-    Images = new List<ImageElement>();
     
-    Configure(this);
-  }
-  
-  LogicDevice(this.ID, this.Type){ 
-    Input = new List<DeviceInput>();
-    Output = new List<DeviceOutput>();
-    Images = new List<ImageElement>();
-    
-    Configure(this);
-  }
-  
-  Map<String, Object> toJson() {
-    Map<String, Object> deviceMap = new Map<String, Object>();
-    deviceMap["id"] = ID;
-    deviceMap["type"] = Type;
-    deviceMap["x"] = X; 
-    deviceMap["y"] = Y;
-    return deviceMap;
+    //Configure IO for this new device from a DeviceType
+    for(DevicePin devicePin in deviceType.inputPins){
+      Input.add(new DeviceInput(this, devicePin.id, devicePin));
+    }
+    for(DevicePin devicePin in deviceType.outputPins){
+      Output.add(new DeviceOutput(this, devicePin.id, devicePin));
+    }
   }
 
-  int get InputCount() => Input.length;
-  int get OutputCount() => Output.length;
-  
-  set InputCount(int count){
-    if(InputCount < count){
-      do{
-        Input.add(new DeviceInput(this,InputCount.toString()));
-      }while(InputCount < count);
-    }
-  }
-  
-  set OutputCount(int count){
-    if(OutputCount < count){
-      do{
-        Output.add(new DeviceOutput(this,OutputCount.toString()));
-      }while(OutputCount < count);
-    }
-  }
-  
   void remove(){
     Input.clear();
     Output.clear();
-    Images.clear();
-  }
-  
-  // Get connections
-  String GetInputs(){
-    List<String> inputList = new List<String>();
-    Input.forEach((f) {
-      inputList.add(JSON.stringify(f.toJson()));
-    });
-    return JSON.stringify(inputList);
   }
   
   // Has this device been calculated
@@ -95,7 +53,8 @@ class LogicDevice {
     _calculated = calc;
     
     if(!_calculated)
-      Input.forEach((f) { f.updated = false; });
+      for(DeviceInput input in Input)
+        input.updated = false;
   }
  
   // Devices are updateable if they have images that need updating based on state
@@ -109,44 +68,24 @@ class LogicDevice {
   set updated(bool ud){
     _updated = ud;
   }
-  
-  // Load device image
-  void addImage(var image){
-    ImageElement _elem;
-    _elem = new Element.tag('img'); 
-    _elem.src = image;
-    //_elem.on.load.add((event) { drawDevice(); });
-    Images.add(_elem);  
-  }
-  
-  // Set the X and Y offsets for the x pin location
-  SetInputPinLocation(int pin, int xPos, int yPos)
+   
+  // Does any of this devices wires start or end with this point
+  // sHould return a list
+  Wire HasWirePoint(int x, int y)
   {
-    if(pin >= 0 && pin < Input.length){ 
-      Input[pin].SetPinLocation(xPos, yPos); 
+    if(CloneMode) return null;
+
+    for (DeviceInput input in Input) {
+      if(input.wire.HasStartEndPoint(x, y))
+          return input.wire; 
     }
-  }
-  
-  // Set the X and Y offsets for the x pin location
-  SetOutputPinLocation(int pin, int xPos, int yPos)
-  {
-    if(pin >= 0 && pin < Output.length){ 
-      Output[pin].SetPinLocation(xPos, yPos); 
-    }
-  }
-  
-  SetInputConnectable(int pin, bool connectable)
-  {
-    if(pin >= 0 && pin < Input.length){ 
-      Input[pin].connectable = false;
-    }
+    return null;  
   }
  
   DeviceInput InputPinHit(int x, int y)
   {
     if(CloneMode) return null;
     
-    if(InputCount <= 0) return null;
     for (DeviceInput input in Input) {
       if(input.connectable){
         if(input.pinHit(x, y))
@@ -160,7 +99,6 @@ class LogicDevice {
   {
     if(CloneMode) return null;
     
-    if(OutputCount <= 0) return null;
     for (DeviceOutput output in Output) {
       if(output.connectable){
         if(output.pinHit(x, y))
@@ -175,23 +113,31 @@ class LogicDevice {
     return contains(x, y);
   }
     
+  // Find what Device output is connected to this device
   DeviceOutput WireHit(int x, int y)
   {
-    DeviceOutput hitDevice;
     for (DeviceInput input in Input) {
-      hitDevice = input.wireHit(x, y);
-      if(hitDevice != null)
-        return hitDevice; 
+      if(input.wireHit(x, y) != null)
+        return input.wireHit(x, y); 
     }
     return null;
   }
   
+  // Try to select a wire
+  Wire WireSelect(int x, int y)
+  {
+    for (DeviceInput input in Input) 
+      if(input.wireHit(x, y) != null)
+        return input.wire;
+
+    return null;
+  }
   
   // Move the device to a new location
   MoveDevice(int newX, int newY)
   { 
-    if(Images[0] != null){    
-        Util.pos(Images[0], newX.toDouble(), newY.toDouble());
+    if(deviceType.images[0] != null){    
+        Util.pos(deviceType.images[0], newX.toDouble(), newY.toDouble());
         X = newX;
         Y = newY;
       }
@@ -208,11 +154,11 @@ class LogicDevice {
     }
   }
   
-  // Id the given point within our image
+//   Id the given point within our image
   bool contains(int pointX, int pointY) 
   {
-    if ((pointX > X && pointX < X + Images[0].width) && 
-        (pointY > Y && pointY < Y + Images[0].height)) {
+    if ((pointX > X && pointX < X + deviceType.images[0].width) && 
+        (pointY > Y && pointY < Y + deviceType.images[0].height)) {
       return true;
     } else {
       return false;
@@ -243,8 +189,8 @@ class LogicDevice {
         _updated = true;
       
       // Check inputs to see if that have devices connected to them that have updated
-      Input.forEach((f) { f.checkUpdate(); });
-    }
+      for(DeviceInput input in Input) input.checkUpdate();
+       
   }
 }
 
@@ -261,4 +207,4 @@ Function CalcClock(LogicDevice device)
 
 
 
-
+}
