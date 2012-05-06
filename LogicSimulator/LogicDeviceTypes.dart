@@ -52,8 +52,8 @@ class LogicDeviceType{
       case 0: return images[0];
       case 1: return images[1];
       
-      case true: return images[0];
-      case false: return images[1];
+      case true: return images[1];
+      case false: return images[0];
       }
   }
  
@@ -83,7 +83,7 @@ class LogicDeviceTypes{
     return null;
   }
   
-  
+  //TODO: move all of this to xml
   LoadDefaultTypes(){
     LogicDeviceType _and = AddNewType('AND');
     _and.AddImage('images/and2.png');
