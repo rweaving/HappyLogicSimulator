@@ -1,7 +1,24 @@
-/** Simple Logic Simulator for Google Dart Hackathon 4-27-2012   
-/   By: Ryan C. Weaving  &  Arthur Liu                           */
-
-// there is one instance of the logic device for each logic device that is displayed
+//  (c) Copyright 2012 - Ryan C. Weaving    
+//
+//  This file is part of Happy Logic Simulator.
+//  http://HappyLogicSimulator.com 
+//
+//  Happy Logic Simulator is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//  
+//  Happy Logic Simulator is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//  
+//  You should have received a copy of the GNU General Public License
+//  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
+   
+/**
+/ there is one instance of the logic device for each logic device that is displayed
+*/
 class LogicDevice {
 
   var ID;
@@ -42,30 +59,19 @@ class LogicDevice {
     }
     
     visible = true;
+    selectable = true;
   }
 
-//  // Devices are updateable if they have images that need updating based on state
-//  bool get updateable() => _updateable;
-//  set updateable(bool val) {
-//    _updateable = val;
-//  }
-//  
-//  // Has the status of this device changed
-//  bool get updated() => _updated;
-//  set updated(bool ud) {
-//    _updated = ud;
-//  }
-   
   // Does any of this devices wires start or end with this point
   // sHould return a list
   Wire HasWirePoint(int x, int y) {
-    if(CloneMode) return null;
-
-    for (DeviceInput input in inputs) {
-      if(input.wire.HasStartEndPoint(x, y))
-          return input.wire; 
-    }
-    return null;  
+//    if(CloneMode) return null;
+//
+//    for (DeviceInput input in inputs) {
+//      if(input.wire.HasStartEndPoint(x, y))
+//          return input.wire; 
+//    }
+//    return null;  
   }
  
   DeviceInput InputPinHit(int x, int y) {
@@ -98,18 +104,18 @@ class LogicDevice {
     
   // Find what Device output is connected to this device
   DeviceOutput WireHit(int x, int y) {
-    for (DeviceInput input in inputs) {
-      if(input.wireHit(x, y) != null)
-        return input.wireHit(x, y); 
-    }
+//    for (DeviceInput input in inputs) {
+//      if(input.wireHit(x, y) != null)
+//        return input.wireHit(x, y); 
+//    }
     return null;
   }
   
   // Try to select a wire
   Wire WireSelect(int x, int y) {
-    for (DeviceInput input in inputs) 
-      if(input.wireHit(x, y) != null)
-        return input.wire;
+//    for (DeviceInput input in inputs) 
+//      if(input.wireHit(x, y) != null)
+//        return input.wire;
 
     return null;
   }
@@ -176,7 +182,6 @@ class LogicDevice {
       }
     }
   }
-
 
   Function CalcClock(LogicDevice device) {
     if(device.acc > device.rset) {

@@ -70,18 +70,18 @@ function $eq$(x, y) {
 $defProp(Object.prototype, '$eq', function(other) {
   return this === other;
 });
-function $lte$complex$(x, y) {
+function $gt$complex$(x, y) {
   if (typeof(x) == 'number') {
     $throw(new IllegalArgumentException(y));
   } else if (typeof(x) == 'object') {
-    return x.$lte(y);
+    return x.$gt(y);
   } else {
-    $throw(new NoSuchMethodException(x, "operator <=", [y]));
+    $throw(new NoSuchMethodException(x, "operator >", [y]));
   }
 }
-function $lte$(x, y) {
-  if (typeof(x) == 'number' && typeof(y) == 'number') return x <= y;
-  return $lte$complex$(x, y);
+function $gt$(x, y) {
+  if (typeof(x) == 'number' && typeof(y) == 'number') return x > y;
+  return $gt$complex$(x, y);
 }
 function $ne$(x, y) {
   if (x == null) return y != null;
@@ -267,11 +267,17 @@ $defProp(Object.prototype, "$dom_addEventListener$3", function($0, $1, $2) {
 $defProp(Object.prototype, "add$1", function($0) {
   return this.noSuchMethod("add", [$0]);
 });
+$defProp(Object.prototype, "contains$2", function($0, $1) {
+  return this.noSuchMethod("contains", [$0, $1]);
+});
 $defProp(Object.prototype, "filter$1", function($0) {
   return this.noSuchMethod("filter", [$0]);
 });
 $defProp(Object.prototype, "forEach$1", function($0) {
   return this.noSuchMethod("forEach", [$0]);
+});
+$defProp(Object.prototype, "indexOf$1", function($0) {
+  return this.noSuchMethod("indexOf", [$0]);
 });
 $defProp(Object.prototype, "is$Collection", function() {
   return false;
@@ -394,6 +400,12 @@ function UnsupportedOperationException(_message) {
 }
 UnsupportedOperationException.prototype.toString = function() {
   return ("UnsupportedOperationException: " + this._message);
+}
+function NotImplementedException() {
+
+}
+NotImplementedException.prototype.toString = function() {
+  return "NotImplementedException";
 }
 function IntegerDivisionByZeroException() {
 
@@ -522,6 +534,18 @@ $defProp(ListFactory.prototype, "removeLast", function() {
 $defProp(ListFactory.prototype, "last", function() {
   return this.$index(this.get$length() - (1));
 });
+$defProp(ListFactory.prototype, "getRange", function(start, rangeLength) {
+  if (rangeLength == (0)) return [];
+  if (rangeLength < (0)) $throw(new IllegalArgumentException("length"));
+  if (start < (0) || start + rangeLength > this.get$length()) $throw(new IndexOutOfRangeException(start));
+  return this.slice(start, start + rangeLength);
+});
+$defProp(ListFactory.prototype, "removeRange", function(start, rangeLength) {
+  if (rangeLength == (0)) return;
+  if (rangeLength < (0)) $throw(new IllegalArgumentException("length"));
+  if (start < (0) || start + rangeLength > this.get$length()) $throw(new IndexOutOfRangeException(start));
+  this.splice(start, rangeLength);
+});
 $defProp(ListFactory.prototype, "iterator", function() {
   return new ListIterator(this);
 });
@@ -535,6 +559,7 @@ $defProp(ListFactory.prototype, "filter$1", function($0) {
 $defProp(ListFactory.prototype, "forEach$1", function($0) {
   return this.forEach(to$call$1($0));
 });
+$defProp(ListFactory.prototype, "indexOf$1", ListFactory.prototype.indexOf);
 function ListIterator(array) {
   this._array = array;
   this._pos = (0);
@@ -1008,6 +1033,9 @@ StringImplementation.prototype.startsWith = function(other) {
 StringImplementation.prototype.isEmpty = function() {
   return this.length == (0);
 }
+StringImplementation.prototype.contains = function(pattern, startIndex) {
+  'use strict'; return this.indexOf(pattern, startIndex) >= 0;
+}
 StringImplementation.prototype.split$_ = function(pattern) {
   if ((typeof(pattern) == 'string')) return this._split(pattern);
   if (!!(pattern && pattern.is$RegExp())) return this._splitRegExp(pattern);
@@ -1032,6 +1060,8 @@ StringImplementation.prototype.hashCode = function() {
       hash ^= hash >> 11;
       return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
 }
+StringImplementation.prototype.contains$2 = StringImplementation.prototype.contains;
+StringImplementation.prototype.indexOf$1 = StringImplementation.prototype.indexOf;
 $inherits(_ArgumentMismatchException, ClosureArgumentMismatchException);
 function _ArgumentMismatchException(_message) {
   this._dart_coreimpl_message = _message;
@@ -1214,23 +1244,8 @@ _ElementEventsImpl.prototype.get$mouseDown = function() {
 _ElementEventsImpl.prototype.get$mouseMove = function() {
   return this._get("mousemove");
 }
-_ElementEventsImpl.prototype.get$touchCancel = function() {
-  return this._get("touchcancel");
-}
-_ElementEventsImpl.prototype.get$touchEnd = function() {
-  return this._get("touchend");
-}
-_ElementEventsImpl.prototype.get$touchEnter = function() {
-  return this._get("touchenter");
-}
-_ElementEventsImpl.prototype.get$touchLeave = function() {
-  return this._get("touchleave");
-}
-_ElementEventsImpl.prototype.get$touchMove = function() {
-  return this._get("touchmove");
-}
-_ElementEventsImpl.prototype.get$touchStart = function() {
-  return this._get("touchstart");
+_ElementEventsImpl.prototype.get$mouseUp = function() {
+  return this._get("mouseup");
 }
 $inherits(_BodyElementEventsImpl, _ElementEventsImpl);
 function _BodyElementEventsImpl(_ptr) {
@@ -1301,11 +1316,20 @@ $dynamic("forEach").DOMStringList = function(f) {
 $dynamic("filter").DOMStringList = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").DOMStringList = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").DOMStringList = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").DOMStringList = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").DOMStringList = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").DOMStringList = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").DOMStringList = function($0) {
   return this.add($0);
@@ -1315,6 +1339,9 @@ $dynamic("filter$1").DOMStringList = function($0) {
 };
 $dynamic("forEach$1").DOMStringList = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").DOMStringList = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("get$length").DataTransferItemList = function() { return this.length; };
 $dynamic("add$1").DataTransferItemList = function($0) {
@@ -1363,17 +1390,8 @@ _DocumentEventsImpl.prototype.get$mouseDown = function() {
 _DocumentEventsImpl.prototype.get$mouseMove = function() {
   return this._get("mousemove");
 }
-_DocumentEventsImpl.prototype.get$touchCancel = function() {
-  return this._get("touchcancel");
-}
-_DocumentEventsImpl.prototype.get$touchEnd = function() {
-  return this._get("touchend");
-}
-_DocumentEventsImpl.prototype.get$touchMove = function() {
-  return this._get("touchmove");
-}
-_DocumentEventsImpl.prototype.get$touchStart = function() {
-  return this._get("touchstart");
+_DocumentEventsImpl.prototype.get$mouseUp = function() {
+  return this._get("mouseup");
 }
 function FilteredElementList() {}
 FilteredElementList.prototype.is$List = function(){return true};
@@ -1392,6 +1410,12 @@ FilteredElementList.prototype.$setindex = function(index, value) {
 }
 FilteredElementList.prototype.add = function(value) {
   this._childNodes.add(value);
+}
+FilteredElementList.prototype.removeRange = function(start, rangeLength) {
+  this.get$_filtered().getRange(start, rangeLength).forEach$1((function (el) {
+    return el.remove$0();
+  })
+  );
 }
 FilteredElementList.prototype.clear$_ = function() {
   this._childNodes.clear$_();
@@ -1415,6 +1439,12 @@ FilteredElementList.prototype.$index = function(index) {
 FilteredElementList.prototype.iterator = function() {
   return this.get$_filtered().iterator();
 }
+FilteredElementList.prototype.getRange = function(start, rangeLength) {
+  return this.get$_filtered().getRange(start, rangeLength);
+}
+FilteredElementList.prototype.indexOf = function(element, start) {
+  return this.get$_filtered().indexOf(element, start);
+}
 FilteredElementList.prototype.last = function() {
   return this.get$_filtered().last();
 }
@@ -1424,6 +1454,9 @@ FilteredElementList.prototype.filter$1 = function($0) {
 };
 FilteredElementList.prototype.forEach$1 = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+FilteredElementList.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
 };
 function EmptyElementRect() {}
 $dynamic("is$html_Element").DocumentFragment = function(){return true};
@@ -1481,6 +1514,15 @@ _ChildrenElementList.prototype.add = function(value) {
 _ChildrenElementList.prototype.iterator = function() {
   return this._toList().iterator();
 }
+_ChildrenElementList.prototype.removeRange = function(start, rangeLength) {
+  $throw(const$0005);
+}
+_ChildrenElementList.prototype.getRange = function(start, rangeLength) {
+  return new _FrozenElementList._wrap$ctor(_Lists.getRange(this, start, rangeLength, []));
+}
+_ChildrenElementList.prototype.indexOf = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.get$length());
+}
 _ChildrenElementList.prototype.clear$_ = function() {
   this._html_element.set$text("");
 }
@@ -1500,6 +1542,9 @@ _ChildrenElementList.prototype.filter$1 = function($0) {
 };
 _ChildrenElementList.prototype.forEach$1 = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+_ChildrenElementList.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
 };
 _FrozenElementList._wrap$ctor = function(_nodeList) {
   this._nodeList = _nodeList;
@@ -1537,6 +1582,15 @@ _FrozenElementList.prototype.add = function(value) {
 _FrozenElementList.prototype.iterator = function() {
   return new _FrozenElementListIterator(this);
 }
+_FrozenElementList.prototype.removeRange = function(start, rangeLength) {
+  $throw(const$0003);
+}
+_FrozenElementList.prototype.getRange = function(start, rangeLength) {
+  return new _FrozenElementList._wrap$ctor(this._nodeList.getRange(start, rangeLength));
+}
+_FrozenElementList.prototype.indexOf = function(element, start) {
+  return this._nodeList.indexOf(element, start);
+}
 _FrozenElementList.prototype.clear$_ = function() {
   $throw(const$0003);
 }
@@ -1552,6 +1606,9 @@ _FrozenElementList.prototype.filter$1 = function($0) {
 };
 _FrozenElementList.prototype.forEach$1 = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+_FrozenElementList.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
 };
 function _FrozenElementListIterator(_list) {
   this._html_index = (0);
@@ -1590,6 +1647,9 @@ _ListWrapper.prototype.$setindex = function(index, value) {
 _ListWrapper.prototype.add = function(value) {
   return this._html_list.add(value);
 }
+_ListWrapper.prototype.indexOf = function(element, start) {
+  return this._html_list.indexOf(element, start);
+}
 _ListWrapper.prototype.clear$_ = function() {
   return this._html_list.clear$_();
 }
@@ -1599,6 +1659,12 @@ _ListWrapper.prototype.removeLast = function() {
 _ListWrapper.prototype.last = function() {
   return this._html_list.last();
 }
+_ListWrapper.prototype.getRange = function(start, rangeLength) {
+  return this._html_list.getRange(start, rangeLength);
+}
+_ListWrapper.prototype.removeRange = function(start, rangeLength) {
+  return this._html_list.removeRange(start, rangeLength);
+}
 _ListWrapper.prototype.add$1 = _ListWrapper.prototype.add;
 _ListWrapper.prototype.filter$1 = function($0) {
   return this.filter($wrap_call$1(to$call$1($0)));
@@ -1606,17 +1672,26 @@ _ListWrapper.prototype.filter$1 = function($0) {
 _ListWrapper.prototype.forEach$1 = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
 };
+_ListWrapper.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
+};
 $inherits(_ListWrapper_Element, _ListWrapper);
 function _ListWrapper_Element(_list) {
   this._html_list = _list;
 }
 _ListWrapper_Element.prototype.add$1 = _ListWrapper_Element.prototype.add;
+_ListWrapper_Element.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
+};
 $inherits(_ElementList, _ListWrapper_Element);
 function _ElementList(list) {
   _ListWrapper_Element.call(this, list);
 }
 _ElementList.prototype.filter = function(f) {
   return new _ElementList(_ListWrapper_Element.prototype.filter.call(this, f));
+}
+_ElementList.prototype.getRange = function(start, rangeLength) {
+  return new _ElementList(_ListWrapper_Element.prototype.getRange.call(this, start, rangeLength));
 }
 _ElementList.prototype.filter$1 = function($0) {
   return this.filter($wrap_call$1(to$call$1($0)));
@@ -1821,11 +1896,20 @@ $dynamic("forEach").Float32Array = function(f) {
 $dynamic("filter").Float32Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Float32Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Float32Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Float32Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Float32Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Float32Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Float32Array = function($0) {
   return this.add($0);
@@ -1835,6 +1919,9 @@ $dynamic("filter$1").Float32Array = function($0) {
 };
 $dynamic("forEach$1").Float32Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Float32Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("is$List").Float64Array = function(){return true};
 $dynamic("is$Collection").Float64Array = function(){return true};
@@ -1857,11 +1944,20 @@ $dynamic("forEach").Float64Array = function(f) {
 $dynamic("filter").Float64Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Float64Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Float64Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Float64Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Float64Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Float64Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Float64Array = function($0) {
   return this.add($0);
@@ -1871,6 +1967,9 @@ $dynamic("filter$1").Float64Array = function($0) {
 };
 $dynamic("forEach$1").Float64Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Float64Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("get$length").HTMLFormElement = function() { return this.length; };
 $dynamic("get$name").HTMLFormElement = function() { return this.name; };
@@ -1907,11 +2006,20 @@ $dynamic("forEach").HTMLCollection = function(f) {
 $dynamic("filter").HTMLCollection = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").HTMLCollection = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.get$length());
+}
 $dynamic("last").HTMLCollection = function() {
   return this.$index(this.get$length() - (1));
 }
 $dynamic("removeLast").HTMLCollection = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").HTMLCollection = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").HTMLCollection = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").HTMLCollection = function($0) {
   return this.add($0);
@@ -1921,6 +2029,9 @@ $dynamic("filter$1").HTMLCollection = function($0) {
 };
 $dynamic("forEach$1").HTMLCollection = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").HTMLCollection = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("get$length").HTMLOptionsCollection = function() {
   return this.length;
@@ -1998,11 +2109,20 @@ $dynamic("forEach").Int16Array = function(f) {
 $dynamic("filter").Int16Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Int16Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Int16Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Int16Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Int16Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Int16Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Int16Array = function($0) {
   return this.add($0);
@@ -2012,6 +2132,9 @@ $dynamic("filter$1").Int16Array = function($0) {
 };
 $dynamic("forEach$1").Int16Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Int16Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("is$List").Int32Array = function(){return true};
 $dynamic("is$Collection").Int32Array = function(){return true};
@@ -2034,11 +2157,20 @@ $dynamic("forEach").Int32Array = function(f) {
 $dynamic("filter").Int32Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Int32Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Int32Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Int32Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Int32Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Int32Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Int32Array = function($0) {
   return this.add($0);
@@ -2048,6 +2180,9 @@ $dynamic("filter$1").Int32Array = function($0) {
 };
 $dynamic("forEach$1").Int32Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Int32Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("is$List").Int8Array = function(){return true};
 $dynamic("is$Collection").Int8Array = function(){return true};
@@ -2070,11 +2205,20 @@ $dynamic("forEach").Int8Array = function(f) {
 $dynamic("filter").Int8Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Int8Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Int8Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Int8Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Int8Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Int8Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Int8Array = function($0) {
   return this.add($0);
@@ -2084,6 +2228,9 @@ $dynamic("filter$1").Int8Array = function($0) {
 };
 $dynamic("forEach$1").Int8Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Int8Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("$dom_addEventListener$3").JavaScriptAudioNode = function($0, $1, $2) {
   return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
@@ -2127,11 +2274,20 @@ $dynamic("forEach").MediaList = function(f) {
 $dynamic("filter").MediaList = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").MediaList = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").MediaList = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").MediaList = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").MediaList = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").MediaList = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").MediaList = function($0) {
   return this.add($0);
@@ -2141,6 +2297,9 @@ $dynamic("filter$1").MediaList = function($0) {
 };
 $dynamic("forEach$1").MediaList = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").MediaList = function($0) {
+  return this.indexOf($0, (0));
 };
 $inherits(_MediaStreamEventsImpl, _EventsImpl);
 function _MediaStreamEventsImpl() {}
@@ -2177,11 +2336,20 @@ $dynamic("forEach").NamedNodeMap = function(f) {
 $dynamic("filter").NamedNodeMap = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").NamedNodeMap = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").NamedNodeMap = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").NamedNodeMap = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").NamedNodeMap = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").NamedNodeMap = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").NamedNodeMap = function($0) {
   return this.add($0);
@@ -2191,6 +2359,9 @@ $dynamic("filter$1").NamedNodeMap = function($0) {
 };
 $dynamic("forEach$1").NamedNodeMap = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").NamedNodeMap = function($0) {
+  return this.indexOf($0, (0));
 };
 function _ChildNodeListLazy() {}
 _ChildNodeListLazy.prototype.is$List = function(){return true};
@@ -2223,6 +2394,15 @@ _ChildNodeListLazy.prototype.forEach = function(f) {
 _ChildNodeListLazy.prototype.filter = function(f) {
   return new _NodeListWrapper(_Collections.filter(this, [], f));
 }
+_ChildNodeListLazy.prototype.indexOf = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.get$length());
+}
+_ChildNodeListLazy.prototype.removeRange = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+_ChildNodeListLazy.prototype.getRange = function(start, rangeLength) {
+  return new _NodeListWrapper(_Lists.getRange(this, start, rangeLength, []));
+}
 _ChildNodeListLazy.prototype.get$length = function() {
   return this._this.get$$$dom_childNodes().length;
 }
@@ -2236,17 +2416,26 @@ _ChildNodeListLazy.prototype.filter$1 = function($0) {
 _ChildNodeListLazy.prototype.forEach$1 = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
 };
+_ChildNodeListLazy.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
+};
 $inherits(_ListWrapper_Node, _ListWrapper);
 function _ListWrapper_Node(_list) {
   this._html_list = _list;
 }
 _ListWrapper_Node.prototype.add$1 = _ListWrapper_Node.prototype.add;
+_ListWrapper_Node.prototype.indexOf$1 = function($0) {
+  return this.indexOf($0, (0));
+};
 $inherits(_NodeListWrapper, _ListWrapper_Node);
 function _NodeListWrapper(list) {
   _ListWrapper_Node.call(this, list);
 }
 _NodeListWrapper.prototype.filter = function(f) {
   return new _NodeListWrapper(this._html_list.filter$1(f));
+}
+_NodeListWrapper.prototype.getRange = function(start, rangeLength) {
+  return new _NodeListWrapper(this._html_list.getRange(start, rangeLength));
 }
 _NodeListWrapper.prototype.filter$1 = function($0) {
   return this.filter($wrap_call$1(to$call$1($0)));
@@ -2278,8 +2467,17 @@ $dynamic("forEach").NodeList = function(f) {
 $dynamic("filter").NodeList = function(f) {
   return new _NodeListWrapper(_Collections.filter(this, [], f));
 }
+$dynamic("indexOf").NodeList = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").NodeList = function() {
   return this.$index(this.length - (1));
+}
+$dynamic("removeRange").NodeList = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").NodeList = function(start, rangeLength) {
+  return new _NodeListWrapper(_Lists.getRange(this, start, rangeLength, []));
 }
 $dynamic("get$length").NodeList = function() { return this.length; };
 $dynamic("$index").NodeList = function(index) {
@@ -2293,6 +2491,9 @@ $dynamic("filter$1").NodeList = function($0) {
 };
 $dynamic("forEach$1").NodeList = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").NodeList = function($0) {
+  return this.indexOf($0, (0));
 };
 $inherits(_NotificationEventsImpl, _EventsImpl);
 function _NotificationEventsImpl() {}
@@ -2314,7 +2515,9 @@ $dynamic("$dom_addEventListener$3").PeerConnection00 = function($0, $1, $2) {
 $inherits(_PeerConnection00EventsImpl, _EventsImpl);
 function _PeerConnection00EventsImpl() {}
 $dynamic("get$x").WebKitPoint = function() { return this.x; };
+$dynamic("set$x").WebKitPoint = function(value) { return this.x = value; };
 $dynamic("get$y").WebKitPoint = function() { return this.y; };
+$dynamic("set$y").WebKitPoint = function(value) { return this.y = value; };
 $dynamic("get$width").HTMLPreElement = function() { return this.width; };
 $dynamic("get$value").HTMLProgressElement = function() { return this.value; };
 $dynamic("set$value").HTMLProgressElement = function(value) { return this.value = value; };
@@ -2341,6 +2544,9 @@ _SVGElementInstanceEventsImpl.prototype.get$mouseDown = function() {
 }
 _SVGElementInstanceEventsImpl.prototype.get$mouseMove = function() {
   return this._get("mousemove");
+}
+_SVGElementInstanceEventsImpl.prototype.get$mouseUp = function() {
+  return this._get("mouseup");
 }
 $dynamic("get$length").SVGElementInstanceList = function() { return this.length; };
 $dynamic("get$name").SVGException = function() { return this.name; };
@@ -2429,7 +2635,9 @@ $dynamic("get$width").SVGForeignObjectElement = function() { return this.width; 
 $dynamic("get$x").SVGForeignObjectElement = function() { return this.x; };
 $dynamic("get$y").SVGForeignObjectElement = function() { return this.y; };
 $dynamic("get$x").SVGGlyphRefElement = function() { return this.x; };
+$dynamic("set$x").SVGGlyphRefElement = function(value) { return this.x = value; };
 $dynamic("get$y").SVGGlyphRefElement = function() { return this.y; };
+$dynamic("set$y").SVGGlyphRefElement = function(value) { return this.y = value; };
 $dynamic("get$height").SVGImageElement = function() { return this.height; };
 $dynamic("get$width").SVGImageElement = function() { return this.width; };
 $dynamic("get$x").SVGImageElement = function() { return this.x; };
@@ -2443,47 +2651,83 @@ $dynamic("get$y").SVGMaskElement = function() { return this.y; };
 $dynamic("get$value").SVGNumber = function() { return this.value; };
 $dynamic("set$value").SVGNumber = function(value) { return this.value = value; };
 $dynamic("get$x").SVGPathSegArcAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegArcAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegArcAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegArcAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegArcRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegArcRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegArcRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegArcRel = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoCubicAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoCubicAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoCubicAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoCubicAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoCubicRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoCubicRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoCubicRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoCubicRel = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoCubicSmoothAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoCubicSmoothAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoCubicSmoothAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoCubicSmoothAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoCubicSmoothRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoCubicSmoothRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoCubicSmoothRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoCubicSmoothRel = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoQuadraticAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoQuadraticAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoQuadraticAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoQuadraticAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoQuadraticRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoQuadraticRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoQuadraticRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoQuadraticRel = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoQuadraticSmoothAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoQuadraticSmoothAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoQuadraticSmoothAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoQuadraticSmoothAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegCurvetoQuadraticSmoothRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegCurvetoQuadraticSmoothRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegCurvetoQuadraticSmoothRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegCurvetoQuadraticSmoothRel = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegLinetoAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegLinetoAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegLinetoAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegLinetoAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegLinetoHorizontalAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegLinetoHorizontalAbs = function(value) { return this.x = value; };
 $dynamic("get$x").SVGPathSegLinetoHorizontalRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegLinetoHorizontalRel = function(value) { return this.x = value; };
 $dynamic("get$x").SVGPathSegLinetoRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegLinetoRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegLinetoRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegLinetoRel = function(value) { return this.y = value; };
 $dynamic("get$y").SVGPathSegLinetoVerticalAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegLinetoVerticalAbs = function(value) { return this.y = value; };
 $dynamic("get$y").SVGPathSegLinetoVerticalRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegLinetoVerticalRel = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegMovetoAbs = function() { return this.x; };
+$dynamic("set$x").SVGPathSegMovetoAbs = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegMovetoAbs = function() { return this.y; };
+$dynamic("set$y").SVGPathSegMovetoAbs = function(value) { return this.y = value; };
 $dynamic("get$x").SVGPathSegMovetoRel = function() { return this.x; };
+$dynamic("set$x").SVGPathSegMovetoRel = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPathSegMovetoRel = function() { return this.y; };
+$dynamic("set$y").SVGPathSegMovetoRel = function(value) { return this.y = value; };
 $dynamic("get$height").SVGPatternElement = function() { return this.height; };
 $dynamic("get$width").SVGPatternElement = function() { return this.width; };
 $dynamic("get$x").SVGPatternElement = function() { return this.x; };
 $dynamic("get$y").SVGPatternElement = function() { return this.y; };
 $dynamic("get$x").SVGPoint = function() { return this.x; };
+$dynamic("set$x").SVGPoint = function(value) { return this.x = value; };
 $dynamic("get$y").SVGPoint = function() { return this.y; };
+$dynamic("set$y").SVGPoint = function(value) { return this.y = value; };
 $dynamic("get$height").SVGRect = function() { return this.height; };
 $dynamic("get$width").SVGRect = function() { return this.width; };
 $dynamic("get$x").SVGRect = function() { return this.x; };
+$dynamic("set$x").SVGRect = function(value) { return this.x = value; };
 $dynamic("get$y").SVGRect = function() { return this.y; };
+$dynamic("set$y").SVGRect = function(value) { return this.y = value; };
 $dynamic("get$height").SVGRectElement = function() { return this.height; };
 $dynamic("get$width").SVGRectElement = function() { return this.width; };
 $dynamic("get$x").SVGRectElement = function() { return this.x; };
@@ -2559,11 +2803,20 @@ $dynamic("forEach").StyleSheetList = function(f) {
 $dynamic("filter").StyleSheetList = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").StyleSheetList = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").StyleSheetList = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").StyleSheetList = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").StyleSheetList = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").StyleSheetList = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").StyleSheetList = function($0) {
   return this.add($0);
@@ -2573,6 +2826,9 @@ $dynamic("filter$1").StyleSheetList = function($0) {
 };
 $dynamic("forEach$1").StyleSheetList = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").StyleSheetList = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("get$height").HTMLTableCellElement = function() { return this.height; };
 $dynamic("get$width").HTMLTableCellElement = function() { return this.width; };
@@ -2621,11 +2877,20 @@ $dynamic("forEach").TouchList = function(f) {
 $dynamic("filter").TouchList = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").TouchList = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").TouchList = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").TouchList = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").TouchList = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").TouchList = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").TouchList = function($0) {
   return this.add($0);
@@ -2635,6 +2900,9 @@ $dynamic("filter$1").TouchList = function($0) {
 };
 $dynamic("forEach$1").TouchList = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").TouchList = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("is$List").Uint16Array = function(){return true};
 $dynamic("is$Collection").Uint16Array = function(){return true};
@@ -2657,11 +2925,20 @@ $dynamic("forEach").Uint16Array = function(f) {
 $dynamic("filter").Uint16Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Uint16Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Uint16Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Uint16Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Uint16Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Uint16Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Uint16Array = function($0) {
   return this.add($0);
@@ -2671,6 +2948,9 @@ $dynamic("filter$1").Uint16Array = function($0) {
 };
 $dynamic("forEach$1").Uint16Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Uint16Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("is$List").Uint32Array = function(){return true};
 $dynamic("is$Collection").Uint32Array = function(){return true};
@@ -2693,11 +2973,20 @@ $dynamic("forEach").Uint32Array = function(f) {
 $dynamic("filter").Uint32Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Uint32Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Uint32Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Uint32Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Uint32Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Uint32Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Uint32Array = function($0) {
   return this.add($0);
@@ -2707,6 +2996,9 @@ $dynamic("filter$1").Uint32Array = function($0) {
 };
 $dynamic("forEach$1").Uint32Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Uint32Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("is$List").Uint8Array = function(){return true};
 $dynamic("is$Collection").Uint8Array = function(){return true};
@@ -2729,11 +3021,20 @@ $dynamic("forEach").Uint8Array = function(f) {
 $dynamic("filter").Uint8Array = function(f) {
   return _Collections.filter(this, [], f);
 }
+$dynamic("indexOf").Uint8Array = function(element, start) {
+  return _Lists.indexOf(this, element, start, this.length);
+}
 $dynamic("last").Uint8Array = function() {
   return this.$index(this.length - (1));
 }
 $dynamic("removeLast").Uint8Array = function() {
   $throw(new UnsupportedOperationException("Cannot removeLast on immutable List."));
+}
+$dynamic("removeRange").Uint8Array = function(start, rangeLength) {
+  $throw(new UnsupportedOperationException("Cannot removeRange on immutable List."));
+}
+$dynamic("getRange").Uint8Array = function(start, rangeLength) {
+  return _Lists.getRange(this, start, rangeLength, []);
 }
 $dynamic("add$1").Uint8Array = function($0) {
   return this.add($0);
@@ -2743,6 +3044,9 @@ $dynamic("filter$1").Uint8Array = function($0) {
 };
 $dynamic("forEach$1").Uint8Array = function($0) {
   return this.forEach($wrap_call$1(to$call$1($0)));
+};
+$dynamic("indexOf$1").Uint8Array = function($0) {
+  return this.indexOf($0, (0));
 };
 $dynamic("get$height").HTMLVideoElement = function() { return this.height; };
 $dynamic("get$width").HTMLVideoElement = function() { return this.width; };
@@ -2775,20 +3079,11 @@ _WindowEventsImpl.prototype.get$mouseDown = function() {
 _WindowEventsImpl.prototype.get$mouseMove = function() {
   return this._get("mousemove");
 }
+_WindowEventsImpl.prototype.get$mouseUp = function() {
+  return this._get("mouseup");
+}
 _WindowEventsImpl.prototype.get$resize = function() {
   return this._get("resize");
-}
-_WindowEventsImpl.prototype.get$touchCancel = function() {
-  return this._get("touchcancel");
-}
-_WindowEventsImpl.prototype.get$touchEnd = function() {
-  return this._get("touchend");
-}
-_WindowEventsImpl.prototype.get$touchMove = function() {
-  return this._get("touchmove");
-}
-_WindowEventsImpl.prototype.get$touchStart = function() {
-  return this._get("touchstart");
 }
 $inherits(_WorkerEventsImpl, _AbstractWorkerEventsImpl);
 function _WorkerEventsImpl() {}
@@ -2939,6 +3234,32 @@ function _FixedSizeListIterator_html_Touch(array) {
   _VariableSizeListIterator_html_Touch.call(this, array);
 }
 function _Lists() {}
+_Lists.indexOf = function(a, element, startIndex, endIndex) {
+  if (startIndex >= a.get$length()) {
+    return (-1);
+  }
+  if (startIndex < (0)) {
+    startIndex = (0);
+  }
+  for (var i = startIndex;
+   i < endIndex; i++) {
+    if ($eq$(a.$index(i), element)) {
+      return i;
+    }
+  }
+  return (-1);
+}
+_Lists.getRange = function(a, start, length, accumulator) {
+  if (length < (0)) $throw(new IllegalArgumentException("length"));
+  if (start < (0)) $throw(new IndexOutOfRangeException(start));
+  var end = start + length;
+  if (end > a.get$length()) $throw(new IndexOutOfRangeException(end));
+  for (var i = start;
+   i < end; i++) {
+    accumulator.add(a.$index(i));
+  }
+  return accumulator;
+}
 function get$$window() {
   return window;
 }
@@ -2972,7 +3293,11 @@ function LogicDevice(ID, deviceType) {
     this.outputs.add(new DeviceOutput(this, devicePin.id, devicePin));
   }
   this.visible = true;
+  this.selectable = true;
 }
+LogicDevice.prototype.get$X = function() { return this.X; };
+LogicDevice.prototype.get$Y = function() { return this.Y; };
+LogicDevice.prototype.get$selectable = function() { return this.selectable; };
 LogicDevice.prototype.InputPinHit = function(x, y) {
   if (this.CloneMode) return null;
   var $$list = this.inputs;
@@ -2992,14 +3317,6 @@ LogicDevice.prototype.OutputPinHit = function(x, y) {
     if (output.get$connectable()) {
       if (output.pinHit(x, y)) return output;
     }
-  }
-  return null;
-}
-LogicDevice.prototype.WireHit = function(x, y) {
-  var $$list = this.inputs;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var input = $$i.next();
-    if (input.wireHit(x, y) != null) return input.wireHit(x, y);
   }
   return null;
 }
@@ -3108,17 +3425,17 @@ LogicDevice.prototype.CalcClock = function(device) {
   }
   else device.acc = device.acc + (1);
 }
-function DeviceInput(device, _id, devicePin) {
+LogicDevice.prototype.contains$2 = LogicDevice.prototype.contains;
+function DeviceInput(device, id, devicePin) {
   this._value = false;
   this._connectable = true;
   this.device = device;
-  this._id = _id;
+  this.id = id;
   this.devicePin = devicePin;
   this.set$value(false);
   this.connectedOutput = null;
   this._pinX = this.devicePin.x;
   this._pinY = this.devicePin.y;
-  this.wire = new Wire();
 }
 DeviceInput.prototype.get$connectable = function() {
   if (this._pinX < (0)) return false;
@@ -3130,22 +3447,6 @@ DeviceInput.prototype.get$offsetX = function() {
 DeviceInput.prototype.get$offsetY = function() {
   return this.device.Y + this._pinY;
 }
-DeviceInput.prototype.addWire = function(wirePoints) {
-  this.clearWire();
-  for (var $$i = wirePoints.iterator(); $$i.hasNext(); ) {
-    var point = $$i.next();
-    this.wire.AddPoint(point.x, point.y);
-  }
-}
-DeviceInput.prototype.clearWire = function() {
-  this.wire.clear$_();
-}
-DeviceInput.prototype.wireHit = function(x, y) {
-  if (this.wire != null && this.connectedOutput != null) {
-    if (this.wire.Contains(x, y, (1))) return this.connectedOutput;
-  }
-  return null;
-}
 DeviceInput.prototype.checkUpdate = function() {
   if (this.connectedOutput != null) {
     this.updated = this.connectedOutput.device.updated;
@@ -3153,17 +3454,22 @@ DeviceInput.prototype.checkUpdate = function() {
   else this.updated = false;
 }
 DeviceInput.prototype.get$connected = function() {
+  if (this.wirePoint == null) return false;
+  this.connectedOutput = this.wirePoint.wire.output;
   if (this.connectedOutput != null) return true;
-  else return false;
+  return false;
 }
 DeviceInput.prototype.get$value = function() {
-  if (this.connectedOutput != null) {
-    if (!this.connectedOutput.get$calculated()) {
-      this.connectedOutput.calculate();
+  if (this.connectedOutput == null) {
+    if (this.wirePoint != null) {
+      this.connectedOutput = this.wirePoint.wire.output;
     }
-    return this.connectedOutput.get$value();
+    return false;
   }
-  else return false;
+  if (!this.connectedOutput.get$calculated()) {
+    this.connectedOutput.calculate();
+  }
+  return this.connectedOutput.get$value();
 }
 DeviceInput.prototype.set$value = function(val) {
   this._value = val;
@@ -3176,10 +3482,10 @@ DeviceInput.prototype.pinHit = function(x, y) {
   }
   return false;
 }
-function DeviceOutput(device, _id, devicePin) {
+function DeviceOutput(device, id, devicePin) {
   this._connectable = true;
   this.device = device;
-  this._id = _id;
+  this.id = id;
   this.devicePin = devicePin;
   this.set$value(false);
   this._pinX = this.devicePin.x;
@@ -3215,13 +3521,6 @@ DeviceOutput.prototype.pinHit = function(x, y) {
   }
   return false;
 }
-function DevicePin(id, x, y) {
-  this.id = id;
-  this.x = x;
-  this.y = y;
-}
-DevicePin.prototype.get$x = function() { return this.x; };
-DevicePin.prototype.get$y = function() { return this.y; };
 function LogicDeviceType(type) {
   this.updateable = false;
   this.type = type;
@@ -3336,16 +3635,14 @@ function Circuit(canvas) {
   var $this = this;
   this.showGrid = false;
   this.gridSnap = false;
-  this.connectionMode = "INIT";
-  this.connectingOutputToInput = false;
-  this.connectingInputToOutput = false;
   this.canvas = canvas;
   this.deviceTypes = new LogicDeviceTypes();
   this.logicDevices = new Array();
   this.context = this.canvas.getContext("2d");
-  this._width = this.canvas.width;
-  this._height = this.canvas.height;
-  this.dummyWire = new Wire();
+  this.width = this.canvas.width;
+  this.height = this.canvas.height;
+  this.selectedDevices = new SelectedDevices(this.logicDevices);
+  this.circuitWires = new Wires();
   this.validPinImage = _ElementFactoryProvider.Element$tag$factory("img");
   this.validPinImage.src = "images/SelectPinGreen.png";
   this.selectPin = _ElementFactoryProvider.Element$tag$factory("img");
@@ -3357,73 +3654,40 @@ function Circuit(canvas) {
   get$$window().setInterval($wrap_call$0(function f() {
     return $this.tick();
   }
-  ), (50));
-  this.canvas.get$on().get$mouseDown().add($wrap_call$1(this.get$onMouseDown()), false);
-  this.canvas.get$on().get$doubleClick().add($wrap_call$1(this.get$onMouseDoubleClick()), false);
-  this.canvas.get$on().get$mouseMove().add($wrap_call$1(this.get$onMouseMove()), false);
-  this.canvas.get$on().get$touchEnter().add($wrap_call$1((function (event) {
-    return $this.onTouchEnter(event);
-  })
-  ), false);
-  this.canvas.get$on().get$touchStart().add($wrap_call$1((function (event) {
-    return $this.onTouchStart(event);
-  })
-  ), false);
-  this.canvas.get$on().get$touchMove().add($wrap_call$1((function (event) {
-    return $this.onTouchMove(event);
-  })
-  ), false);
-  this.canvas.get$on().get$touchEnd().add($wrap_call$1((function (event) {
-    return $this.onTouchEnd(event);
-  })
-  ), false);
-  this.canvas.get$on().get$touchCancel().add($wrap_call$1((function (event) {
-    return $this.onTouchCancel(event);
-  })
-  ), false);
-  this.canvas.get$on().get$touchLeave().add($wrap_call$1((function (event) {
-    return $this.onTouchLeave(event);
-  })
-  ), false);
+  ), (25));
   get$$window().get$on().get$resize().add($wrap_call$1((function (event) {
     return $this.onResize();
   })
   ), true);
+  this.canvas.get$on().get$mouseDown().add($wrap_call$1(this.get$onMouseDown()), false);
+  this.canvas.get$on().get$mouseUp().add($wrap_call$1(this.get$onMouseUp()), false);
+  this.canvas.get$on().get$doubleClick().add($wrap_call$1(this.get$onMouseDoubleClick()), false);
+  this.canvas.get$on().get$mouseMove().add($wrap_call$1(this.get$onMouseMove()), false);
 }
-Circuit.prototype.get$width = function() {
-  return this._width;
-}
-Circuit.prototype.set$width = function(val) {
-  this._width = val;
-  this.canvas.width = val;
-}
-Circuit.prototype.get$height = function() {
-  return this._height;
-}
-Circuit.prototype.set$height = function(val) {
-  this._height = val;
-  this.canvas.height = val;
-}
-Circuit.prototype.onResize = function() {
-  this.set$height(get$$window().innerHeight - (25));
-  this.set$width(get$$window().innerWidth - (25));
-  this.Paint();
-}
+Circuit.prototype.get$width = function() { return this.width; };
+Circuit.prototype.get$height = function() { return this.height; };
 Circuit.prototype.start = function() {
   this.createSelectorBar();
   this.onResize();
 }
+Circuit.prototype.onResize = function() {
+  this.height = get$$window().innerHeight - (25);
+  this.width = get$$window().innerWidth - (25);
+  this.canvas.height = this.height;
+  this.canvas.width = this.width;
+  this.Paint();
+}
 Circuit.prototype.createSelectorBar = function() {
-  this.addNewCloneableDevice("Clock", "CLOCK", (0), (0));
-  this.addNewCloneableDevice("Switch", "SWITCH", (0), (60));
-  this.addNewCloneableDevice("Not", "NOT", (0), (120));
-  this.addNewCloneableDevice("And", "AND", (0), (180));
-  this.addNewCloneableDevice("Nand", "NAND", (0), (240));
-  this.addNewCloneableDevice("Or", "OR", (0), (300));
-  this.addNewCloneableDevice("Nor", "NOR", (0), (360));
-  this.addNewCloneableDevice("XOR", "XOR", (0), (420));
-  this.addNewCloneableDevice("XNOR", "XNOR", (0), (480));
-  this.addNewCloneableDevice("LED", "LED", (50), (60));
+  this.addNewCloneableDevice("clock", "CLOCK", (0), (0));
+  this.addNewCloneableDevice("switch", "SWITCH", (0), (60));
+  this.addNewCloneableDevice("not", "NOT", (0), (120));
+  this.addNewCloneableDevice("and", "AND", (0), (180));
+  this.addNewCloneableDevice("nand", "NAND", (0), (240));
+  this.addNewCloneableDevice("or", "OR", (0), (300));
+  this.addNewCloneableDevice("nor", "NOR", (0), (360));
+  this.addNewCloneableDevice("xor", "XOR", (0), (420));
+  this.addNewCloneableDevice("xnor", "XNOR", (0), (480));
+  this.addNewCloneableDevice("led", "LED", (50), (60));
   this.Paint();
 }
 Circuit.prototype.addNewCloneableDevice = function(id, type, x, y) {
@@ -3432,24 +3696,24 @@ Circuit.prototype.addNewCloneableDevice = function(id, type, x, y) {
     var newDevice = new LogicDevice(id, deviceType);
     this.logicDevices.add(newDevice);
     newDevice.CloneMode = true;
+    newDevice.selectable = false;
     newDevice.MoveDevice(x, y);
     return newDevice;
   }
 }
-Circuit.prototype.NewDeviceFrom = function(device) {
+Circuit.prototype.newDeviceFrom = function(device) {
   var newDevice = new LogicDevice(this.getNewId(), device.deviceType);
   this.logicDevices.add(newDevice);
   newDevice.MoveDevice(device.X, device.Y);
-  this.connectionMode = null;
   this.moveDevice = newDevice;
 }
 Circuit.prototype.drawBorder = function() {
   this.context.beginPath();
-  this.context.rect((115), (0), this.get$width(), this.get$height());
+  this.context.rect((115), (0), this.width, this.height);
   this.context.fillStyle = "#eeeeee";
   this.context.lineWidth = (1);
   this.context.strokeStyle = "#eeeeee";
-  this.context.fillRect((115), (0), this.get$width(), this.get$height());
+  this.context.fillRect((115), (0), this.width, this.height);
   this.context.stroke();
   this.context.closePath();
 }
@@ -3500,151 +3764,43 @@ Circuit.prototype.tryOutputSelect = function(x, y) {
   }
   return null;
 }
-Circuit.prototype.onTouchEnter = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  this._touchX = e.targetTouches.$index((0)).pageX;
-  this._touchY = e.targetTouches.$index((0)).pageY;
-  if ($eq$(this.connectionMode)) {
-    this.selectedInput = this.tryInputSelect(this._touchX, this._touchY);
-    if (this.selectedInput != null) {
-      this.connectionMode = "InputSelected";
-      this.Paint();
-      return;
-    }
-    this.selectedOutput = this.tryOutputSelect(this._touchX, this._touchY);
-    if (this.selectedOutput != null) {
-      this.connectionMode = "OutputSelected";
-      this.Paint();
-      return;
-    }
-  }
-}
-Circuit.prototype.onTouchStart = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  this._touchX = e.targetTouches.$index((0)).pageX;
-  this._touchY = e.targetTouches.$index((0)).pageY;
-  var selectedDevice = this.tryDeviceSelect(this._touchX, this._touchY);
-  if (selectedDevice != null) {
-    if (selectedDevice.CloneMode) {
-      this.NewDeviceFrom(selectedDevice);
-      this.Paint();
-      return;
-    }
-    selectedDevice.clicked();
-    this.Paint();
-  }
-  var _selectedInput = this.tryInputSelect(this._touchX, this._touchY);
-  if (_selectedInput != null) {
-    this.selectedInput = _selectedInput;
-    this.connectionMode = "InputSelected";
-    this.StartWire(this._touchX, this._touchY);
-    return;
-  }
-  var _selectedOutput = this.tryOutputSelect(this._touchX, this._touchY);
-  if (_selectedOutput != null) {
-    this.selectedOutput = _selectedOutput;
-    this.connectionMode = "OutputSelected";
-    this.StartWire(this._touchX, this._touchY);
-    return;
-  }
-}
-Circuit.prototype.onTouchMove = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  this._touchX = e.targetTouches.$index((0)).pageX;
-  this._touchY = e.targetTouches.$index((0)).pageY;
-  if (this.moveDevice != null) {
-    if (e.targetTouches.length >= (1)) {
-      this.moveDevice.MoveDevice(this._touchX, this._touchY);
-      this.Paint();
-      return;
-    }
-  }
-  this.Paint();
-}
-Circuit.prototype.onTouchEnd = function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  this._touchX = e.targetTouches.$index((0)).pageX;
-  this._touchY = e.targetTouches.$index((0)).pageY;
-  if (this.moveDevice != null) {
-    this.moveDevice = null;
-    this.Paint();
-    return;
-  }
-  switch (this.connectionMode) {
-    case "InputToOutput":
-    case "OutputToInput":
-
-      this.AddWirePoint(this._touchX, this._touchY);
-      if (this.checkValidConnection()) {
-        this.EndWire();
-      }
-      return;
-
-  }
-}
-Circuit.prototype.onTouchCancel = function(e) {
-  if (this.moveDevice != null) {
-    this.moveDevice = null;
-    this.Paint();
-    return;
-  }
-}
-Circuit.prototype.onTouchLeave = function(e) {
-  if (this.moveDevice != null) {
-    this.moveDevice = null;
-    this.Paint();
-    return;
-  }
-}
 Circuit.prototype.onMouseDown = function(e) {
   e.preventDefault();
-  var selectedDevice = this.tryDeviceSelect(this._mouseX, this._mouseY);
-  if (selectedDevice != null) {
-    print$(selectedDevice.deviceType.type);
-  }
   if (this.moveDevice != null) {
     this.moveDevice = null;
     return;
   }
-  switch (this.connectionMode) {
-    case "InputToOutput":
-    case "OutputToInput":
-
-      this.AddWirePoint(this._mouseX, this._mouseY);
-      if (this.checkValidConnection()) {
-        this.EndWire();
-      }
+  if (this.newWire != null) {
+    this.addWirePoint(this.mouseX, this.mouseY);
+    return;
+  }
+  if ($eq$(this.StartWire(this.mouseX, this.mouseY), true)) {
+    return;
+  }
+  var selectedDevice = this.tryDeviceSelect(this.mouseX, this.mouseY);
+  if (selectedDevice != null) {
+    if ($eq$(selectedDevice.CloneMode, true)) {
+      this.newDeviceFrom(selectedDevice);
       return;
-
-    case "InputSelected":
-
-      this.StartWire(this._mouseX, this._mouseY);
-      return;
-
-    case "OutputSelected":
-
-      this.StartWire(this._mouseX, this._mouseY);
-      return;
-
-    case "CloneDevice":
-
-      this.NewDeviceFrom(this.cloneDevice);
-      return;
-
-    case null:
-
-      var device = this.tryDeviceSelect(this._mouseX, this._mouseY);
-      if (device != null) device.clicked();
-      break;
-
+    }
+    this.selectedDevices.selectTopAt(this.mouseX, this.mouseY);
+    selectedDevice.clicked();
+    print$(selectedDevice.deviceType.type);
+    return;
   }
 }
 Circuit.prototype.get$onMouseDown = function() {
   return this.onMouseDown.bind(this);
+}
+Circuit.prototype.onMouseUp = function(e) {
+  e.stopPropagation();
+  e.preventDefault();
+  if ($gt$(this.selectedDevices.get$count(), (0))) {
+    this.selectedDevices.clear$_();
+  }
+}
+Circuit.prototype.get$onMouseUp = function() {
+  return this.onMouseUp.bind(this);
 }
 Circuit.prototype.onMouseDoubleClick = function(e) {
   e.stopPropagation();
@@ -3654,149 +3810,149 @@ Circuit.prototype.get$onMouseDoubleClick = function() {
   return this.onMouseDoubleClick.bind(this);
 }
 Circuit.prototype.onMouseMove = function(e) {
-  this._mouseX = e.offsetX;
-  this._mouseY = e.offsetY;
+  this.mouseX = e.offsetX;
+  this.mouseY = e.offsetY;
   if (this.gridSnap) {
-    var x1 = this._mouseX.toDouble() / (10).toDouble();
-    var y1 = this._mouseY.toDouble() / (10).toDouble();
-    this._mouseX = x1.toInt() * (10);
-    this._mouseY = y1.toInt() * (10);
+    var x1 = this.mouseX.toDouble() / (10).toDouble();
+    var y1 = this.mouseY.toDouble() / (10).toDouble();
+    this.mouseX = x1.toInt() * (10);
+    this.mouseY = y1.toInt() * (10);
+  }
+  if ($gt$(this.selectedDevices.get$count(), (0))) {
+    this.selectedDevices.moveTo(this.mouseX, this.mouseY);
+    print$(("selectedDevices.moveTo(" + this.mouseX + ", " + this.mouseY + ")"));
+    return;
   }
   if (this.moveDevice != null) {
-    this.moveDevice.MoveDevice(this._mouseX, this._mouseY);
+    this.moveDevice.MoveDevice(this.mouseX, this.mouseY);
     this.Paint();
     return;
   }
-  switch (this.connectionMode) {
-    case "OutputToInput":
-
-      this.selectedInput = this.checkForInputPinHit(e.offsetX, e.offsetY);
-      if (this.selectedInput != null) {
-        this._mouseX = this.selectedInput.get$offsetX();
-        this._mouseY = this.selectedInput.get$offsetY();
-      }
-      this.dummyWire.UpdateLast(this._mouseX, this._mouseY);
-      this.Paint();
-      return;
-
-    case "InputToOutput":
-
-      this.selectedOutput = this.checkForOutputPinHit(e.offsetX, e.offsetY);
-      if (this.selectedOutput != null) {
-        this._mouseX = this.selectedOutput.get$offsetX();
-        this._mouseY = this.selectedOutput.get$offsetY();
-      }
-      else {
-        this.selectedOutput = this.checkForWireHit(e.offsetX, e.offsetY);
-      }
-      this.dummyWire.UpdateLast(this._mouseX, this._mouseY);
-      this.Paint();
-      return;
-
-    default:
-
-
-  }
-  this.selectedInput = this.checkForInputPinHit(e.offsetX, e.offsetY);
-  if (this.selectedInput != null) {
-    this.connectionMode = "InputSelected";
-    this._mouseX = this.selectedInput.get$offsetX();
-    this._mouseY = this.selectedInput.get$offsetY();
+  if (this.newWire != null) {
+    this.newWire.UpdateLast(this.mouseX, this.mouseY);
+    if (this.checkConnection(this.mouseX, this.mouseY)) {
+    }
     this.Paint();
     return;
   }
-  this.selectedOutput = this.checkForOutputPinHit(e.offsetX, e.offsetY);
-  if (this.selectedOutput != null) {
-    this.connectionMode = "OutputSelected";
-    this._mouseX = this.selectedOutput.get$offsetX();
-    this._mouseY = this.selectedOutput.get$offsetY();
-    this.Paint();
+  if (this.checkValid(this.mouseX, this.mouseY)) {
     return;
-  }
-  this.cloneDevice = this.checkCloneableDevices(e.offsetX, e.offsetY);
-  if (this.cloneDevice != null) {
-    this.connectionMode = "CloneDevice";
-    return;
-  }
-  if ($ne$(this.connectionMode)) {
-    this.connectionMode = null;
-    this.Paint();
   }
 }
 Circuit.prototype.get$onMouseMove = function() {
   return this.onMouseMove.bind(this);
 }
-Circuit.prototype.checkCloneableDevices = function(x, y) {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    if (device.CloneMode) if (device.contains(x, y)) return device;
+Circuit.prototype.checkConnection = function(x, y) {
+  if (this.newWire == null) return false;
+  if (this.newWire.input == null) {
+    var input = this.tryInputSelect(x, y);
+    this.selectedInput = input;
+    if (this.selectedInput != null) {
+      this.newWire.UpdateLast(input.get$offsetX(), input.get$offsetY());
+      return true;
+    }
   }
-}
-Circuit.prototype.checkValidConnection = function() {
-  if (this.selectedOutput != null && this.selectedInput != null) return true;
+  if (this.newWire.output == null) {
+    var output = this.tryOutputSelect(x, y);
+    this.selectedOutput = output;
+    if (this.selectedOutput != null) {
+      this.newWire.UpdateLast(output.get$offsetX(), output.get$offsetY());
+      return true;
+    }
+  }
   return false;
 }
-Circuit.prototype.checkForOutputPinHit = function(x, y) {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    if (device.OutputPinHit(x, y) != null) {
-      return device.OutputPinHit(x, y);
-    }
+Circuit.prototype.checkValid = function(x, y) {
+  if (this.newWire != null) {
+    return this.checkConnection(x, y);
   }
-}
-Circuit.prototype.checkForWireHit = function(x, y) {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    if (device.WireHit(x, y) != null) {
-      return device.WireHit(x, y);
-    }
+  this.selectedInput = this.tryInputSelect(x, y);
+  if (this.selectedInput != null) {
+    this.drawHighlightPin(this.selectedInput.get$offsetX(), this.selectedInput.get$offsetY(), "VALID");
+    return true;
   }
-}
-Circuit.prototype.checkForInputPinHit = function(x, y) {
-  var $$list = this.logicDevices;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    if (device.InputPinHit(x, y) != null) {
-      return device.InputPinHit(x, y);
-    }
+  this.selectedOutput = this.tryOutputSelect(x, y);
+  if (this.selectedOutput != null) {
+    this.drawHighlightPin(this.selectedOutput.get$offsetX(), this.selectedOutput.get$offsetY(), "VALID");
+    return true;
   }
-}
-Circuit.prototype.AddWirePoint = function(x, y) {
-  this.dummyWire.AddPoint(x, y);
+  return false;
 }
 Circuit.prototype.StartWire = function(x, y) {
-  this.dummyWire.clear$_();
-  this.dummyWire.AddPoint(x, y);
-  switch (this.connectionMode) {
-    case "InputSelected":
-
-      this.connectionMode = "InputToOutput";
-      break;
-
-    case "OutputSelected":
-
-      this.connectionMode = "OutputToInput";
-      break;
-
+  var input = this.tryInputSelect(x, y);
+  if (input != null) {
+    this.newWire = this.circuitWires.createWire();
+    this.newWire.input = input;
+    var wp = this.newWire.AddPoint(input.get$offsetX(), input.get$offsetY());
+    input.wirePoint = wp;
+    this.newWire.AddPoint(input.get$offsetX(), input.get$offsetY());
+    print$(("StartWire:" + input.device.ID + " " + input.id));
+    return true;
   }
-  this.drawPinSelectors();
+  var output = this.tryOutputSelect(x, y);
+  if (output != null) {
+    this.newWire = this.circuitWires.createWire();
+    this.newWire.output = output;
+    var wp = this.newWire.AddPoint(output.get$offsetX(), output.get$offsetY());
+    output.wirePoint = wp;
+    this.newWire.AddPoint(output.get$offsetX(), output.get$offsetY());
+    print$(("StartWire:" + output.device.ID + " " + output.id));
+    return true;
+  }
+  if (this.newWire != null) this.circuitWires.deleteWire(this.newWire);
 }
-Circuit.prototype.EndWire = function() {
-  if (this.selectedOutput == null || this.selectedInput == null) {
-    this.selectedInput = null;
-    this.selectedOutput = null;
-    this.connectionMode = null;
-    return;
+Circuit.prototype.addWirePoint = function(x, y) {
+  if (this.newWire == null) return false;
+  this.newWire.UpdateLast(x, y);
+  if (this.newWire.input == null) {
+    var input = this.tryInputSelect(x, y);
+    if (input != null) {
+      this.newWire.input = input;
+      this.newWire.UpdateLast(input.get$offsetX(), input.get$offsetY());
+      input.wirePoint = this.newWire.wirePoints.last();
+    }
+    else {
+      var device = this.tryDeviceSelect(x, y);
+      if (this.newWire.output.device != null) {
+        if ((null == device ? null == (this.newWire.output.device) : device === this.newWire.output.device)) {
+          this.abortWire();
+          return false;
+        }
+      }
+    }
   }
-  this.selectedInput.connectedOutput = this.selectedOutput;
-  this.selectedInput.addWire(this.dummyWire.wirePoints);
+  if (this.newWire.output == null) {
+    var output = this.tryOutputSelect(x, y);
+    if (output != null) {
+      this.newWire.output = output;
+      this.newWire.UpdateLast(output.get$offsetX(), output.get$offsetY());
+      output.wirePoint = this.newWire.wirePoints.last();
+    }
+    else {
+      var device = this.tryDeviceSelect(x, y);
+      if (this.newWire.input.device != null) {
+        if ((null == device ? null == (this.newWire.input.device) : device === this.newWire.input.device)) {
+          this.abortWire();
+          return false;
+        }
+      }
+    }
+  }
+  if (this.newWire.input != null && this.newWire.output != null) {
+    this.newWire = null;
+    return false;
+  }
+  this.newWire.AddPoint(x, y);
+  return true;
+}
+Circuit.prototype.abortWire = function() {
   this.selectedInput = null;
   this.selectedOutput = null;
-  this.connectionMode = null;
-  this.dummyWire.clear$_();
+  if (this.newWire != null) {
+    this.circuitWires.deleteWire(this.newWire);
+    this.newWire = null;
+  }
+  print$("abortWire()");
   this.Paint();
 }
 Circuit.prototype.Paint = function() {
@@ -3807,7 +3963,7 @@ Circuit.prototype.Paint = function() {
   this.drawPinSelectors();
 }
 Circuit.prototype.clearCanvas = function() {
-  this.context.clearRect((0), (0), this._width, this._height);
+  this.context.clearRect((0), (0), this.width, this.height);
 }
 Circuit.prototype.drawDevices = function() {
   var $$list = this.logicDevices;
@@ -3816,160 +3972,55 @@ Circuit.prototype.drawDevices = function() {
     this.context.drawImage(device.deviceType.getImage(device.outputs.$index((0)).get$value()), device.X, device.Y);
   }
 }
-Circuit.prototype.drawDummyWire = function(state) {
+Circuit.prototype.drawWire = function(wire) {
+  if (wire == null) return;
   this.context.fillStyle = this.context.strokeStyle;
   this.context.beginPath();
   this.context.lineWidth = (3);
-  switch (state) {
-    case "VALID":
-
-      this.context.strokeStyle = "#009900";
-      break;
-
-    case "INVALID":
-
-      this.context.strokeStyle = "#999999";
-      break;
-
-    case "ERASE":
-
-      this.context.strokeStyle = "#eeeeee";
-      this.context.lineWidth = (4);
-      break;
-
-    case true:
-
-      this.context.strokeStyle = "#ff4444";
-      break;
-
-    case false:
-
-      this.context.strokeStyle = "#550091";
-      break;
-
-    default:
-
-      this.context.strokeStyle = "#999999";
-
+  if (wire.input == null || wire.output == null) {
+    this.context.strokeStyle = "#999999";
   }
-  this.context.moveTo(this.dummyWire.startX, this.dummyWire.startY);
-  var $$list = this.dummyWire.wirePoints;
-  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var wirePoint = $$i.next();
-    this.context.lineTo(wirePoint.x, wirePoint.y);
-  }
-  this.context.lineTo(this.dummyWire.lastX, this.dummyWire.lastY);
-  this.context.stroke();
-  this.context.closePath();
-}
-Circuit.prototype.drawWire = function(input, state) {
-  if (input.wire == null) return;
-  this.context.fillStyle = this.context.strokeStyle;
-  this.context.beginPath();
-  this.context.lineWidth = (3);
-  switch (state) {
-    case "VALID":
-
-      this.context.strokeStyle = "#009900";
-      break;
-
-    case "INVALID":
-
-      this.context.strokeStyle = "#999999";
-      break;
-
-    case "ERASE":
-
-      this.context.strokeStyle = "#eeeeee";
-      this.context.lineWidth = (4);
-      break;
-
-    case false:
-
-      this.context.strokeStyle = "#550091";
-      break;
-
-    case true:
-
+  else {
+    if ($eq$(wire.output.get$value(), true)) {
       this.context.strokeStyle = "#ff4444";
-      break;
-
-    default:
-
-      this.context.strokeStyle = "#999999";
-
+    }
+    else {
+      this.context.strokeStyle = "#550091";
+    }
   }
   this.context.fillStyle = this.context.strokeStyle;
-  if (input.wire.wirePoints.get$length() >= (2)) {
-    this.context.moveTo(input.wire.wirePoints.$index((0)).get$x(), input.wire.wirePoints.$index((0)).get$y());
-    var $$list = input.wire.wirePoints;
+  if (wire.wirePoints.get$length() >= (2)) {
+    this.context.moveTo(wire.wirePoints.$index((0)).get$x(), wire.wirePoints.$index((0)).get$y());
+    var $$list = wire.wirePoints;
     for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
       var point = $$i.next();
       this.context.lineTo(point.x, point.y);
     }
   }
-  if (input.wire.lastX != input.wire.wirePoints.last().get$x() || input.wire.lastY != input.wire.wirePoints.last().get$y()) {
-    this.context.moveTo(input.wire.wirePoints.last().get$x(), input.wire.wirePoints.last().get$y());
-    this.context.lineTo(input.wire.lastX, input.wire.lastY);
-  }
   this.context.stroke();
   this.context.closePath();
-  if (input.connectedOutput != null) {
-    if (input.connectedOutput.get$offsetX() != input.wire.wirePoints.last().get$x() && input.connectedOutput.get$offsetY() != input.wire.wirePoints.last().get$y()) {
-      this.context.beginPath();
-      this.context.lineWidth = (2);
-      this.context.arc(input.wire.wirePoints.$index(input.wire.wirePoints.get$length() - (1)).get$x(), input.wire.wirePoints.$index(input.wire.wirePoints.get$length() - (1)).get$y(), (5), (0), (6.283185307179586), false);
-      this.context.fill();
-      this.context.stroke();
-      this.context.closePath();
-    }
-  }
 }
 Circuit.prototype.drawWires = function() {
-  var $$list = this.logicDevices;
+  var $$list = this.circuitWires.wires;
   for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
-    var device = $$i.next();
-    var $list0 = device.inputs;
-    for (var $i0 = $list0.iterator(); $i0.hasNext(); ) {
-      var input = $i0.next();
-      if (input.connectedOutput != null) {
-        this.drawWire(input, input.get$value());
-      }
-    }
-  }
-  if (this.dummyWire.wirePoints.get$length() > (0)) {
-    if (this.checkValidConnection()) {
-      this.drawDummyWire("VALID");
-    }
-    else {
-      this.drawDummyWire("INVAILD");
-    }
+    var wire = $$i.next();
+    this.drawWire(wire);
   }
 }
 Circuit.prototype.drawPinSelectors = function() {
-  switch (this.connectionMode) {
-    case "InputToOutput":
-
-      this.drawConnectableOutputPins();
-      if (this.selectedOutput != null) this.drawHighlightPin(this._mouseX, this._mouseY, "VALID");
-      break;
-
-    case "OutputToInput":
-
+  if (this.selectedOutput != null) {
+    this.drawHighlightPin(this.selectedOutput.get$offsetX(), this.selectedOutput.get$offsetY(), "VALID");
+  }
+  if (this.selectedInput != null) {
+    this.drawHighlightPin(this.selectedInput.get$offsetX(), this.selectedInput.get$offsetY(), "VALID");
+  }
+  if (this.newWire != null) {
+    if (this.newWire.input == null) {
       this.drawConnectableInputPins();
-      if (this.selectedInput != null) this.drawHighlightPin(this._mouseX, this._mouseY, "VALID");
-      break;
-
-    case "InputSelected":
-
-      this.drawHighlightPin(this.selectedInput.get$offsetX(), this.selectedInput.get$offsetY(), "VALID");
-      break;
-
-    case "OutputSelected":
-
-      this.drawHighlightPin(this.selectedOutput.get$offsetX(), this.selectedOutput.get$offsetY(), "VALID");
-      break;
-
+    }
+    if (this.newWire.output == null) {
+      this.drawConnectableOutputPins();
+    }
   }
 }
 Circuit.prototype.drawConnectableOutputPins = function() {
@@ -4031,55 +4082,129 @@ Circuit.prototype.drawHighlightPin = function(x, y, highlightMode) {
 
   }
 }
-function WirePoint(x, y) {
+function WirePoint(wire, x, y) {
+  this.wire = wire;
   this.x = x;
   this.y = y;
 }
 WirePoint.prototype.get$x = function() { return this.x; };
+WirePoint.prototype.set$x = function(value) { return this.x = value; };
 WirePoint.prototype.get$y = function() { return this.y; };
+WirePoint.prototype.set$y = function(value) { return this.y = value; };
 function Wire() {
   this.drawWireEndpoint = false;
   this.wirePoints = new Array();
 }
-Wire.prototype.clear$_ = function() {
-  this.wirePoints.clear$_();
-  this.startX = null;
-  this.startY = null;
-  this.lastX = null;
-  this.lastY = null;
-}
 Wire.prototype.AddPoint = function(x, y) {
-  this.lastX = x;
-  this.lastY = y;
-  if (this.startX == null) {
-    this.startX = x;
-    this.startY = y;
-  }
-  this.wirePoints.add(new WirePoint(x, y));
+  this.UpdateLast(x, y);
+  var wp = new WirePoint(this, x, y);
+  this.wirePoints.add(wp);
+  print$(("new WirePoint(" + x + "," + y + ")"));
+  return wp;
 }
 Wire.prototype.UpdateLast = function(x, y) {
-  this.lastX = x;
-  this.lastY = y;
-}
-Wire.prototype.Contains = function(x, y, d) {
   if (this.wirePoints.get$length() >= (2)) {
-    var x1, x2, x3, y1, y2, y3;
-    var d1;
-    x3 = x;
-    y3 = y;
-    for (var t = (0);
-     t < this.wirePoints.get$length() - (1); t++) {
-      x1 = this.wirePoints.$index(t).get$x();
-      x2 = this.wirePoints.$index(t + (1)).get$x();
-      y1 = this.wirePoints.$index(t).get$y();
-      y2 = this.wirePoints.$index(t + (1)).get$y();
-      d1 = (Math.sqrt((y3 - y1) * (y3 - y1) + (x3 - x1) * (x3 - x1)) + Math.sqrt((y3 - y2) * (y3 - y2) + (x3 - x2) * (x3 - x2))) - Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
-      if ($lte$(d1, d)) {
-        return true;
+    this.wirePoints.last().set$x(x);
+    this.wirePoints.last().set$y(y);
+  }
+}
+function Wires() {
+  this.wires = new Array();
+}
+Wires.prototype.createWire = function() {
+  var w = new Wire();
+  this.wires.add(w);
+  return w;
+}
+Wires.prototype.deleteWire = function(w) {
+  this.wires.removeRange(this.wires.indexOf$1(w), (1));
+}
+function DevicePin(id, x, y) {
+  this.id = id;
+  this.x = x;
+  this.y = y;
+}
+DevicePin.prototype.get$x = function() { return this.x; };
+DevicePin.prototype.set$x = function(value) { return this.x = value; };
+DevicePin.prototype.get$y = function() { return this.y; };
+DevicePin.prototype.set$y = function(value) { return this.y = value; };
+function OffsetPoint(xOffset, yOffset) {
+  this.xOffset = xOffset;
+  this.yOffset = yOffset;
+}
+OffsetPoint.prototype.get$xOffset = function() { return this.xOffset; };
+OffsetPoint.prototype.get$yOffset = function() { return this.yOffset; };
+function SelectedDevices(_devices) {
+  this._devices = _devices;
+  this.selectedDevices = new Array();
+  this.offsetPoints = new Array();
+  this.selectedWirePoints = new Array();
+  this.selectedWireOffsetPoints = new Array();
+}
+SelectedDevices.prototype.get$count = function() {
+  return this.selectedDevices.get$length();
+}
+SelectedDevices.prototype.get$wirePointsCount = function() {
+  return this.selectedWirePoints.get$length();
+}
+SelectedDevices.prototype.clear$_ = function() {
+  this.selectedDevices.clear$_();
+  this.offsetPoints.clear$_();
+  this.selectedWireOffsetPoints.clear$_();
+  this.selectedWirePoints.clear$_();
+}
+SelectedDevices.prototype.add = function(device, offsetX, offsetY) {
+  this.selectedDevices.add(device);
+  this.offsetPoints.add(new OffsetPoint(offsetX, offsetY));
+}
+SelectedDevices.prototype.selectTopAt = function(selectX, selectY) {
+  this.selectedDevices.clear$_();
+  for (var t = this._devices.get$length() - (1);
+   t >= (0); t--) {
+    if (this._devices.$index(t).get$selectable()) {
+      if (this._devices.$index(t).contains$2(selectX, selectY)) {
+        this.add(this._devices.$index(t), (this._devices.$index(t).get$X() - selectX), (this._devices.$index(t).get$Y() - selectY));
+        this.selectWirePoints(this._devices.$index(t), selectX, selectY);
+        break;
       }
     }
   }
-  return false;
+  return this.get$count();
+}
+SelectedDevices.prototype.moveTo = function(x, y) {
+  for (var t = (0);
+   t < this.selectedDevices.get$length(); t++) {
+    this.selectedDevices.$index(t).MoveDevice(x + this.offsetPoints.$index(t).get$xOffset(), y + this.offsetPoints.$index(t).get$yOffset());
+  }
+  for (var c = (0);
+   c < this.selectedWireOffsetPoints.get$length(); c++) {
+    this.selectedWirePoints.$index(c).set$x((this.selectedWireOffsetPoints.$index(c).get$xOffset() + x));
+    this.selectedWirePoints.$index(c).set$y((this.selectedWireOffsetPoints.$index(c).get$yOffset() + y));
+  }
+}
+SelectedDevices.prototype.selectWirePoints = function(device, selectX, selectY) {
+  print$(("device:" + device + ".type"));
+  var $$list = device.inputs;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var input = $$i.next();
+    if (input.wirePoint != null) {
+      this.addWirePoint(input.wirePoint, (input.wirePoint.x - selectX), (input.wirePoint.y - selectY));
+    }
+  }
+  var $$list = device.outputs;
+  for (var $$i = $$list.iterator(); $$i.hasNext(); ) {
+    var output = $$i.next();
+    if (output.wirePoint != null) {
+      this.addWirePoint(output.wirePoint, (output.wirePoint.x - selectX), (output.wirePoint.y - selectY));
+    }
+  }
+  print$(("WirePointCount:" + this.selectedWirePoints.get$length()));
+  return this.get$wirePointsCount();
+}
+SelectedDevices.prototype.addWirePoint = function(p, offsetX, offsetY) {
+  print$(("addWirePoint(" + p + ", " + offsetX + ", " + offsetY + ")"));
+  this.selectedWirePoints.add(p);
+  this.selectedWireOffsetPoints.add(new OffsetPoint(offsetX, offsetY));
 }
 function main() {
   new Circuit(get$$document().query("#canvas")).start();
@@ -4126,6 +4251,7 @@ var const$0001 = Object.create(NoMoreElementsException.prototype, {});
 var const$0002 = Object.create(EmptyQueueException.prototype, {});
 var const$0003 = Object.create(UnsupportedOperationException.prototype, {_message: {"value": "", writeable: false}});
 var const$0004 = new JSSyntaxRegExp("^#[_a-zA-Z]\\w*$");
+var const$0005 = Object.create(NotImplementedException.prototype, {});
 $static_init();
 if (typeof window != 'undefined' && typeof document != 'undefined' &&
     window.addEventListener && document.readyState == 'loading') {
