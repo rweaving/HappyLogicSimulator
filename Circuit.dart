@@ -16,24 +16,19 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
       
-/**
-/ A circuit contains and controls the logic simulaton
-*/
+/** A circuit contains and controls the logic simulaton */
 class Circuit {
 
   static final int BORDER_LINE_WIDTH = 1;
   static final String BORDER_LINE_COLOR = '#000000';
-  
   static final int    NEW_WIRE_WIDTH = 3;
   static final String NEW_WIRE_COLOR = '#990000';
   static final String NEW_WIRE_VALID = '#009900';
   static final String NEW_WIRE_INVALID = '#999999';
-  
   static final String WIRE_HIGH = '#ff4444';
   static final String WIRE_LOW = '#550091';
   static final String WIRE_INVALID = '#999999';
-  static final int    WIRE_WIDTH = 3;
-  
+  static final int    WIRE_WIDTH = 4;
   static final int GRID_SIZE = 10;
   static final int GRID_POINT_SIZE = 1;
   static final String GRID_COLOR = '#999493';
@@ -45,11 +40,13 @@ class Circuit {
   CanvasElement canvas;
   CanvasRenderingContext2D context;
   
+//  ImageElement validPinImage;
+//  ImageElement selectPin;
+//  ImageElement startWireImage;
+//  ImageElement connectablePinImage;
   
-  ImageElement validPinImage;
-  ImageElement selectPin;
-  ImageElement startWireImage;
-  ImageElement connectablePinImage;
+  ImageElement background;
+  CanvasPattern backgroundPattern;
    
   int width;
   int height;
@@ -59,10 +56,13 @@ class Circuit {
   LogicDeviceTypes deviceTypes; // Has all the various type of logic devices
   List<LogicDevice> logicDevices; // Holds all the devices in the simulation
   SelectedDevices selectedDevices; // Devices that are selected
+  List<WirePoint> wirePoints; // All the wirepoints
   
   DeviceInput selectedInput;
   DeviceOutput selectedOutput;
-
+  WirePoint selectedWirePoint;
+  WirePoint movingWirePoint;
+  
   LogicDevice moveDevice;
   LogicDevice cloneDevice;
   
@@ -70,12 +70,13 @@ class Circuit {
   Wire newWire; // Pointer to our new wire if adding one
   Wires circuitWires; // Holds all the wires for the simulation
 
-  bool showGrid = false;
-  bool gridSnap = false;
+  bool showGrid = true;
+  bool gridSnap = true;
   
   Circuit(this.canvas) : 
     deviceTypes = new LogicDeviceTypes(), 
-    logicDevices = new List<LogicDevice>(){
+    logicDevices = new List<LogicDevice>(),
+    wirePoints = new List<WirePoint>(){
 
     context = canvas.getContext('2d');
     width = canvas.width;
@@ -85,17 +86,9 @@ class Circuit {
     
     circuitWires = new Wires();
     
-    validPinImage = new Element.tag('img'); 
-    validPinImage.src = "images/SelectPinGreen.png";
-    
-    selectPin = new Element.tag('img');
-    selectPin.src = "images/SelectPinBlack.png";  
-    
-    startWireImage = new Element.tag('img');
-    startWireImage.src = "images/SelectPinBlack.png"; 
-    
-    connectablePinImage = new Element.tag('img');
-    connectablePinImage.src = "images/SelectPinPurple.png";   
+    background = new Element.tag('img');
+    background.src = "images/GridBackground.png";
+    background.on.load.add((Event e) { backgroundPattern = context.createPattern(background,'repeat');});
     
     window.setInterval(f() => tick(), 25); // Create a timer to update the simulation tick
     window.on.resize.add((event) => onResize(), true);
@@ -106,12 +99,13 @@ class Circuit {
     canvas.on.mouseMove.add(onMouseMove);
   }
   
-  // Start the simulation
+  /** Start the simulation */
   void start() {
     createSelectorBar();
     onResize();
   }
   
+  /** When the simulation is resized this is called. */
   void onResize() {
     height = window.innerHeight - 25;
     width = window.innerWidth - 25;
@@ -122,8 +116,9 @@ class Circuit {
     Paint();
   }
   
-  
+  /** Creates the button bar to add devices */
   void createSelectorBar() {
+    
     addNewCloneableDevice('clock', 'CLOCK', 0, 0);
     addNewCloneableDevice('switch', 'SWITCH', 0, 60);
     addNewCloneableDevice('not', 'NOT', 0, 120);
@@ -138,6 +133,7 @@ class Circuit {
     Paint();
   }
   
+  /** add a new button type device */
   LogicDevice addNewCloneableDevice(var id, var type, int x, int y) {
     LogicDeviceType deviceType = deviceTypes.getDeviceType(type);
     if(deviceType != null){
@@ -150,6 +146,7 @@ class Circuit {
     }
   }
   
+  /** Creates a new device from a given device and adds it to the circuit */
   newDeviceFrom(LogicDevice device) {
     LogicDevice newDevice = new LogicDevice(getNewId(), device.deviceType); 
     logicDevices.add(newDevice);
@@ -158,6 +155,7 @@ class Circuit {
     moveDevice = newDevice;
   }
   
+  /** Finds and returns a given device by the give ID */
   LogicDevice GetDeviceByID(var id) {
     for (LogicDevice device in logicDevices) {
       if(device.ID == id) return device; 
@@ -165,13 +163,14 @@ class Circuit {
     return null;
   }
   
-  void ClearCircuit()
-  {
+  /** Clears the circuit of all devices */
+  void ClearCircuit() {
     logicDevices.clear();
+    circuitWires.clearAll();
     Paint();
   }
   
-  
+  /** Draws the simulation border */
   void drawBorder() {
     context.beginPath();
     context.rect(TOOLBAR_WIDTH, 0, width, height);
@@ -183,41 +182,34 @@ class Circuit {
     context.closePath();
   }
   
+  /** Draw the background grid */
   void drawGrid(){
-    context.beginPath();
-    context.lineWidth = 1;
-    context.strokeStyle = GRID_COLOR;
-    
-    for(int x=TOOLBAR_WIDTH; x < width; x+=GRID_SIZE){
-      for(int y=GRID_SIZE; y < height; y+=GRID_SIZE){
-        context.rect(x, y, GRID_POINT_SIZE, GRID_POINT_SIZE);
-      }
-    }
-    context.stroke();
-    context.closePath(); 
+    context.fillStyle = backgroundPattern;  
+    context.fillRect(TOOLBAR_WIDTH, 0, width, height);  
   }
  
+  /** Simulation tick */
   void tick() {
-    if(logicDevices.length <= 0) return;
     
-    for (LogicDevice device in logicDevices) {
-      device.calculated = false;
+    if(logicDevices.length <= 0) 
+      return;
+    
+    for (LogicDevice device in logicDevices) { // Clear the calc status of each
+      device.calculated = false;               // device  
     }
-    for (LogicDevice device in logicDevices) {
+    for (LogicDevice device in logicDevices) { // Calculate the device
       device.Calculate();
     }
     
-    Paint();   
+    Paint(); // Redraw background
   }
   
-  // add new id number
-  getNewId(){    
+  /** Get a unique id */
+  getNewId() {    
     return logicDevices.length;
   }
 
-  /**
-  / Try to select a logic device
-  */
+  /** Try to select a logic device at given point*/
   LogicDevice tryDeviceSelect(int x, int y) {
     for (LogicDevice device in logicDevices) {  
       if(device.contains(x, y)) {
@@ -227,9 +219,7 @@ class Circuit {
     return null;
   }
   
-  /**
-  / Try to select a logic device input
-  */
+  /** Try to select a logic device input at given point*/
   DeviceInput tryInputSelect(int x, int y) {
     for (LogicDevice device in logicDevices) { 
       if(device.InputPinHit(x, y) != null) {
@@ -239,9 +229,7 @@ class Circuit {
     return null;
   }
   
-  /**
-  / Try to select a logic device output
-  */
+  /** Try to select a logic device output at given point */
   DeviceOutput tryOutputSelect(int x, int y) {
     for (LogicDevice device in logicDevices) { 
       if(device.OutputPinHit(x, y) != null) {
@@ -251,9 +239,7 @@ class Circuit {
     return null;
   }
   
-  /**
-  / Try to select a wire at a given point
-  */
+  /** Try to select a wire at a given point */
   Wire tryWireSelect(int x, int y) {
     for (LogicDevice device in logicDevices) { 
       if(device.WireHit(x, y) != null) {
@@ -261,43 +247,51 @@ class Circuit {
       }
     }        
     return null;
-  }  
-
- // Mouse events 
- void onMouseDown(MouseEvent e) {
-   e.preventDefault();
+  } 
+  
+  /** When the user presses down the mouse button */
+  void onMouseDown(MouseEvent e) {
+    e.preventDefault();
    
-   // If we are moving a device stop moving it and stick it
-   if(moveDevice != null) { 
-     moveDevice = null;
-     return;
-   }
+    // If we are moving a device stop moving it and stick it
+    if(moveDevice != null) { 
+      moveDevice = null;
+      return;
+    }
    
-   // If we are adding a new wire try to add a new point to it
-   if(newWire != null) {
-     addWirePoint(mouseX, mouseY); 
-     return;
-   }
+    // If we are adding a new wire try to add a new point to it
+    if(newWire != null) {
+      addWirePoint(mouseX, mouseY); 
+      return;
+    }
    
-   if(StartWire(mouseX, mouseY) == true) {
-     return;
-   }
+    // Start moving a wirepoint if it was selected 
+    if(selectedWirePoint != null) {
+      movingWirePoint = selectedWirePoint; 
+      selectedWirePoint = null; 
+      return;
+    } 
    
-   LogicDevice selectedDevice = tryDeviceSelect(mouseX, mouseY);
+    // Try to start a wire
+    if(StartWire(mouseX, mouseY) == true) {
+      return;
+    }
    
-   if(selectedDevice != null) {
-     if(selectedDevice.CloneMode == true){
-       newDeviceFrom(selectedDevice);
-       return;
-     }
-     selectedDevices.selectTopAt(mouseX, mouseY);
-     selectedDevice.clicked();
-     print(selectedDevice.deviceType.type);
-     return;
-   }
-  }
+    LogicDevice selectedDevice = tryDeviceSelect(mouseX, mouseY);
+    
+    if(selectedDevice != null) {
+      if(selectedDevice.CloneMode == true){
+        newDeviceFrom(selectedDevice);
+        return;
+      }
+      selectedDevices.selectTopAt(mouseX, mouseY);
+      selectedDevice.clicked();
+      print(selectedDevice.deviceType.type);
+      return;
+    }
+}
  
-  // User releases mouse button
+  /** Called when the user releases mouse button */
   void onMouseUp(MouseEvent e) {
     e.stopPropagation();
     e.preventDefault();
@@ -305,14 +299,19 @@ class Circuit {
     if(selectedDevices.count > 0){ // If we are moving devices stop it
       selectedDevices.clear();
     }
+    
+    if(movingWirePoint != null){ // deselect wire point 
+      movingWirePoint = null;
+    }
   }
 
+  /** Called when the user is double clicking on their mizzouse */
   void onMouseDoubleClick(MouseEvent e) {
     e.stopPropagation();
     e.preventDefault();
   }
  
-  // User is moving the mouse
+  /** Called when the user is moving the mouse */
   void onMouseMove(MouseEvent e) {
     mouseX = e.offsetX;
     mouseY = e.offsetY; 
@@ -327,13 +326,20 @@ class Circuit {
     
     if(selectedDevices.count > 0) {
       selectedDevices.moveTo(mouseX, mouseY);
-      print("selectedDevices.moveTo(${mouseX}, ${mouseY})");
+      //print("selectedDevices.moveTo(${mouseX}, ${mouseY})");
       return;
     }
    
     if(moveDevice != null) {
       moveDevice.MoveDevice(mouseX, mouseY);
       Paint();
+      return;
+    }
+    
+    // If we are moving a point update its position
+    if(movingWirePoint != null){
+      movingWirePoint.x = mouseX;
+      movingWirePoint.y = mouseY;
       return;
     }
    
@@ -345,18 +351,22 @@ class Circuit {
       }
       Paint();
       return;
-  }
-   
+    }
+    
     // Check to see if mouse cursor is over a vaild point and select it
     if(checkValid(mouseX, mouseY)){
+      return;
+    }
+    
+    // Try to select a wirepoint 
+    selectedWirePoint = circuitWires.selectWirePoint(mouseX, mouseY); 
+    if(selectedWirePoint != null){
       return;
     }
  }
  
  
- /**
- / Check to see if this point is a vaild connection
- */
+ /** Check to see if this point is a vaild connection */
  bool checkConnection(int x, int y) {
    if(newWire == null) return false;
    
@@ -382,9 +392,7 @@ class Circuit {
    return false;
  }
  
- /**
- / Check to see if this point is vaild
- */
+ /** Check to see if this point is vaild */
  bool checkValid(int x, int y) {
      
    if(newWire != null) { // We are adding a wire
@@ -394,20 +402,21 @@ class Circuit {
    selectedInput = tryInputSelect(x, y); 
   
    if(selectedInput != null){
-     drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, "VALID");  
+     //drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, "VALID");  
      return true;
    }
    
    selectedOutput = tryOutputSelect(x, y);
    
    if(selectedOutput != null){
-     drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, "VALID");  
+     //drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, "VALID");  
      return true;
    }
    
    return false;
  }
 
+ /** Check the button type devices to see if any have the given point */
  LogicDevice checkCloneableDevices(int x, int y) {
   // Check to see if we 
    for (LogicDevice device in logicDevices)
@@ -416,9 +425,7 @@ class Circuit {
          return device;
  }
  
- /**
- /Try to start adding a wire, returns true if a wire is started
- */
+ /** Try to start adding a wire, returns true if a wire is started */
  bool StartWire(int x, int y) {
     
     DeviceInput input = tryInputSelect(x, y);
@@ -508,7 +515,7 @@ class Circuit {
    return true;
  }
   
-  // Abort the connection of two devices
+  /** Abort adding a wire to the simulation */
   void abortWire() {
     selectedInput = null;
     selectedOutput = null;
@@ -518,37 +525,68 @@ class Circuit {
       circuitWires.deleteWire(newWire);
       newWire = null;
     }
-    
-    print("abortWire()");
     Paint();
   }
 
+  /** Redraws the entire simulation */
   void Paint() {
-    clearCanvas();  
-    drawBorder();
-    //drawGrid();
-    drawDevices();
-    drawWires();
-    drawPinSelectors();
+    
+    clearCanvas(); // Clear the background 
+    
+    drawBorder(); // Draw the border of the simulation
+    
+    if(showGrid) drawGrid(); // Draw a background grid
+    
+    drawDevices(); // Draw all the devices
+    
+    drawWires(); // Draw all the wires
+    
+    drawPinSelectors(); // Draw any revent pin selectors
   }
   
+  /** Clear the background */
   void clearCanvas() {
     context.clearRect(0, 0, width, height);
   }
   
-  // Redraw all of the devices
+  /** Redraw all of the devices */
   void drawDevices(){
+    
     for (LogicDevice device in logicDevices) {
+      
+      if(device.CloneMode){
+        context.shadowOffsetX = 0;  
+        context.shadowOffsetY = 0;  
+        context.shadowBlur = 0;  
+        context.shadowColor = "rgba(0, 0, 0, 0.5)";  
+      }
+      else{
+        context.shadowOffsetX = 3;  
+        context.shadowOffsetY = 3;  
+        context.shadowBlur = 7;  
+        context.shadowColor = "rgba(0, 0, 0, 0.5)";  
+        
+      }
+      
       context.drawImage(device.deviceType.getImage(device.outputs[0].value), device.X, device.Y);  
     }
   }
-    
+  
+  /** Draw a given wire using its internal state */
   void drawWire(Wire wire) {
     if(wire == null) return;  
 
     context.fillStyle = context.strokeStyle;
     context.beginPath();
     context.lineWidth = WIRE_WIDTH;
+    
+    context.shadowOffsetX = 3;  
+    context.shadowOffsetY = 3;  
+    context.shadowBlur = 7;  
+    context.shadowColor = "rgba(0, 0, 0, 0.5)"; 
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.miterLimit = 10;
 
     if(wire.input == null || wire.output == null){
       context.strokeStyle = WIRE_INVALID;
@@ -573,7 +611,10 @@ class Circuit {
     }
     context.stroke();
     context.closePath(); 
-    
+  }
+  
+  /** Draws a knot (wire to wire connection point) at a given point */
+  void drawKnot(int x, int y) {
     /*
     // Check to see if we need to draw a knot
     if(input.connectedOutput != null) {
@@ -587,16 +628,17 @@ class Circuit {
           context.closePath(); 
       }
     }*/
-  }    
+  }
   
-  //Draw all the wires
+  
+  /** Draw all the wires in the simulation */
   void drawWires() {
     for (Wire wire in circuitWires.wires) { 
       drawWire(wire);
     }
   }
 
-  // Draw the device visual pin indicators
+  /** Draw the device's visual pin indicators */
   void drawPinSelectors() {
     if(selectedOutput != null){
       drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID'); 
@@ -604,6 +646,10 @@ class Circuit {
     
     if(selectedInput != null){
       drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID'); 
+    }
+    
+    if(selectedWirePoint != null){
+      drawHighlightPin(selectedWirePoint.x , selectedWirePoint.y, 'WIREPOINT'); 
     }
     
     // If we are adding a wire draw acceptable connection points
@@ -617,7 +663,7 @@ class Circuit {
     }
   }
   
-  // Draw the output pins that we can connect to
+  /** Draw the output pins that we can connect to */
   void drawConnectableOutputPins() {
     for (LogicDevice device in logicDevices) {
       if(device.CloneMode) continue;
@@ -628,7 +674,7 @@ class Circuit {
     }      
   }
   
-  // Draw the input pins that we can connect to
+  /** Draw the input pins that we can connect to */
   void drawConnectableInputPins() {
     for (LogicDevice device in logicDevices) {
       if(device.CloneMode) continue;     
@@ -639,18 +685,46 @@ class Circuit {
     }      
   }
   
+  /** Draw the highlight pin at a given coordinate */
   void drawHighlightPin(int x, int y, var highlightMode) {
-    x = x - PIN_INDICATOR_OFFSET;
-    y = y - PIN_INDICATOR_OFFSET;
     
     switch(highlightMode){
-      case 'VALID':       context.drawImage(validPinImage, x, y); break;
-      case 'INVALID':     context.drawImage(validPinImage, x, y); break;
-      case 'WIRECONNECT': context.drawImage(startWireImage, x, y); break;
-      case 'CONNECTED':   context.drawImage(startWireImage, x, y); break;
-      case 'CONNECTABLE': context.drawImage(connectablePinImage, x, y); break; 
-      default:            context.drawImage(validPinImage, x, y);
+      case 'VALID':       context.strokeStyle = '#00AA00'; 
+                          context.fillStyle = 'rgba(0, 170, 0, 0.25)';
+                          break;
+      case 'INVALID':     context.strokeStyle = '#999999'; 
+                          context.fillStyle = 'rgba(153, 153, 153, 0.50)';
+                          break;
+      case 'WIRECONNECT': context.strokeStyle = '#00AA00'; 
+                          context.fillStyle = 'rgba(0, 170, 0, 0.5)';
+                          break;
+      case 'CONNECTED':   context.strokeStyle = '#FFFF00'; 
+                          context.fillStyle = 'rgba(0, 170, 0, 0.5)'; 
+                          break;
+      case 'WIREPOINT':   context.strokeStyle = '#000000'; 
+                          context.fillStyle = 'rgba(255, 255, 255, 0.5)'; 
+                          break;
+                          
+      case 'CONNECTABLE': context.strokeStyle = '#4000AA'; 
+                          context.fillStyle = 'rgba(64, 0, 170, 0.25)';
+                          break; 
+                          
+      default:            context.strokeStyle = '#000000';
+                          context.fillStyle = 'rgba(255, 0, 0, 0.5)';
     }
+    
+    context.beginPath();  
+    context.shadowOffsetX = 0;  
+    context.shadowOffsetY = 0;  
+    context.shadowBlur = 0; 
+    context.lineWidth = 1;
+    context.arc(x, y, 7, 0, TAU, true);  
+    
+    context.fill();
+    context.stroke();  
+    context.closePath(); 
+
   }
+  
 }
   

@@ -18,7 +18,7 @@
 #source('Wires.dart');
 #source('DevicePin.dart');
 #source('DeviceButton.dart');
-#source('SelectedDevices.dart');
+#source('DeviceSelector.dart');
 
 void main() {
   

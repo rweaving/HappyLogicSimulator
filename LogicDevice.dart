@@ -123,7 +123,8 @@ class LogicDevice {
   // Move the device to a new location
   MoveDevice(int newX, int newY) { 
     if(deviceType.images[0] != null) {    
-        Util.pos(deviceType.images[0], newX.toDouble(), newY.toDouble());
+        
+      Util.pos(deviceType.images[0], newX.toDouble(), newY.toDouble());
         X = newX;
         Y = newY;
       }

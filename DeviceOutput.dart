@@ -18,7 +18,7 @@
    
 
 class DeviceOutput{ 
-  static final int PIND = 7; // Pin hit margin
+  static final int PIND = 6; // Pin hit margin
   bool _value;  
   int _pinX;
   int _pinY;

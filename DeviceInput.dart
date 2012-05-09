@@ -17,7 +17,7 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
 class DeviceInput {
-  static final int PIND = 7; // Pin hit margin 
+  static final int PIND = 6; // Pin hit margin 
   final LogicDevice device;  
 
   DeviceOutput connectedOutput;
@@ -63,29 +63,6 @@ class DeviceInput {
   set pinY(int y)   => _pinY;             // the pins Y location on the devices image
    
   
-//  void createWire(int x, int y){
-//      wire.AddPoint(x, y);
-//  }
-//  
-//  void addWire(List<WirePoint> wirePoints){
-//    clearWire();
-//    for(WirePoint point in wirePoints){
-//      wire.AddPoint(point.x, point.y);
-//    }
-//  }
-//  
-//  void clearWire(){
-//      wire.clear();
-//  }
-//  
-//  DeviceOutput wireHit(int x, int y){
-//    if(wire != null && connectedOutput != null){
-//      if(wire.Contains(x, y, 1))
-//        return connectedOutput;
-//    }
-//    return null;
-//  }
-  
   void checkUpdate(){
     if(connectedOutput != null) {
       updated = connectedOutput.device.updated;
@@ -94,7 +71,7 @@ class DeviceInput {
       updated = false;
    }
   
-  // Has this device been calculated
+  /** Returns true if the device has been calculated */
   bool get calculated(){
     if(wirePoint != null) {
       return wirePoint.wire.output.device.calculated;
@@ -102,7 +79,7 @@ class DeviceInput {
     return false;
   }
   
-  // Is this input connected to another device
+  /** Returns true if this input connected to another device */
   bool get connected(){
     if(wirePoint == null) 
       return false;
@@ -115,6 +92,7 @@ class DeviceInput {
     return false;
   }
   
+  /** returns the inputs value */
   bool get value(){
 
     if(connectedOutput == null){

@@ -19,11 +19,11 @@
 
 class DeviceButton extends LogicDevice {
 
-  
+  num scale;
   Circuit circuit;
   
   DeviceButton(this.circuit){
-    
+    scale = 0.75;
   }
   
   onPress(){

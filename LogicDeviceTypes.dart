@@ -15,7 +15,6 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
 
 class LogicDeviceType{
   var type;
@@ -100,9 +99,9 @@ class LogicDeviceTypes{
     
     LogicDeviceType _nand = AddNewType('NAND');
     _nand.AddImage('images/nand2.png');
-    _nand.AddInput(0, 5, 15);
-    _nand.AddInput(1, 5, 35);
-    _nand.AddOutput(0, 95, 25);  
+    _nand.AddInput(0, 10, 20);
+    _nand.AddInput(1, 10, 40);
+    _nand.AddOutput(0, 100, 30);  
     
     LogicDeviceType _switch = AddNewType('SWITCH');
     _switch.AddImage("images/01Switch_Low.png");
@@ -114,7 +113,7 @@ class LogicDeviceTypes{
     LogicDeviceType _led = AddNewType('LED');
     _led.AddImage("images/01Disp_Low.png");
     _led.AddImage("images/01Disp_High.png");
-    _led.AddInput(0, 16, 0);
+    _led.AddInput(0, 20, 12);
     _led.AddOutput(0, -1, -1);
     _led.updateable = true;
     
@@ -144,13 +143,13 @@ class LogicDeviceTypes{
 
     LogicDeviceType _not = AddNewType('NOT');
     _not.AddImage("images/not.png");
-    _not.AddInput(0, 5, 25);
-    _not.AddOutput(0, 94, 25);
+    _not.AddInput(0, 10, 30);
+    _not.AddOutput(0, 100, 30);
     
     LogicDeviceType _clock = AddNewType('CLOCK');
     _clock.AddImage("images/Clock.png");
     _clock.AddInput(0, -1, -1);
-    _clock.AddOutput(0, 64, 14);
-    _clock.AddOutput(1, 64, 39);
+    _clock.AddOutput(0, 70, 20);
+    _clock.AddOutput(1, 70, 40);
     }
 }

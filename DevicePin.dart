@@ -19,12 +19,11 @@
 /**
 / A connection point that belongs to an input or output
 */
-class DevicePin {
+class DevicePin implements Point{
   var id;
   int x;
   int y;
   
   DevicePin(this.id, this.x, this.y){}
-  
 }
 

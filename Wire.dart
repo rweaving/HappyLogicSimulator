@@ -17,16 +17,19 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
 
-class WirePoint {
+class WirePoint  implements Point{
   int x;
   int y;
   Wire wire;
+  
   WirePoint(this.wire, this.x, this.y){}
 }
 
-
+/** A wire contains a list of wire points and connects logic devices together */
 class Wire {
   static final int NEW_WIRE_WIDTH = 3;
+  static final int WIRE_HIT_RADIUS = 6;
+  
   static final String NEW_WIRE_COLOR = '#990000';
   
   static final String NEW_WIRE_VALID = '#009900';
@@ -49,6 +52,7 @@ class Wire {
     wirePoints = new List<WirePoint>();
   }
   
+  /** The wire's starting x point */
   int get startX(){
     if(wirePoints.length > 0){
       return wirePoints[0].x;
@@ -56,6 +60,7 @@ class Wire {
     return null;
   }
   
+  /** The wire's starting y point */
   int get startY(){
     if(wirePoints.length > 0){
       return wirePoints[0].y;
@@ -63,7 +68,19 @@ class Wire {
     return null;
   }
   
-  // Clear all the wire points
+  /** Returns a wirepoint if it exists at the given point */
+  WirePoint getWirePoint(int x, int y) {
+    for(WirePoint point in wirePoints) {
+      if(x >= (point.x - WIRE_HIT_RADIUS) && x <= (point.x + WIRE_HIT_RADIUS)) {
+        if(y >= (point.y - WIRE_HIT_RADIUS) && y <= (point.y + WIRE_HIT_RADIUS)) {
+          return point;
+        }
+      }
+    }
+    return null;
+  }
+  
+  /** Clear the wire of all the wire points */
   void clear() {
     wirePoints.clear();
     
@@ -71,45 +88,40 @@ class Wire {
     lastY = null;
   }
    
-  // Add a new point to the wire
+  /** Add a new point to the wire */
   WirePoint AddPoint(int x, int y) {
     UpdateLast(x,y);
     
     WirePoint wp = new WirePoint(this, x, y);
     wirePoints.add(wp);
-    print("new WirePoint($x,$y)");
+    //print("new WirePoint($x,$y)");
     return wp;
   }
   
-  // Check to see if first or last point is here
+  /** Check to see if first or last point is here */
   bool HasStartEndPoint(int x, int y) {
-    if(wirePoints.length >= 2){
-      if(wirePoints[0].x == x && wirePoints[0].y == y) return true;
-      if(wirePoints.last().x == x && wirePoints.last().y == y) return true;
+    if(wirePoints.length >= 2) {
+      if(wirePoints[0].x == x && wirePoints[0].y == y) { 
+        return true;
+      }
+      if(wirePoints.last().x == x && wirePoints.last().y == y) {
+        return true;
+      }
     }
   }
   
-  // Updates the last point
+  /** Updates the last point in the wire */
   void UpdateLast(int x, int y){
     if(wirePoints.length >= 2){ // at least 2 points
       wirePoints.last().x = x;
       wirePoints.last().y = y;
     }
   }
-    
-//  String GetWireString()
-//  {
-//    List<String> wireString = new List<String>();
-//    wirePoints.forEach((f){
-//      wireString.add(JSON.stringify(f.toMap()));
-//    });
-//    return JSON.stringify(wireString);
-//  }
   
-  // Check to see of the wire contains the point
-  // TODO: optimise
-  bool Contains(int x, int y, var d)
-  { 
+  /** Check to see of the wire contains a given point */
+  bool Contains(int x, int y, var d) { 
+    
+    // TODO: optimise
     if(wirePoints.length >= 2){
       int x1, x2, x3, y1, y2, y3;
       var d1;
