@@ -18,31 +18,46 @@
    
 
 class DeviceIO { 
-  static final int PIND = 10; // Pin hit radius 
+  static final int IO_HIT_RADIUS = 10; // Pin hit radius 
   
   LogicDevice device; // parent device  
   DevicePin devicePin; // the pin that we connect to 
+    
+  bool value; // The IO value
+  bool _connectable;
+  var id; // the IO's id TODO:use hashcode
   
-  var value; // io points value
-  var id; // io id TODO:use hashcode
+  /** True if this IO's value has been updated */
+  bool updated; 
   
-  bool connectable; // Can you connect to this input pin
-  bool updated; // True if this IO's value has been updated 
+  /** Returns the corrected absolute X position */
+  int get offsetX() => device.X + devicePin.x;   
   
-  DeviceIO(this.device, this.id, DevicePin pin) {
-    value = false;
-    devicePin = pin; 
-  }
+  /** Returns the corrected absolute Y position */
+  int get offsetY() => device.Y + devicePin.y;  
   
-  int get offsetX() => device.X + devicePin.x;  // the corrected absolute X position 
-  int get offsetY() => device.Y + devicePin.y;  // the corrected absolute Y position
-  
+  /** Returns true if given point is within the pin hit radius */
   bool pinHit(int x, int y) {
-    if(x <= (offsetX + PIND) && x >= (offsetX - PIND)) {
-      if(y <= (offsetY + PIND) && y >= (offsetY - PIND)) {
+    if(x <= (offsetX + IO_HIT_RADIUS) && x >= (offsetX - IO_HIT_RADIUS)) {
+      if(y <= (offsetY + IO_HIT_RADIUS) && y >= (offsetY - IO_HIT_RADIUS)) {
         return true;
       }
     }
     return false;
   }
+
+  /** Returns true if you connect to this io */
+  bool get connectable() {
+    if (devicePin.x < 0) { 
+      return false; 
+    }
+    else { 
+      return true;
+    }
+  }
+  
+  set connectable(bool c){
+    _connectable = c;
+  }
+  
 }

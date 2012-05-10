@@ -16,72 +16,73 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
-
-class DeviceOutput{ 
-  static final int PIND = 6; // Pin hit margin
-  bool _value;  
-  int _pinX;
-  int _pinY;
+class DeviceOutput  { //extends DeviceIO
+ static final int IO_HIT_RADIUS = 9; // Pin hit radius 
   
-  int id;
-  
-  DevicePin devicePin;
-  WirePoint wirePoint;
-  
-  // Can you connect to this output pin
-  bool _connectable = true;
-  bool get connectable(){
-    if (_pinX < 0) return false;  
-    else return _connectable;
-  }
-  set connectable(bool val){
-    _connectable = val;
-  }
-  
-  final LogicDevice device;
-  
-  DeviceOutput(this.device, this.id, this.devicePin){
-    value = false;
+  LogicDevice device; // parent device  
+  DevicePin devicePin; // the pin that we connect to 
     
-    _pinX = devicePin.x;
-    _pinY = devicePin.y;
-    
-  }
+  bool value; // The IO value
+  bool _connectable;
+  var id; // the IO's id TODO:use hashcode
   
-  // Has this device been calculated
-  bool get calculated(){
-    return device.calculated;
-  }
+  /** True if this IO's value has been updated */
+  bool updated; 
   
-  calculate(){
-    device.Calculate();
-  }
+  /** Returns the corrected absolute X position */
+  int get offsetX() => device.X + devicePin.x;   
   
-  int get offsetX() => device.X + _pinX;
-  int get offsetY() => device.Y + _pinY;
-  int get pinX() => _pinX;
-  int get pinY() => _pinY;
-  set pinX(int x) => _pinX;             // the pins X location on the devices image
-  set pinY(int y) => _pinY;             // the pins Y location on the devices image
+  /** Returns the corrected absolute Y position */
+  int get offsetY() => device.Y + devicePin.y;  
   
-  bool get value() => _value;
-  
-  set value(bool val){
-    _value = val;
-  }
-  
-  SetPinLocation(int x, int y){
-    _pinX = x;
-    _pinY = y;
-  }
-  
-  bool pinHit(int x, int y){
-    if(x <= (offsetX + PIND) && x >= (offsetX - PIND)){
-      if(y <= (offsetY + PIND) && y >= (offsetY - PIND)){
+  /** Returns true if given point is within the pin hit radius */
+  bool pinHit(int x, int y) {
+    if(x <= (offsetX + IO_HIT_RADIUS) && x >= (offsetX - IO_HIT_RADIUS)) {
+      if(y <= (offsetY + IO_HIT_RADIUS) && y >= (offsetY - IO_HIT_RADIUS)) {
         return true;
       }
     }
     return false;
+  }
+
+  /** Returns true if you connect to this io */
+  bool get connectable() {
+    if (devicePin.x < 0) { 
+      return false; 
+    }
+    else { 
+      return true;
+    }
+  }
+  
+  set connectable(bool c){
+    _connectable = c;
+  }
+  
+  WirePoint wirePoint;
+
+  DeviceOutput(LogicDevice d, var ioId, DevicePin pin) {
+//    super.device = d;
+//    super.id = ioId;
+//    super.devicePin = pin;
+//    super.connectable = true;
+//    super.value = false;
+//    
+    this.device = d;
+    this.id = ioId;
+    this.devicePin = pin;
+    this.connectable = true;
+    this.value = false;
+  }
+  
+  /** Returns the connected devices' calculation state */
+  bool get calculated() {
+    return device.calculated;
+  }
+  
+  /** Call the devices' calculation function */
+  void calculate() {
+    device.Calculate();
   }
   
 }

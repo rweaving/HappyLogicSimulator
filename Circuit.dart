@@ -25,8 +25,8 @@ class Circuit {
   static final String NEW_WIRE_COLOR = '#990000';
   static final String NEW_WIRE_VALID = '#009900';
   static final String NEW_WIRE_INVALID = '#999999';
-  static final String WIRE_HIGH = '#ff4444';
-  static final String WIRE_LOW = '#550091';
+  static final String WIRE_HIGH = 'hsl(0, 100%, 50%)';
+  static final String WIRE_LOW =  'hsl(0, 100%, 5%)'; 
   static final String WIRE_INVALID = '#999999';
   static final int    WIRE_WIDTH = 4;
   static final int GRID_SIZE = 10;
@@ -39,11 +39,6 @@ class Circuit {
   
   CanvasElement canvas;
   CanvasRenderingContext2D context;
-  
-//  ImageElement validPinImage;
-//  ImageElement selectPin;
-//  ImageElement startWireImage;
-//  ImageElement connectablePinImage;
   
   ImageElement background;
   CanvasPattern backgroundPattern;
@@ -70,8 +65,8 @@ class Circuit {
   Wire newWire; // Pointer to our new wire if adding one
   Wires circuitWires; // Holds all the wires for the simulation
 
-  bool showGrid = true;
-  bool gridSnap = true;
+  bool showGrid = false;
+  bool gridSnap = false;
   
   Circuit(this.canvas) : 
     deviceTypes = new LogicDeviceTypes(), 
@@ -90,9 +85,9 @@ class Circuit {
     background.src = "images/GridBackground.png";
     background.on.load.add((Event e) { backgroundPattern = context.createPattern(background,'repeat');});
     
-    window.setInterval(f() => tick(), 25); // Create a timer to update the simulation tick
+    window.setInterval(f() => tick(), 50); // Create a timer to update the simulation tick
     window.on.resize.add((event) => onResize(), true);
-  
+    
     canvas.on.mouseDown.add(onMouseDown);
     canvas.on.mouseUp.add(onMouseUp);
     canvas.on.doubleClick.add(onMouseDoubleClick);
@@ -273,18 +268,18 @@ class Circuit {
     } 
    
     // Try to start a wire
-    if(StartWire(mouseX, mouseY) == true) {
+    if(StartWire(e.offsetX , e.offsetY) == true) { // mouseY
       return;
     }
    
-    LogicDevice selectedDevice = tryDeviceSelect(mouseX, mouseY);
+    LogicDevice selectedDevice = tryDeviceSelect(e.offsetX, e.offsetY);//mouseX, mouseY);
     
     if(selectedDevice != null) {
       if(selectedDevice.CloneMode == true){
         newDeviceFrom(selectedDevice);
         return;
       }
-      selectedDevices.selectTopAt(mouseX, mouseY);
+      selectedDevices.selectTopAt(e.offsetX, e.offsetY);//mouseX, mouseY);
       selectedDevice.clicked();
       print(selectedDevice.deviceType.type);
       return;
@@ -346,7 +341,7 @@ class Circuit {
     // If we are adding a wire update its last point
     if(newWire != null){
       newWire.UpdateLast(mouseX, mouseY);
-      if(checkConnection(mouseX, mouseY)){ // Check to see if we have valid connection
+      if(checkConnection(e.offsetX, e.offsetY)) {//mouseX, mouseY)){ // Check to see if we have valid connection
       
       }
       Paint();
@@ -354,12 +349,12 @@ class Circuit {
     }
     
     // Check to see if mouse cursor is over a vaild point and select it
-    if(checkValid(mouseX, mouseY)){
+    if(checkValid(e.offsetX, e.offsetY)) { //mouseX, mouseY)){
       return;
     }
     
     // Try to select a wirepoint 
-    selectedWirePoint = circuitWires.selectWirePoint(mouseX, mouseY); 
+    selectedWirePoint = circuitWires.selectWirePoint(e.offsetX, e.offsetY);//mouseX, mouseY); 
     if(selectedWirePoint != null){
       return;
     }
@@ -541,7 +536,7 @@ class Circuit {
     
     drawWires(); // Draw all the wires
     
-    drawPinSelectors(); // Draw any revent pin selectors
+    drawPinSelectors(); // Draw pin selectors
   }
   
   /** Clear the background */
@@ -554,19 +549,19 @@ class Circuit {
     
     for (LogicDevice device in logicDevices) {
       
-      if(device.CloneMode){
-        context.shadowOffsetX = 0;  
-        context.shadowOffsetY = 0;  
-        context.shadowBlur = 0;  
-        context.shadowColor = "rgba(0, 0, 0, 0.5)";  
-      }
-      else{
-        context.shadowOffsetX = 3;  
-        context.shadowOffsetY = 3;  
-        context.shadowBlur = 7;  
-        context.shadowColor = "rgba(0, 0, 0, 0.5)";  
-        
-      }
+//      if(device.CloneMode){
+//        context.shadowOffsetX = 0;  
+//        context.shadowOffsetY = 0;  
+//        context.shadowBlur = 0;  
+//        context.shadowColor = "rgba(0, 0, 0, 0.5)";  
+//      }
+//      else{
+//        context.shadowOffsetX = 3;  
+//        context.shadowOffsetY = 3;  
+//        context.shadowBlur = 7;  
+//        context.shadowColor = "rgba(0, 0, 0, 0.5)";  
+//        
+//      }
       
       context.drawImage(device.deviceType.getImage(device.outputs[0].value), device.X, device.Y);  
     }
@@ -580,10 +575,6 @@ class Circuit {
     context.beginPath();
     context.lineWidth = WIRE_WIDTH;
     
-    context.shadowOffsetX = 3;  
-    context.shadowOffsetY = 3;  
-    context.shadowBlur = 7;  
-    context.shadowColor = "rgba(0, 0, 0, 0.5)"; 
     context.lineCap = 'round';
     context.lineJoin = 'round';
     context.miterLimit = 10;
@@ -593,7 +584,7 @@ class Circuit {
     }
     else{
       if(wire.output.value == true){ // High
-        context.strokeStyle = WIRE_HIGH;  
+        context.strokeStyle = WIRE_HIGH;
       }
       else{
         context.strokeStyle = WIRE_LOW;
@@ -701,12 +692,12 @@ class Circuit {
       case 'CONNECTED':   context.strokeStyle = '#FFFF00'; 
                           context.fillStyle = 'rgba(0, 170, 0, 0.5)'; 
                           break;
-      case 'WIREPOINT':   context.strokeStyle = '#000000'; 
-                          context.fillStyle = 'rgba(255, 255, 255, 0.5)'; 
+      case 'WIREPOINT':   context.strokeStyle = 'hsla(240, 100%, 50%, 1)'; 
+                          context.fillStyle = 'hsla(240, 100%, 50%, 0.5)'; 
                           break;
                           
-      case 'CONNECTABLE': context.strokeStyle = '#4000AA'; 
-                          context.fillStyle = 'rgba(64, 0, 170, 0.25)';
+      case 'CONNECTABLE': context.strokeStyle = 'hsla(270, 75%, 50%, 1)';//'#4000AA'; 
+                          context.fillStyle = 'hsla(270, 75%, 50%, 0.5)';// 'rgba(64, 0, 170, 0.25)';
                           break; 
                           
       default:            context.strokeStyle = '#000000';
@@ -714,10 +705,10 @@ class Circuit {
     }
     
     context.beginPath();  
-    context.shadowOffsetX = 0;  
-    context.shadowOffsetY = 0;  
-    context.shadowBlur = 0; 
     context.lineWidth = 1;
+    
+    //DeviceIO.IO_HIT_RADIUS
+    
     context.arc(x, y, 7, 0, TAU, true);  
     
     context.fill();
