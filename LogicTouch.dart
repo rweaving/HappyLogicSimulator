@@ -1,8 +1,10 @@
     // Touch Events
     canvas.on.touchEnter.add((event) => onTouchEnter(event), false);
+    
     canvas.on.touchStart.add((event) => onTouchStart(event), false);
     canvas.on.touchMove.add((event) => onTouchMove(event), false);
     canvas.on.touchEnd.add((event) => onTouchEnd(event), false);
+    
     canvas.on.touchCancel.add((event) => onTouchCancel(event), false);
     canvas.on.touchLeave.add((event) => onTouchLeave(event), false); 
  

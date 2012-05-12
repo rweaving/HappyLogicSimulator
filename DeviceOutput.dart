@@ -30,10 +30,10 @@ class DeviceOutput  { //extends DeviceIO
   bool updated; 
   
   /** Returns the corrected absolute X position */
-  int get offsetX() => device.X + devicePin.x;   
+  int get offsetX() => device.xPosition + devicePin.x;   
   
   /** Returns the corrected absolute Y position */
-  int get offsetY() => device.Y + devicePin.y;  
+  int get offsetY() => device.yPosition + devicePin.y;  
   
   /** Returns true if given point is within the pin hit radius */
   bool pinHit(int x, int y) {
@@ -58,8 +58,7 @@ class DeviceOutput  { //extends DeviceIO
   set connectable(bool c){
     _connectable = c;
   }
-  
-  WirePoint wirePoint;
+  //WirePoint wirePoint;
 
   DeviceOutput(LogicDevice d, var ioId, DevicePin pin) {
 //    super.device = d;

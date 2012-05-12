@@ -16,16 +16,14 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
-/**
-/ there is one instance of the logic device for each logic device that is displayed
-*/
+/** There is one instance of the logic device for each logic device that is displayed */
 class LogicDevice {
 
-  var ID;
-
-  int X;
-  int Y;
-  
+  //var id;
+  Point position;
+  int xPosition;
+  int yPosition;
+    
   bool selected;
   bool selectable;
   bool enabled;
@@ -33,10 +31,6 @@ class LogicDevice {
   bool updated;
   bool visible;
   bool updateable;
-  
-  bool CloneMode = false; 
-  
-  static final int PIND = 7;
 
   List<DeviceInput> inputs;
   List<DeviceOutput> outputs;
@@ -46,7 +40,7 @@ class LogicDevice {
   int acc=0;
   int rset=4;
  
-  LogicDevice(this.ID, this.deviceType) { 
+  LogicDevice(this.deviceType) { 
     inputs = new List<DeviceInput>();
     outputs = new List<DeviceOutput>();
     
@@ -58,25 +52,12 @@ class LogicDevice {
       outputs.add(new DeviceOutput(this, devicePin.id, devicePin));
     }
     
+    position = new Point(0,0);
     visible = true;
     selectable = true;
   }
-
-  // Does any of this devices wires start or end with this point
-  // sHould return a list
-  Wire HasWirePoint(int x, int y) {
-//    if(CloneMode) return null;
-//
-//    for (DeviceInput input in inputs) {
-//      if(input.wire.HasStartEndPoint(x, y))
-//          return input.wire; 
-//    }
-//    return null;  
-  }
  
   DeviceInput InputPinHit(int x, int y) {
-    if(CloneMode) return null;
-    
     for (DeviceInput input in inputs) {
       if(input.connectable){
         if(input.pinHit(x, y))
@@ -87,8 +68,6 @@ class LogicDevice {
   }
   
   DeviceOutput OutputPinHit(int x, int y) {
-    if(CloneMode) return null;
-    
     for (DeviceOutput output in outputs) {
       if(output.connectable){
         if(output.pinHit(x, y))
@@ -101,33 +80,13 @@ class LogicDevice {
   bool DeviceHit(int x, int y) {
     return contains(x, y);
   }
-    
-  // Find what Device output is connected to this device
-  DeviceOutput WireHit(int x, int y) {
-//    for (DeviceInput input in inputs) {
-//      if(input.wireHit(x, y) != null)
-//        return input.wireHit(x, y); 
-//    }
-    return null;
-  }
-  
-  // Try to select a wire
-  Wire WireSelect(int x, int y) {
-//    for (DeviceInput input in inputs) 
-//      if(input.wireHit(x, y) != null)
-//        return input.wire;
-
-    return null;
-  }
-  
+   
   // Move the device to a new location
-  MoveDevice(int newX, int newY) { 
-    if(deviceType.images[0] != null) {    
-        
-      Util.pos(deviceType.images[0], newX.toDouble(), newY.toDouble());
-        X = newX;
-        Y = newY;
-      }
+  void MoveDevice(int newX, int newY) { 
+      position.x = newX;
+      position.y = newY;
+      xPosition = newX;
+      yPosition = newY;
   }
   
   // the user has click on a logic device
@@ -142,10 +101,11 @@ class LogicDevice {
   
 //   Id the given point within our image
   bool contains(int pointX, int pointY) {
-    if ((pointX > X && pointX < X + deviceType.images[0].width) && 
-          (pointY > Y && pointY < Y + deviceType.images[0].height)) {
+    if ((pointX > xPosition && pointX < xPosition + deviceType.images[0].width) && 
+          (pointY > yPosition && pointY < yPosition + deviceType.images[0].height)) {
       return true;
-    } else {
+    } 
+    else {
       return false;
     }
   }

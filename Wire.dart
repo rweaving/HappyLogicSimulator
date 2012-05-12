@@ -27,24 +27,28 @@ class WirePoint  implements Point{
 
 /** A wire contains a list of wire points and connects logic devices together */
 class Wire {
+  static final int WIRE_HIT_RADIUS = 8;
+  
+  static final int WIRE_WIDTH = 3;
   static final int NEW_WIRE_WIDTH = 3;
-  static final int WIRE_HIT_RADIUS = 6;
-  
+
   static final String NEW_WIRE_COLOR = '#990000';
-  
   static final String NEW_WIRE_VALID = '#009900';
   static final String NEW_WIRE_INVALID= '#999999';
   
   static final String WIRE_HIGH = '#ff4444';
   static final String WIRE_LOW = '#550091';
-  static final int WIRE_WIDTH = 3;
-  static final TAU = Math.PI * 2;
+  
+  static final TAU = Math.PI * 2; 
   
   DeviceInput input;
   DeviceOutput output;
   
+  WirePoint inputPoint;
+  WirePoint outputPoint;
+  
   bool drawWireEndpoint = false;
-  int lastX, lastY;
+
   
   List<WirePoint> wirePoints;
   
@@ -67,6 +71,41 @@ class Wire {
     }
     return null;
   }
+  
+  int get lastX() {
+    return wirePoints.last().x; 
+  }
+  
+  int get lastY() {
+    return wirePoints.last().y; 
+  }
+  
+  
+  /** Returns a point that is snapped to the wire */
+  Point getWireSnapPoint(int x, int y){
+    WirePoint wp1, wp2; 
+    Point p = new Point(x, y);
+    wp1 = contains(p); // get upstream point
+    
+    if(wp1 != null){
+      int i = wirePoints.indexOf(wp1);
+      wp2 = wirePoints[i+1];
+      
+      num length = distance(wp1.x, wp1.y, x, y); 
+      
+      num angle = Math.atan2((wp2.y - wp1.y), (wp2.x - wp1.x));
+      num xp = length * Math.cos(angle) + wp1.x;
+      num yp = length * Math.sin(angle) + wp1.y;
+      
+      return new Point(xp, yp);
+    }
+    return null;
+  }
+  
+  num distance(num x1, num y1, num x2, num y2) {
+    return Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+  }
+  
   
   /** Returns a wirepoint if it exists at the given point */
   WirePoint getWirePoint(int x, int y) {
@@ -111,36 +150,64 @@ class Wire {
   }
   
   /** Updates the last point in the wire */
-  void UpdateLast(int x, int y){
-    if(wirePoints.length >= 2){ // at least 2 points
+  void UpdateLast(int x, int y) {
+    if(wirePoints.length >= 2) { // at least 2 points
       wirePoints.last().x = x;
       wirePoints.last().y = y;
     }
   }
   
   /** Check to see of the wire contains a given point */
-  bool Contains(int x, int y, var d) { 
+  bool Contains(int x, int y) { 
     
     // TODO: optimise
-    if(wirePoints.length >= 2){
-      int x1, x2, x3, y1, y2, y3;
+    if(wirePoints.length >= 2) {
+      int x1, x2, y1, y2;
       var d1;
-      x3 = x; 
-      y3 = y;
-      for(int t=0; t<wirePoints.length-1; t++){ 
+      for(int t=0; t < wirePoints.length - 1; t++) { 
         x1 = wirePoints[t].x;
         x2 = wirePoints[t+1].x;
         
         y1 = wirePoints[t].y;
         y2 = wirePoints[t+1].y;
         
-        d1 = (Math.sqrt((y3-y1)*(y3-y1)+(x3-x1)*(x3-x1)) + Math.sqrt((y3-y2)*(y3-y2)+(x3-x2)*(x3-x2))) - Math.sqrt((y2-y1)*(y2-y1)+(x2-x1)*(x2-x1));
-        if(d1 <= d){
+        d1 = (Math.sqrt((y-y1)*(y-y1)+(x-x1)*(x-x1)) 
+            + Math.sqrt((y-y2)*(y-y2)+(x-x2)*(x-x2))) 
+            - Math.sqrt((y2-y1)*(y2-y1)+(x2-x1)*(x2-x1));
+        
+        if(d1 <= WIRE_HIT_RADIUS){
           return true;
         }
       }
     }
     return false;
+  }
+  
+  /** Check to see of the wire contains a given point and returns
+      the upstream point */
+  WirePoint contains(Point p) { 
+    
+    // TODO: optimise
+    if(wirePoints.length >= 2) {
+      int x1, x2, y1, y2;
+      var d1;
+      for(int t=0; t < wirePoints.length - 1; t++) { 
+        x1 = wirePoints[t].x;
+        x2 = wirePoints[t+1].x;
+        
+        y1 = wirePoints[t].y;
+        y2 = wirePoints[t+1].y;
+        
+        d1 = (Math.sqrt((p.y-y1)*(p.y-y1)+(p.x-x1)*(p.x-x1)) 
+            + Math.sqrt((p.y-y2)*(p.y-y2)+(p.x-x2)*(p.x-x2))) 
+            - Math.sqrt((y2-y1)*(y2-y1)+(x2-x1)*(x2-x1));
+        
+        if(d1 <= WIRE_HIT_RADIUS){
+          return wirePoints[t];
+        }
+      }
+    }
+    return null;
   }
   
 }

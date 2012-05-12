@@ -18,7 +18,7 @@
    
 
 class DeviceIO { 
-  static final int IO_HIT_RADIUS = 10; // Pin hit radius 
+  static final int IO_HIT_RADIUS = 9; // Pin hit radius 
   
   LogicDevice device; // parent device  
   DevicePin devicePin; // the pin that we connect to 
@@ -31,10 +31,10 @@ class DeviceIO {
   bool updated; 
   
   /** Returns the corrected absolute X position */
-  int get offsetX() => device.X + devicePin.x;   
+  int get offsetX() => device.xPosition + devicePin.x;   
   
   /** Returns the corrected absolute Y position */
-  int get offsetY() => device.Y + devicePin.y;  
+  int get offsetY() => device.yPosition + devicePin.y;  
   
   /** Returns true if given point is within the pin hit radius */
   bool pinHit(int x, int y) {

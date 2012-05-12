@@ -149,7 +149,7 @@ class LogicDeviceTypes{
     LogicDeviceType _clock = AddNewType('CLOCK');
     _clock.AddImage("images/Clock.png");
     _clock.AddInput(0, -1, -1);
-    _clock.AddOutput(0, 70, 20);
-    _clock.AddOutput(1, 70, 40);
+    _clock.AddOutput(0, 70, 21);
+    _clock.AddOutput(1, 70, 46);
     }
 }

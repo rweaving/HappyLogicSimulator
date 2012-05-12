@@ -25,28 +25,31 @@ class OffsetPoint {
   }
 }
 
-
-/**
-/ Handles selection of devices
-*/
+/** Handles the selection of logic devices */
 class SelectedDevices {
    
-  List<LogicDevice> _devices;
+  List<LogicDevice> allDevices;
+  Wires allWires;
+  
   List<LogicDevice> selectedDevices;
   List<OffsetPoint> offsetPoints;
   List<WirePoint> selectedWirePoints;
   List<OffsetPoint> selectedWireOffsetPoints;
   
-  SelectedDevices(this._devices) {
+  SelectedDevices(this.allDevices, this.allWires) {
     selectedDevices = new List<LogicDevice>();
     offsetPoints = new List<OffsetPoint>();
     selectedWirePoints = new List<WirePoint>();
     selectedWireOffsetPoints = new List<OffsetPoint>();
   }
   
+  /** Returns the number of devices that we have selected */
   get count() => selectedDevices.length;
+  
+  /** Returns the total number of wirepoints that we have selected */
   get wirePointsCount() => selectedWirePoints.length;
   
+  /** Clear the list of selected devices */
   void clear(){
     selectedDevices.clear();
     offsetPoints.clear();
@@ -54,32 +57,33 @@ class SelectedDevices {
     selectedWirePoints.clear();
   }
   
+  /** Add a device to the list of selected devices */
   void add(device, offsetX, offsetY){
     selectedDevices.add(device);
     offsetPoints.add(new OffsetPoint(offsetX, offsetY));
   }
   
-  // Select all the devices at a give point
+  /** Select all the devices at a give point */
   int selectAllAt(int selectX, int selectY) {
     selectedDevices.clear();
-    for (LogicDevice device in _devices) {  
+    for (LogicDevice device in allDevices) {  
       if(device.selectable){
         if(device.contains(selectX, selectY)) {
-          add(device, (device.X - selectX), (device.Y - selectY));
+          add(device, (device.xPosition - selectX), (device.yPosition - selectY));
         }
       }
     }
     return count;
   }
   
-  // Select all the devices at a give point
+  /** Select the top most device at a give point */
   int selectTopAt(int selectX, int selectY) {
     selectedDevices.clear();
-    for (int t=_devices.length-1; t>=0; t--) {  
-      if(_devices[t].selectable) {
-        if(_devices[t].contains(selectX, selectY)) {
-          add(_devices[t], (_devices[t].X - selectX), (_devices[t].Y - selectY));
-          selectWirePoints(_devices[t], selectX, selectY);
+    for (int t = allDevices.length - 1; t >= 0; t--) {  
+      if(allDevices[t].selectable) {
+        if(allDevices[t].contains(selectX, selectY)) {
+          add(allDevices[t], (allDevices[t].xPosition - selectX), (allDevices[t].yPosition - selectY));
+          selectWirePoints(allDevices[t], selectX, selectY);
           break;
         }
       }
@@ -87,7 +91,7 @@ class SelectedDevices {
     return count;
   }
   
-  // Move selected devices to a new point
+  /** Move selected devices to a new point */
   void moveTo(int x, int y) {
     for (int t=0; t < selectedDevices.length; t++) {
       selectedDevices[t].MoveDevice(x+offsetPoints[t].xOffset, y+offsetPoints[t].yOffset);
@@ -100,27 +104,34 @@ class SelectedDevices {
     }
   }
   
-  // Get all the wirepoints connected to the given devices
+  /** Get all the wirepoints connected to the given devices */
   int selectWirePoints(LogicDevice device, int selectX, int selectY) {
-     
-    print("device:$device.type");
-    
+    // Get all the wirepoints that match the device input point
     for (DeviceInput input in device.inputs) { 
-      if(input.wirePoint != null) {
-        addWirePoint(input.wirePoint, (input.wirePoint.x - selectX), (input.wirePoint.y - selectY));
-      }
-    }  
-    for (DeviceOutput output in device.outputs) {
-      if(output.wirePoint != null) {
-        addWirePoint(output.wirePoint, (output.wirePoint.x - selectX), (output.wirePoint.y - selectY));
+      for (Wire wire in allWires.wires) {
+        for(WirePoint wp in wire.wirePoints) {
+          if(wp.x == input.offsetX && wp.y == input.offsetY) {
+            addWirePoint(wp,  (wire.input.offsetX - selectX), (wire.input.offsetY - selectY));
+          }
+        }
       }
     }
-  
-      print("WirePointCount:${selectedWirePoints.length}");
+    
+    // Get all the wirepoints that match the device output point
+    for (DeviceOutput output in device.outputs) { 
+      for (Wire wire in allWires.wires) {
+        for(WirePoint wp in wire.wirePoints) {
+          if(wp.x == output.offsetX && wp.y == output.offsetY) {
+            addWirePoint(wp,  (wire.output.offsetX - selectX), (wire.output.offsetY - selectY));
+          }
+        }
+      }
+    }
     return wirePointsCount;
   }
   
-  clearSelectedWirePoints() {
+  /** Clears all the points for a selected wire */
+  void clearSelectedWirePoints() {
     selectedWirePoints.clear();
     selectedWireOffsetPoints.clear();
   }

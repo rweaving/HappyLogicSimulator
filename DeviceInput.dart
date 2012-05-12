@@ -31,10 +31,10 @@ class DeviceInput {
   bool updated; 
   
   /** Returns the corrected absolute X position */
-  int get offsetX() => device.X + devicePin.x;   
+  int get offsetX() => device.xPosition + devicePin.x;   
   
   /** Returns the corrected absolute Y position */
-  int get offsetY() => device.Y + devicePin.y;  
+  int get offsetY() => device.yPosition + devicePin.y;  
   
   /** Returns true if given point is within the pin hit radius */
   bool pinHit(int x, int y) {
@@ -61,8 +61,9 @@ class DeviceInput {
   }
 
   DeviceOutput connectedOutput;
+  Wire connectedWire;
   
-  WirePoint wirePoint;
+  //WirePoint wirePoint;
   
   DeviceInput(LogicDevice d, var ioId, DevicePin pin) {
 //    super.device = d;
@@ -85,38 +86,41 @@ class DeviceInput {
   
   /** Returns true if the device has been calculated */
   bool get calculated() {
-    if(wirePoint != null) {
-      return wirePoint.wire.output.device.calculated;
+    if(connectedWire.output != null) {
+      return connectedWire.output.device.calculated;
     }
     return false;
   }
   
   /** Returns true if this input connected to another device */
   bool get connected() {
-    if(wirePoint == null) 
+    
+    if(connectedWire == null) {
       return false;
+    }
     
-    connectedOutput = wirePoint.wire.output;
+    if(connectedWire.output == null) { 
+      return false;
+    }
     
-    if(connectedOutput != null)   
-      return true;
-       
-    return false;
+    return true;
   }
   
   /** returns the inputs value */
   bool get value(){
 
-    if(connectedOutput == null) {
-      if(wirePoint != null) { 
-        connectedOutput = wirePoint.wire.output;
-      }
+    if(connectedWire == null) {
       return false;
     }
-    if(!connectedOutput.calculated) {
-      connectedOutput.calculate();
+    
+    if(connectedWire.output == null) { 
+        return false;
     }
-    return connectedOutput.value;
+    
+    if(!connectedWire.output.calculated) {
+      connectedWire.output.calculate();
+    }
+    return connectedWire.output.value;
   }
 
 }
