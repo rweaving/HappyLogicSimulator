@@ -64,6 +64,7 @@ class Circuit {
   Wire newWire; // Pointer to our new wire if adding one
   Wire selectedWire;
   Wires circuitWires; // Holds all the wires for the simulation
+  Point wireSnapPoint; // A point that holds the wiresnap pointer
 
   bool showGrid = false;
   bool gridSnap = false;
@@ -108,7 +109,7 @@ class Circuit {
     canvas.height = height;
     canvas.width = width;
     
-    Paint();
+    draw();
   }
   
   /** Creates the button bar to add devices */
@@ -125,7 +126,7 @@ class Circuit {
     addNewButtonDevice('xnor', 'XNOR', 0, 480);
     addNewButtonDevice('led', 'LED', 50, 70);
     
-    Paint();
+    draw();
   }
   
   /** add a new button type device */
@@ -154,28 +155,26 @@ class Circuit {
   void ClearCircuit() {
     logicDevices.clear();
     circuitWires.clearAll();
-    Paint();
+    draw();
   }
   
   /** Simulation tick */
   void tick() {
     
-    if(logicDevices.length > 0) {
-      for (LogicDevice device in logicDevices) { // Clear the calc status of each
-        device.calculated = false;               // device  
-      }
-      for (LogicDevice device in logicDevices) { // Calculate the device
-        device.Calculate();
-      }
+    for (LogicDevice device in logicDevices) { // Clear the calc status of each
+      device.calculated = false;               // device  
     }
-    
-    Paint(); // Redraw background
+    for (LogicDevice device in logicDevices) { // Calculate the device
+      device.Calculate();
+    }
+  
+    draw(); // Redraw background
   }
   
   /** Try to select a logic device at given point*/
   LogicDevice tryDeviceSelect(int x, int y) {
     for (LogicDevice device in logicDevices) {  
-      if(device.contains(x, y)) {
+      if (device.contains(x, y)) {
         return device;
       }
     }            
@@ -185,7 +184,7 @@ class Circuit {
   /** Try to select a logic device input at given point*/
   DeviceInput tryInputSelect(int x, int y) {
     for (LogicDevice device in logicDevices) { 
-      if(device.InputPinHit(x, y) != null) {
+      if (device.InputPinHit(x, y) != null) {
         return device.InputPinHit(x, y);
       }
     }
@@ -195,7 +194,7 @@ class Circuit {
   /** Try to select a logic device output at given point */
   DeviceOutput tryOutputSelect(int x, int y) {
     for (LogicDevice device in logicDevices) { 
-      if(device.OutputPinHit(x, y) != null) {
+      if (device.OutputPinHit(x, y) != null) {
         return device.OutputPinHit(x, y);
       }
     }   
@@ -212,14 +211,14 @@ class Circuit {
     e.preventDefault();
    
     // If we are moving a device stop moving it and stick it
-    if(moveDevice != null) { 
+    if (moveDevice != null) { 
       moveDevice = null;
       return;
     }
    
     // If we are adding a new wire try to add a new point to it
-    if(newWire != null) {
-      if(selectedWire != null) {
+    if (newWire != null) {
+      if (selectedWire != null) {
         newWire.output = selectedWire.output;  
       }
       addWirePoint(newWire.lastX, newWire.lastY);
@@ -227,33 +226,34 @@ class Circuit {
     }
    
     // Start moving a wirepoint if it was selected 
-    if(selectedWirePoint != null) {
+    if (selectedWirePoint != null) {
       movingWirePoint = selectedWirePoint; 
       selectedWirePoint = null; 
       return;
     } 
    
     // Try to start a wire
-    if(StartWire(e.offsetX , e.offsetY) == true) { 
+    if (StartWire(e.offsetX , e.offsetY) == true) { 
       return;
     }
    
     // Check to see if user has pressed a device add button
     LogicDevice selectedButton = tryButtonSelect(e.offsetX, e.offsetY);
-    if(selectedButton != null) {
+    if (selectedButton != null) {
       newDeviceFrom(selectedButton);
       return;
     }
     
     // Try to select a device in the simulation
     LogicDevice selectedDevice = tryDeviceSelect(e.offsetX, e.offsetY);
-    if(selectedDevice != null) {
+    if (selectedDevice != null) {
       selectedDevices.selectTopAt(e.offsetX, e.offsetY);
       selectedDevice.clicked();
       return;
     }
     
-    if(tryWireSelect(e.offsetX, e.offsetY) > 0) {
+    // Try to select or deselect a wire
+    if (tryWireSelect(e.offsetX, e.offsetY) > 0) {
       selectedWire = circuitWires.firstSelectedWire();  
     }
     
@@ -264,21 +264,21 @@ class Circuit {
     e.stopPropagation();
     e.preventDefault();
     
-    if(selectedDevices.count > 0) { // If we are moving devices stop it
+    if (selectedDevices.count > 0) { // If we are moving devices stop it
       
       // Make sure that all the devices are not on our device selector bar
       bool allowDrop = true;
-      for(LogicDevice d in selectedDevices.selectedDevices) {
-        if(d.xPosition < TOOLBAR_WIDTH) {
+      for (LogicDevice d in selectedDevices.selectedDevices) {
+        if (d.xPosition < TOOLBAR_WIDTH) {
           allowDrop = false;
         }
       }
-      if(allowDrop) { // If all is good then allow the selected devices to be dropped
+      if (allowDrop) { // If all is good then allow the selected devices to be dropped
         selectedDevices.clear();
       }
     }
     
-    if(movingWirePoint != null){ // deselect wire point 
+    if (movingWirePoint != null) { // deselect wire point 
       movingWirePoint = null;
     }
   }
@@ -293,65 +293,64 @@ class Circuit {
   void onMouseMove(MouseEvent e) {
     mouseX = e.offsetX;
     mouseY = e.offsetY; 
-   
-//    if(gridSnap) {  // Snap mouse cursor to grid
-//      double x1 = mouseX.toDouble() / GRID_SIZE.toDouble();
-//      double y1 = mouseY.toDouble() / GRID_SIZE.toDouble();
-//   
-//      mouseX = x1.toInt() * GRID_SIZE;
-//      mouseY = y1.toInt() * GRID_SIZE;
-//    }
     
-    if(selectedDevices.count > 0) {
+    if (selectedDevices.count > 0) {
       selectedDevices.moveTo(mouseX, mouseY);
       return;
     }
    
-    if(moveDevice != null) {
+    if (moveDevice != null) {
       moveDevice.MoveDevice(mouseX, mouseY);
-      Paint();
+      draw();
       return;
     }
     
     // If we are moving a point update its position
-    if(movingWirePoint != null) {
+    if (movingWirePoint != null) {
       movingWirePoint.x = mouseX;
       movingWirePoint.y = mouseY;
       return;
     }
    
     // If we are adding a wire update its last point
-    if(newWire != null) {
+    if (newWire != null) {
       newWire.UpdateLast(mouseX, mouseY);
-      if(checkConnection(e.offsetX, e.offsetY)){
-        Paint();
+      if (checkConnection(e.offsetX, e.offsetY)) {
+        draw();
         return;
         // Check to see if we have valid connection
       }
         
-      if(newWire.input != null) { // Snap to a wire only when connecting from an input.
-        selectedWire = circuitWires.wireHit(e.offsetX, e.offsetY);
-        
-        if(selectedWire != null) {
-          Point p = selectedWire.getWireSnapPoint(e.offsetX, e.offsetY);
-          if(p != null) {
-            newWire.UpdateLast(p.x, p.y);
+      if (newWire.input != null) { // Snap to a wire only when connecting from an input.
+        // Try to select a wirepoint 
+        selectedWirePoint = circuitWires.selectWirePoint(e.offsetX, e.offsetY);
+        if (selectedWirePoint != null){
+          newWire.UpdateLast(selectedWirePoint.x, selectedWirePoint.y);
+        }
+        else{
+          selectedWire = circuitWires.wireHit(e.offsetX, e.offsetY);
+          if (selectedWire != null) {
+            Point p = selectedWire.getWireSnapPoint(e.offsetX, e.offsetY);
+            if(p != null) {
+              selectedWirePoint = p;
+              newWire.UpdateLast(p.x, p.y);
+            }
           }
         }
       }
       
-      Paint();
+      draw();
       return;
     }
     
     // Check to see if mouse cursor is over a vaild point and select it
-    if(checkValid(e.offsetX, e.offsetY)) { 
+    if (checkValid(e.offsetX, e.offsetY)) { 
       return;
     }
     
     // Try to select a wirepoint 
     selectedWirePoint = circuitWires.selectWirePoint(e.offsetX, e.offsetY);
-    if(selectedWirePoint != null){
+    if (selectedWirePoint != null){
       return;
     }
     
@@ -360,10 +359,10 @@ class Circuit {
  
  /** Check to see if this point is a vaild connection */
  bool checkConnection(int x, int y) {
-   if(newWire == null) return false;
+   if (newWire == null) return false;
    
    // Looking for a vaild input
-   if(newWire.input == null) {
+   if (newWire.input == null) {
      DeviceInput input = tryInputSelect(x, y); 
      selectedInput = input;
      if(selectedInput != null){
@@ -387,20 +386,20 @@ class Circuit {
  /** Check to see if this point is vaild */
  bool checkValid(int x, int y) {
      
-   if(newWire != null) { // We are adding a wire
+   if (newWire != null) { // We are adding a wire
      return checkConnection(x, y);  
    }
    
    selectedInput = tryInputSelect(x, y); 
   
-   if(selectedInput != null){
+   if (selectedInput != null){
      //drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, "VALID");  
      return true;
    }
    
    selectedOutput = tryOutputSelect(x, y);
    
-   if(selectedOutput != null){
+   if (selectedOutput != null){
      //drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, "VALID");  
      return true;
    }
@@ -423,7 +422,7 @@ class Circuit {
     DeviceInput input = tryInputSelect(x, y);
     // If we have a vaild point then continue adding a wire
     if(input != null){ 
-      newWire = circuitWires.createWire();
+      newWire = new Wire();
       newWire.input = input;
       WirePoint wp = newWire.AddPoint(input.offsetX, input.offsetY);
       newWire.input = input;
@@ -435,7 +434,7 @@ class Circuit {
     
     DeviceOutput output = tryOutputSelect(x, y);    
     if(output != null){
-      newWire = circuitWires.createWire(); 
+      newWire = new Wire();
       newWire.output = output;
       WirePoint wp = newWire.AddPoint(output.offsetX, output.offsetY);
       newWire.output = output;
@@ -460,18 +459,20 @@ class Circuit {
    newWire.UpdateLast(x, y);
       
    // Looking for a vaild input
-   if(newWire.input == null) {
+   if (newWire.input == null) {
      DeviceInput input = tryInputSelect(x, y);
-     if(input != null) {
+     if (input != null) {
        newWire.input = input;  
        newWire.UpdateLast(input.offsetX, input.offsetY);
        input.connectedWire = newWire;
-       //input.wirePoint = newWire.wirePoints.last();
+       newWire.AddPoint(input.offsetX, input.offsetY);
+       finishWire(); // Good connection
+       return false;
      }
-     else{// if user tries to place connection on top of start device then abort
+     else {// if user tries to place connection on top of start device then abort
        LogicDevice device = tryDeviceSelect(x, y);
-       if(newWire.output.device != null){  
-         if(device === newWire.output.device){
+       if (newWire.output.device != null){  
+         if (device === newWire.output.device){
            abortWire();
            return false;
          }
@@ -480,25 +481,55 @@ class Circuit {
    }
    
    // Looking for a valid output
-   if(newWire.output == null) {
+   if (newWire.output == null) {
+     
+     // Check for output points
      DeviceOutput output = tryOutputSelect(x, y); 
-     if(output != null) {
+     if (output != null) {
        newWire.output = output;
        newWire.UpdateLast(output.offsetX, output.offsetY);
-       //output.wirePoint = newWire.wirePoints.last();
+       finishWire(); // Good connection
+       print("output select");
+       return false;
      }
-     else{// if user tries to place connection on top of start device then abort 
+     
+     // Check for wire points
+     WirePoint wp = circuitWires.selectWirePoint(x, y);
+     if (wp != null) {
+       newWire.output = wp.wire.output;
+       newWire.UpdateLast(wp.x, wp.y);
+       newWire.addKnot(wp.x, wp.y);
+       newWire.AddPoint(wp.x, wp.y);
+       finishWire(); // Good connection
+       return false;
+       }
+     }
+     
+     // Check on wire
+     Wire w = circuitWires.wireHit(x, y);
+     if (w != null) {
+       Point p = selectedWire.getWireSnapPoint(x, y);
+       if(p != null) {
+         newWire.output = w.output;
+         newWire.UpdateLast(p.x, p.y);
+         newWire.addKnot(p.x, p.y);
+         newWire.AddPoint(p.x, p.y);
+         finishWire(); // Good connection
+         print("Wire Hit Snap Point");
+         return false;
+        }
+     }
+     
+     //else {// if user tries to place connection on top of start device then abort 
        LogicDevice device = tryDeviceSelect(x, y);
-       if(newWire.input.device != null){  
-         if(device === newWire.input.device){
+       if (newWire.input.device != null) {  
+         if (device === newWire.input.device) {
            abortWire();
            return false;
          }
        }
-     }
-   }
-   
-   // Check vaid connection
+
+//   // Check vaid connection
    if(newWire.input != null && newWire.output != null) {
      newWire = null;
      return false;
@@ -506,9 +537,17 @@ class Circuit {
 
    // Add the new point
    newWire.AddPoint(x, y);
+   print("add point");
    return true;
  }
   
+ void finishWire() {
+   if (newWire.input != null && newWire.output != null) {
+    circuitWires.addWire(newWire);
+    newWire = null;
+    print("finish wire");
+   }
+ }
   /** Abort adding a wire to the simulation */
   void abortWire() {
     selectedInput = null;
@@ -519,11 +558,11 @@ class Circuit {
       circuitWires.deleteWire(newWire);
       newWire = null;
     }
-    Paint();
+    draw();
   }
 
   /** Redraws the entire simulation */
-  void Paint() {
+  void draw() {
     
     clearCanvas(); // Clear the background 
     
@@ -583,6 +622,9 @@ class Circuit {
   void drawWires() {
     for (Wire wire in circuitWires.wires) { 
       drawWire(wire);
+    }
+    if (newWire != null){
+      drawWire(newWire);
     }
   }
   
@@ -653,23 +695,20 @@ class Circuit {
     }
     context.stroke();
     context.closePath(); 
+    
+    if (wire.wireKnot != null) {
+      drawKnot(wire.wireKnot.x, wire.wireKnot.y);  
+    }
   }
   
   /** Draws a knot (wire to wire connection point) at a given point */
   void drawKnot(int x, int y) {
-    /*
-    // Check to see if we need to draw a knot
-    if(input.connectedOutput != null) {
-      if(input.connectedOutput.offsetX != input.wire.wirePoints.last().x &&
-          input.connectedOutput.offsetY != input.wire.wirePoints.last().y) {
-          context.beginPath();
-          context.lineWidth = 2;
-          context.arc(input.wire.wirePoints[input.wire.wirePoints.length-1].x, input.wire.wirePoints[input.wire.wirePoints.length-1].y, 5, 0, TAU, false);
-          context.fill();
-          context.stroke();
-          context.closePath(); 
-      }
-    }*/
+    context.beginPath();
+    context.lineWidth = 2;
+    context.arc(x, y, 6, 0, TAU, false);
+    context.fill();
+    context.stroke();
+    context.closePath(); 
   }
   
  
@@ -679,14 +718,17 @@ class Circuit {
       drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, 'VALID'); 
     }
     
-    if(selectedInput != null){
-      drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID'); 
+    if (selectedInput != null){
+      if (selectedInput.connected)
+        drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'CONNECTED');
+      else
+        drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, 'VALID');
     }
     
     if(selectedWirePoint != null){
-      drawHighlightPin(selectedWirePoint.x , selectedWirePoint.y, 'WIREPOINT'); 
+      drawHighlightPin(selectedWirePoint.x , selectedWirePoint.y, 'VALID'); 
     }
-    
+        
     // If we are adding a wire draw acceptable connection points
     if(newWire != null){
       if(newWire.input == null) { // Looking for a vaild input

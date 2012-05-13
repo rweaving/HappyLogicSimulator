@@ -17,56 +17,58 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
 
-class WirePoint  implements Point{
+class WirePoint  implements Point {
   int x;
   int y;
   Wire wire;
   
-  WirePoint(this.wire, this.x, this.y){}
+  WirePoint(this.wire, this.x, this.y) {}
 }
 
 /** A wire contains a list of wire points and connects logic devices together */
 class Wire {
-  static final int WIRE_HIT_RADIUS = 8;
+  static final int WIRE_HIT_RADIUS = 6;
   
   static final int WIRE_WIDTH = 3;
   static final int NEW_WIRE_WIDTH = 3;
 
   static final String NEW_WIRE_COLOR = '#990000';
   static final String NEW_WIRE_VALID = '#009900';
-  static final String NEW_WIRE_INVALID= '#999999';
+  static final String NEW_WIRE_INVALID = '#999999';
   
   static final String WIRE_HIGH = '#ff4444';
   static final String WIRE_LOW = '#550091';
   
   static final TAU = Math.PI * 2; 
+  static final KNOT_RADIUS = 6;
   
   DeviceInput input;
   DeviceOutput output;
   
   WirePoint inputPoint;
   WirePoint outputPoint;
+  WirePoint wireKnot; // when a wire ends on a wire draw a wire knot
   
   bool drawWireEndpoint = false;
-
+  
   
   List<WirePoint> wirePoints;
   
-  Wire(){
+  Wire() {
     wirePoints = new List<WirePoint>();
   }
   
   /** The wire's starting x point */
-  int get startX(){
-    if(wirePoints.length > 0){
+  int get startX() {
+    if (wirePoints.length > 0) {
       return wirePoints[0].x;
     }
     return null;
   }
   
   /** The wire's starting y point */
-  int get startY(){
-    if(wirePoints.length > 0){
+  int get startY() {
+    if (wirePoints.length > 0) {
       return wirePoints[0].y;
     }
     return null;
@@ -82,12 +84,12 @@ class Wire {
   
   
   /** Returns a point that is snapped to the wire */
-  Point getWireSnapPoint(int x, int y){
+  Point getWireSnapPoint(int x, int y) {
     WirePoint wp1, wp2; 
     Point p = new Point(x, y);
     wp1 = contains(p); // get upstream point
     
-    if(wp1 != null){
+    if(wp1 != null) {
       int i = wirePoints.indexOf(wp1);
       wp2 = wirePoints[i+1];
       
@@ -109,9 +111,9 @@ class Wire {
   
   /** Returns a wirepoint if it exists at the given point */
   WirePoint getWirePoint(int x, int y) {
-    for(WirePoint point in wirePoints) {
-      if(x >= (point.x - WIRE_HIT_RADIUS) && x <= (point.x + WIRE_HIT_RADIUS)) {
-        if(y >= (point.y - WIRE_HIT_RADIUS) && y <= (point.y + WIRE_HIT_RADIUS)) {
+    for (WirePoint point in wirePoints) {
+      if (x >= (point.x - WIRE_HIT_RADIUS) && x <= (point.x + WIRE_HIT_RADIUS)) {
+        if (y >= (point.y - WIRE_HIT_RADIUS) && y <= (point.y + WIRE_HIT_RADIUS)) {
           return point;
         }
       }
@@ -133,8 +135,15 @@ class Wire {
     
     WirePoint wp = new WirePoint(this, x, y);
     wirePoints.add(wp);
-    //print("new WirePoint($x,$y)");
     return wp;
+  }
+  
+  /** Add a wire knot to the wire this happens when you
+      connect a wire to another wire */
+  WirePoint addKnot(int x, int y) {
+    wireKnot = new WirePoint(this, x, y);
+    print("Add Wire Knot");
+    return wireKnot;
   }
   
   /** Check to see if first or last point is here */
