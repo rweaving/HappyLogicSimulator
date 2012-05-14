@@ -36,6 +36,9 @@ class DeviceInput {
   /** Returns the corrected absolute Y position */
   int get offsetY() => device.yPosition + devicePin.y;  
   
+  /** returns the absolute point */
+  Point get offset() => new Point(offsetX, offsetY);
+  
   /** Returns true if given point is within the pin hit radius */
   bool pinHit(int x, int y) {
     if(x <= (offsetX + IO_HIT_RADIUS) && x >= (offsetX - IO_HIT_RADIUS)) {

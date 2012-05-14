@@ -34,7 +34,10 @@ class DeviceIO {
   int get offsetX() => device.xPosition + devicePin.x;   
   
   /** Returns the corrected absolute Y position */
-  int get offsetY() => device.yPosition + devicePin.y;  
+  int get offsetY() => device.yPosition + devicePin.y; 
+  
+  /** returns the absolute point */
+  Point get offset() => new Point(offsetX, offsetY);
   
   /** Returns true if given point is within the pin hit radius */
   bool pinHit(int x, int y) {

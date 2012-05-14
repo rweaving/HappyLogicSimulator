@@ -137,7 +137,7 @@ class SelectedDevices {
   }
   
   void addWirePoint(p, offsetX, offsetY) {
-    print("addWirePoint($p, $offsetX, $offsetY)");
+    print("Device Select addWirePoint($offsetX, $offsetY)");
     selectedWirePoints.add(p);
     selectedWireOffsetPoints.add(new OffsetPoint(offsetX, offsetY));
   }

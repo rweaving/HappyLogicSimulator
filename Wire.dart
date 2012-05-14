@@ -20,6 +20,7 @@
 class WirePoint  implements Point {
   int x;
   int y;
+  bool drawKnot;
   Wire wire;
   
   WirePoint(this.wire, this.x, this.y) {}
@@ -27,7 +28,8 @@ class WirePoint  implements Point {
 
 /** A wire contains a list of wire points and connects logic devices together */
 class Wire {
-  static final int WIRE_HIT_RADIUS = 6;
+  static final int WIRE_HIT_RADIUS = 4;
+  static final int WIREPOINT_HIT_RADIUS = 10;
   
   static final int WIRE_WIDTH = 3;
   static final int NEW_WIRE_WIDTH = 3;
@@ -48,9 +50,6 @@ class Wire {
   WirePoint inputPoint;
   WirePoint outputPoint;
   WirePoint wireKnot; // when a wire ends on a wire draw a wire knot
-  
-  bool drawWireEndpoint = false;
-  
   
   List<WirePoint> wirePoints;
   
@@ -74,14 +73,40 @@ class Wire {
     return null;
   }
   
+  /** Returns the last x point in the wire */
   int get lastX() {
     return wirePoints.last().x; 
   }
   
+  /** Returns the last y point in the wire */
   int get lastY() {
     return wirePoints.last().y; 
   }
   
+  /** Returns the last wire point in the wire */
+  WirePoint get lastPoint() {
+    return wirePoints.last();
+  }
+  
+  /** Returns true if we need an input connection for this wire */
+  bool get needInput() {
+    if (input == null) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+  
+  /** Returns true if we need an output connection for this wire */
+  bool get needOutput() {
+    if (output == null) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
   
   /** Returns a point that is snapped to the wire */
   Point getWireSnapPoint(int x, int y) {
@@ -104,21 +129,30 @@ class Wire {
     return null;
   }
   
+  /** Distance between two points */
   num distance(num x1, num y1, num x2, num y2) {
     return Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
   }
+//  num distance(Point a, Point b) {
+//    return Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x));
+//  }
   
   
   /** Returns a wirepoint if it exists at the given point */
   WirePoint getWirePoint(int x, int y) {
     for (WirePoint point in wirePoints) {
-      if (x >= (point.x - WIRE_HIT_RADIUS) && x <= (point.x + WIRE_HIT_RADIUS)) {
-        if (y >= (point.y - WIRE_HIT_RADIUS) && y <= (point.y + WIRE_HIT_RADIUS)) {
+      if (x >= (point.x - WIREPOINT_HIT_RADIUS) && x <= (point.x + WIREPOINT_HIT_RADIUS)) {
+        if (y >= (point.y - WIREPOINT_HIT_RADIUS) && y <= (point.y + WIREPOINT_HIT_RADIUS)) {
           return point;
         }
       }
     }
     return null;
+  }
+  
+  /** Returns the last wirepoint in the wire */
+  WirePoint getLastPoint(){
+    return wirePoints.last();  
   }
   
   /** Clear the wire of all the wire points */
@@ -128,22 +162,39 @@ class Wire {
     lastX = null;
     lastY = null;
   }
+  
+  /** Reverse all the wire points */
+  void flipWire() {
+    List<WirePoint> flipPoints = new List<WirePoint>();
+    for (int i = wirePoints.length - 1 ; i >= 0; i-- ) {
+      flipPoints.add(wirePoints[i]);
+    }
+    wirePoints.clear();
+    wirePoints = flipPoints;
+    print("FlipnWire");
+  }
+   
    
   /** Add a new point to the wire */
   WirePoint AddPoint(int x, int y) {
     UpdateLast(x,y);
-    
     WirePoint wp = new WirePoint(this, x, y);
     wirePoints.add(wp);
     return wp;
   }
+
   
   /** Add a wire knot to the wire this happens when you
-      connect a wire to another wire */
-  WirePoint addKnot(int x, int y) {
-    wireKnot = new WirePoint(this, x, y);
-    print("Add Wire Knot");
-    return wireKnot;
+  connect a wire to another wire */
+  void setKnot(WirePoint p, bool drawKnot) {
+    p.drawKnot = drawKnot;
+    
+    if (p.drawKnot) {
+      wireKnot = p;
+    }
+    else {
+      wireKnot = null;
+    }
   }
   
   /** Check to see if first or last point is here */
@@ -166,37 +217,59 @@ class Wire {
     }
   }
   
-  /** Check to see of the wire contains a given point */
-  bool Contains(int x, int y) { 
+  /** Get a segment between two points */
+  WireSegment getSegment(Point p) {
+    WirePoint wp1 = contains(p);
+    int wpi1 = wirePoints.indexOf(wp1);
     
-    // TODO: optimise
-    if(wirePoints.length >= 2) {
-      int x1, x2, y1, y2;
-      var d1;
-      for(int t=0; t < wirePoints.length - 1; t++) { 
-        x1 = wirePoints[t].x;
-        x2 = wirePoints[t+1].x;
-        
-        y1 = wirePoints[t].y;
-        y2 = wirePoints[t+1].y;
-        
-        d1 = (Math.sqrt((y-y1)*(y-y1)+(x-x1)*(x-x1)) 
-            + Math.sqrt((y-y2)*(y-y2)+(x-x2)*(x-x2))) 
-            - Math.sqrt((y2-y1)*(y2-y1)+(x2-x1)*(x2-x1));
-        
-        if(d1 <= WIRE_HIT_RADIUS){
-          return true;
-        }
+    if (wpi1 + 1 < wirePoints.length) {
+      WirePoint wp2 = wirePoints[wpi1 + 1];
+      // TODO: need to correctly assign 
+      if (wp1 != null && wp2 != null) {
+        WireSegment ws = new WireSegment(wp2, wp1);
+        return ws;
       }
     }
-    return false;
+    return null;
+  }
+  
+  /** Insert a point in a wire segment an returns the rest of the wire*/
+  List<WirePoint> insertPoint(WireSegment ws, Point p) {
+    if (ws == null || p == null) return null;
+    
+    List<WirePoint> endWire = new List<WirePoint>();
+
+    int wi = wirePoints.indexOf(ws.inputSide);
+    endWire = wirePoints.getRange(wi, wirePoints.length - wi); // Store the end of the wire
+    wirePoints.removeRange(wi, wirePoints.length - wi); // Remove the end
+    
+    WirePoint wp = new WirePoint(this, p.x, p.y); // Add our new point
+    wirePoints.add(wp);
+    
+    for (WirePoint wpe in endWire) { // Stick the end of the wire back on
+      wirePoints.add(wpe);
+    }
+    
+    return endWire; // return the end points so that we can use it 
+  }
+  
+  /** Add a list of wirepoints to the wire */
+  addWire (List<WirePoint> newWire) {
+    for (WirePoint wp in newWire) {
+      AddPoint(wp.x, wp.y);
+    }
+  }
+  
+  /** Print to the console a list of wire points */
+  void printWirePoints (List<WirePoint> wps) {
+    for (WirePoint wp in wps) {
+      print("${wirePoints.indexOf(wp)}:(${wp.x},${wp.y})");
+    }
   }
   
   /** Check to see of the wire contains a given point and returns
       the upstream point */
   WirePoint contains(Point p) { 
-    
-    // TODO: optimise
     if(wirePoints.length >= 2) {
       int x1, x2, y1, y2;
       var d1;
