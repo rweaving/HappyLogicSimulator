@@ -17,13 +17,13 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
 
-class OffsetPoint {
-  int xOffset;
-  int yOffset;
-  
-  OffsetPoint(this.xOffset, this.yOffset){
-  }
-}
+//class OffsetPoint {
+//  int xOffset;
+//  int yOffset;
+//  
+//  OffsetPoint(this.xOffset, this.yOffset){
+//  }
+//}
 
 /** Handles the selection of logic devices */
 class SelectedDevices {
@@ -32,15 +32,15 @@ class SelectedDevices {
   Wires allWires;
   
   List<LogicDevice> selectedDevices;
-  List<OffsetPoint> offsetPoints;
+  List<Point> offsetPoints;
   List<WirePoint> selectedWirePoints;
-  List<OffsetPoint> selectedWireOffsetPoints;
+  List<Point> selectedWireOffsetPoints;
   
   SelectedDevices(this.allDevices, this.allWires) {
     selectedDevices = new List<LogicDevice>();
-    offsetPoints = new List<OffsetPoint>();
+    offsetPoints = new List<Point>();
     selectedWirePoints = new List<WirePoint>();
-    selectedWireOffsetPoints = new List<OffsetPoint>();
+    selectedWireOffsetPoints = new List<Point>();
   }
   
   /** Returns the number of devices that we have selected */
@@ -58,18 +58,21 @@ class SelectedDevices {
   }
   
   /** Add a device to the list of selected devices */
-  void add(device, offsetX, offsetY){
+  void add(device, Point p){
     selectedDevices.add(device);
-    offsetPoints.add(new OffsetPoint(offsetX, offsetY));
+    offsetPoints.add(p);
+    print('${p.x},${p.y}');
   }
   
   /** Select all the devices at a give point */
-  int selectAllAt(int selectX, int selectY) {
+  int selectAllAt(Point p) {
     selectedDevices.clear();
     for (LogicDevice device in allDevices) {  
       if(device.selectable){
-        if(device.contains(selectX, selectY)) {
-          add(device, (device.xPosition - selectX), (device.yPosition - selectY));
+        if(device.contains(p)) {
+          //p.x = device.position.x - p.x;
+          //p.y = device.position.y - p.y;
+          add(device, new Point((device.position.x - p.x), (device.position.y - p.y)));
         }
       }
     }
@@ -77,13 +80,16 @@ class SelectedDevices {
   }
   
   /** Select the top most device at a give point */
-  int selectTopAt(int selectX, int selectY) {
+  int selectTopAt(Point p) {
     selectedDevices.clear();
     for (int t = allDevices.length - 1; t >= 0; t--) {  
       if(allDevices[t].selectable) {
-        if(allDevices[t].contains(selectX, selectY)) {
-          add(allDevices[t], (allDevices[t].xPosition - selectX), (allDevices[t].yPosition - selectY));
-          selectWirePoints(allDevices[t], selectX, selectY);
+        if(allDevices[t].contains(p)) {
+          //p.x = allDevices[t].position.x - p.x;
+          //p.y = allDevices[t].position.y - p.y;
+          add(allDevices[t], new Point((allDevices[t].position.x - p.x), (allDevices[t].position.y - p.y)));
+          
+          selectWirePoints(allDevices[t], p);
           break;
         }
       }
@@ -92,26 +98,30 @@ class SelectedDevices {
   }
   
   /** Move selected devices to a new point */
-  void moveTo(int x, int y) {
+  void moveTo(Point p) {
     for (int t=0; t < selectedDevices.length; t++) {
-      selectedDevices[t].MoveDevice(x+offsetPoints[t].xOffset, y+offsetPoints[t].yOffset);
+      Point op = new Point((p.x + offsetPoints[t].x), (p.y + offsetPoints[t].y));
+      selectedDevices[t].MoveDevice(op);
+      print('MoveTo(${p.x},${p.y})');
     }
     
     // Move the selected wire points with the device
     for (int c=0; c < selectedWireOffsetPoints.length; c++) {
-      selectedWirePoints[c].x = (selectedWireOffsetPoints[c].xOffset + x);
-      selectedWirePoints[c].y = (selectedWireOffsetPoints[c].yOffset + y);
+      selectedWirePoints[c].x = selectedWireOffsetPoints[c].x + p.x;
+      selectedWirePoints[c].y = selectedWireOffsetPoints[c].y + p.y;
     }
   }
   
   /** Get all the wirepoints connected to the given devices */
-  int selectWirePoints(LogicDevice device, int selectX, int selectY) {
+  int selectWirePoints(LogicDevice device, Point p) {
     // Get all the wirepoints that match the device input point
     for (DeviceInput input in device.inputs) { 
       for (Wire wire in allWires.wires) {
         for(WirePoint wp in wire.wirePoints) {
           if(wp.x == input.offsetX && wp.y == input.offsetY) {
-            addWirePoint(wp,  (wire.input.offsetX - selectX), (wire.input.offsetY - selectY));
+            addWirePoint(wp, 
+              new Point((wire.input.offsetX - p.x), 
+                        (wire.input.offsetY - p.y)));
           }
         }
       }
@@ -122,7 +132,9 @@ class SelectedDevices {
       for (Wire wire in allWires.wires) {
         for(WirePoint wp in wire.wirePoints) {
           if(wp.x == output.offsetX && wp.y == output.offsetY) {
-            addWirePoint(wp,  (wire.output.offsetX - selectX), (wire.output.offsetY - selectY));
+            addWirePoint(wp, 
+              new Point((wire.output.offsetX - p.x), 
+                        (wire.output.offsetY - p.y)));
           }
         }
       }
@@ -136,9 +148,11 @@ class SelectedDevices {
     selectedWireOffsetPoints.clear();
   }
   
-  void addWirePoint(p, offsetX, offsetY) {
-    print("Device Select addWirePoint($offsetX, $offsetY)");
+  /** Add a wirepoint to our selected wirepoints list */
+  void addWirePoint(p, op) {
+   // print("Device Select addWirePoint($op.x, $op.y)");
     selectedWirePoints.add(p);
-    selectedWireOffsetPoints.add(new OffsetPoint(offsetX, offsetY));
+    selectedWireOffsetPoints.add(op);
   }
+  
 }

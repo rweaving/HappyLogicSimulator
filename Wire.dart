@@ -109,16 +109,16 @@ class Wire {
   }
   
   /** Returns a point that is snapped to the wire */
-  Point getWireSnapPoint(int x, int y) {
+  Point getWireSnapPoint(Point p) {
     WirePoint wp1, wp2; 
-    Point p = new Point(x, y);
+    //Point p = new Point(x, y);
     wp1 = contains(p); // get upstream point
     
     if(wp1 != null) {
       int i = wirePoints.indexOf(wp1);
       wp2 = wirePoints[i+1];
       
-      num length = distance(wp1.x, wp1.y, x, y); 
+      num length = distance(wp1, p); 
       
       num angle = Math.atan2((wp2.y - wp1.y), (wp2.x - wp1.x));
       num xp = length * Math.cos(angle) + wp1.x;
@@ -130,19 +130,19 @@ class Wire {
   }
   
   /** Distance between two points */
-  num distance(num x1, num y1, num x2, num y2) {
-    return Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+  num distance(Point a, Point b) {
+    return Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x));
   }
-//  num distance(Point a, Point b) {
-//    return Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x));
+  
+//  num distance(num x1, num y1, num x2, num y2) {
+//    return Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
 //  }
   
-  
   /** Returns a wirepoint if it exists at the given point */
-  WirePoint getWirePoint(int x, int y) {
+  WirePoint getWirePoint(Point p) {
     for (WirePoint point in wirePoints) {
-      if (x >= (point.x - WIREPOINT_HIT_RADIUS) && x <= (point.x + WIREPOINT_HIT_RADIUS)) {
-        if (y >= (point.y - WIREPOINT_HIT_RADIUS) && y <= (point.y + WIREPOINT_HIT_RADIUS)) {
+      if (p.x >= (point.x - WIREPOINT_HIT_RADIUS) && p.x <= (point.x + WIREPOINT_HIT_RADIUS)) {
+        if (p.y >= (point.y - WIREPOINT_HIT_RADIUS) && p.y <= (point.y + WIREPOINT_HIT_RADIUS)) {
           return point;
         }
       }
@@ -171,14 +171,12 @@ class Wire {
     }
     wirePoints.clear();
     wirePoints = flipPoints;
-    print("FlipnWire");
   }
    
-   
-  /** Add a new point to the wire */
-  WirePoint AddPoint(int x, int y) {
-    UpdateLast(x,y);
-    WirePoint wp = new WirePoint(this, x, y);
+  /** Add a new point to the wire returns the point that was created */
+  WirePoint AddPoint(Point p) {
+    UpdateLast(p);
+    WirePoint wp = new WirePoint(this, p.x, p.y);
     wirePoints.add(wp);
     return wp;
   }
@@ -197,23 +195,23 @@ class Wire {
     }
   }
   
-  /** Check to see if first or last point is here */
-  bool HasStartEndPoint(int x, int y) {
-    if(wirePoints.length >= 2) {
-      if(wirePoints[0].x == x && wirePoints[0].y == y) { 
-        return true;
-      }
-      if(wirePoints.last().x == x && wirePoints.last().y == y) {
-        return true;
-      }
-    }
-  }
-  
+//  /** Check to see if first or last point is here */
+//  bool HasStartEndPoint(int x, int y) {
+//    if(wirePoints.length >= 2) {
+//      if(wirePoints[0].x == x && wirePoints[0].y == y) { 
+//        return true;
+//      }
+//      if(wirePoints.last().x == x && wirePoints.last().y == y) {
+//        return true;
+//      }
+//    }
+//  }
+//  
   /** Updates the last point in the wire */
-  void UpdateLast(int x, int y) {
+  void UpdateLast(Point p) {
     if(wirePoints.length >= 2) { // at least 2 points
-      wirePoints.last().x = x;
-      wirePoints.last().y = y;
+      wirePoints.last().x = p.x;
+      wirePoints.last().y = p.y;
     }
   }
   
@@ -256,7 +254,7 @@ class Wire {
   /** Add a list of wirepoints to the wire */
   addWire (List<WirePoint> newWire) {
     for (WirePoint wp in newWire) {
-      AddPoint(wp.x, wp.y);
+      AddPoint(wp);
     }
   }
   

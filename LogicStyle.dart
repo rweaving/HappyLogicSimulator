@@ -15,19 +15,23 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
 
-class DeviceButton extends LogicDevice {
-
-  num scale;
-  Circuit circuit;
+class Style {
   
-  DeviceButton(this.circuit){
-    scale = 0.75;
-  }
-  
-//  onPress(){
-//    circuit.newDeviceFrom(this);    
-//  }
+  static final int BORDER_LINE_WIDTH = 1;
+  static final String BORDER_LINE_COLOR = '#000000';
+  static final int    NEW_WIRE_WIDTH = 3;
+  static final String NEW_WIRE_COLOR = '#990000';
+  static final String NEW_WIRE_VALID = '#009900';
+  static final String NEW_WIRE_INVALID = '#999999';
+  static final String WIRE_HIGH = 'hsl(0, 100%, 50%)';
+  static final String WIRE_LOW =  'hsl(0, 100%, 5%)';
+  static final String WIRE_SELECT_STYLE = 'hsla(270, 100%, 60%, 0.75)';
+  static final String WIRE_INVALID = '#999999';
+  static final int    WIRE_WIDTH = 4;
+  static final int GRID_SIZE = 10;
+  static final int GRID_POINT_SIZE = 1;
+  static final String GRID_COLOR = '#999493';
+  static final String GRID_BACKGROUND_COLOR = '#eeeeee';
   
 }

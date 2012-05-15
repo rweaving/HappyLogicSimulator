@@ -21,8 +21,8 @@ class LogicDevice {
 
   //var id;
   Point position;
-  int xPosition;
-  int yPosition;
+  //int xPosition;
+  //int yPosition;
     
   bool selected;
   bool selectable;
@@ -57,41 +57,40 @@ class LogicDevice {
     selectable = true;
   }
  
-  DeviceInput InputPinHit(int x, int y) {
+  DeviceInput InputPinHit(Point p) {
     for (DeviceInput input in inputs) {
       if(input.connectable){
-        if(input.pinHit(x, y))
+        if(input.pinHit(p))
           return input; 
       }
     }
     return null;
   }
   
-  DeviceOutput OutputPinHit(int x, int y) {
+  DeviceOutput OutputPinHit(Point p) {
     for (DeviceOutput output in outputs) {
       if(output.connectable){
-        if(output.pinHit(x, y))
+        if(output.pinHit(p))
           return output; 
       }
     }
     return null;
   }    
     
-  bool DeviceHit(int x, int y) {
-    return contains(x, y);
+  bool DeviceHit(Point p) {
+    return contains(p);
   }
    
   // Move the device to a new location
-  void MoveDevice(int newX, int newY) { 
-      position.x = newX;
-      position.y = newY;
-      xPosition = newX;
-      yPosition = newY;
+  void MoveDevice(Point p) { 
+      position.x = p.x;
+      position.y = p.y;
   }
   
   // the user has click on a logic device
   void clicked() {
     switch (deviceType.type) {
+      case 'INPUT': 
       case 'SWITCH': 
         outputs[0].value = !outputs[0].value; 
         updated = true; 
@@ -100,9 +99,9 @@ class LogicDevice {
   }
   
 //   Id the given point within our image
-  bool contains(int pointX, int pointY) {
-    if ((pointX > xPosition && pointX < xPosition + deviceType.images[0].width) && 
-          (pointY > yPosition && pointY < yPosition + deviceType.images[0].height)) {
+  bool contains(Point p) {
+    if ((p.x > position.x && p.x < position.x + deviceType.images[0].width) && 
+          (p.y > position.y && p.y < position.y + deviceType.images[0].height)) {
       return true;
     } 
     else {
@@ -128,6 +127,10 @@ class LogicDevice {
         case 'XNOR':    outputs[0].value = !(inputs[0].value != inputs[1].value); break;
         case 'NOT':     outputs[0].value = !(inputs[0].value); break;
         case 'SWITCH':  outputs[0].value = outputs[0].value; break;
+        
+        case 'INPUT':  outputs[0].value = outputs[0].value; break; // Dummy output for device design
+        case 'OUTPUT': outputs[0].value = inputs[0].value; break; // Dummy input for device design
+        
         case 'DLOGO':
         case 'LED':     outputs[0].value = inputs[0].value; break;
         case 'CLOCK':   CalcClock(this); break;

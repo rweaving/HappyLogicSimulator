@@ -86,25 +86,25 @@ class Wires {
   }
   
   /** Try to select a wire point at a given point */
-  WirePoint selectWirePoint(int x, int y) {
+  WirePoint selectWirePoint(Point p) {
     for (Wire wire in wires) { 
-      if(wire.getWirePoint(x, y) != null) {
-        return wire.getWirePoint(x, y);
+      if(wire.getWirePoint(p) != null) {
+        return wire.getWirePoint(p);
       }
     }        
     return null;
   }
   
   /** Try to select a wire points at a given point */
-  int selectWirePoints(int x, int y) {
+  int selectWirePoints(Point p) {
     selectedWirePoints.clear();
     
     Point firstPoint;
     
     for (Wire wire in wires) { 
       for (WirePoint point in wire.wirePoints) {
-        if (x >= (point.x - Wire.WIREPOINT_HIT_RADIUS) && x <= (point.x + Wire.WIREPOINT_HIT_RADIUS)) {
-          if (y >= (point.y - Wire.WIREPOINT_HIT_RADIUS) && y <= (point.y + Wire.WIREPOINT_HIT_RADIUS)) {
+        if (p.x >= (point.x - Wire.WIREPOINT_HIT_RADIUS) && p.x <= (point.x + Wire.WIREPOINT_HIT_RADIUS)) {
+          if (p.y >= (point.y - Wire.WIREPOINT_HIT_RADIUS) && p.y <= (point.y + Wire.WIREPOINT_HIT_RADIUS)) {
             if (firstPoint == null) {
               firstPoint = point;
               selectedWirePoints.add(point);
@@ -120,6 +120,7 @@ class Wires {
     }        
     return selectedWirePoints.length;
   }
+  
   
   /** Unselect wire points */
   void deselectWirePoints() {
@@ -169,25 +170,12 @@ class Wires {
     
     for (Wire wire in wires) { 
       if (wire.contains(p) != null) {
-        //wire.printWirePoints(wire.wirePoints);
         selectedWires.add(wire);
-        //addWireToSelection(wire);
-        
       }
     }
     return selectedWires.length;
   }
   
-//  /** tries to select a wire at a give point */  
-//  void addWireToSelection(Wire wire) {
-//    for(Wire w in selectedWires) {
-//      if(w === wire) {
-//        selectedWires.removeRange(selectedWires.indexOf(w), 1); 
-//        return;
-//      }
-//    }
-//    selectedWires.add(wire);
-//  }
   
   /** returns the first wire that is selected */
   Wire firstSelectedWire() {

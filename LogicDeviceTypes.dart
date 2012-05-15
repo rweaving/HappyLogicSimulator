@@ -110,6 +110,21 @@ class LogicDeviceTypes{
     _switch.AddOutput(0, 21, 0);
     _switch.updateable = true;
     
+    LogicDeviceType _input = AddNewType('INPUT');
+    _input.AddImage("images/in_low.png");
+    _input.AddImage("images/in_high.png");
+    _input.AddInput(0, -1, -1);
+    _input.AddOutput(0, 109, 25);
+    _input.updateable = true;
+    
+    LogicDeviceType _output = AddNewType('OUTPUT');
+    _output.AddImage("images/out_low.png");
+    _output.AddImage("images/out_high.png");
+    _output.AddInput(0, 0, 25);
+    _output.AddOutput(0, -1, -1);
+    _output.updateable = true;
+    
+    
     LogicDeviceType _led = AddNewType('LED');
     _led.AddImage("images/01Disp_Low.png");
     _led.AddImage("images/01Disp_High.png");

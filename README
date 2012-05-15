@@ -1,9 +1,14 @@
-This is a simple digital logic simulator written in Dart. You can add logic devices to the simulator and connect them to simulate various logic conditions. This program is intended to help students understand logic gates and flip flops through experimentation.
+This is a simple digital logic simulator written in Dart.  
 
-This is the Happy Logic Simulator that I wrote during the 2012 Dart Hackathon
+You can add logic devices to the simulator and connect them to simulate various 
+logic conditions. This program is intended to help the user to understand logic 
+gates and flip flops through experimentation.  My goal is to make the simulation 
+as easy to use as possible.  My 4 yr old son is the primary ui tester.
 
-It is a work in progess, expect lots of changes.....
+I started this project at the Silicon Valley 2012 Dart Hackathon
+
+It is under development, so expect lots of changes.....
 
 Live Code at http://HappyLogicSimulator.com
 
-Ryan C. Weaving
+Ryan C. Weaving 

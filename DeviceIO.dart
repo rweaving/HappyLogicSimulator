@@ -31,18 +31,18 @@ class DeviceIO {
   bool updated; 
   
   /** Returns the corrected absolute X position */
-  int get offsetX() => device.xPosition + devicePin.x;   
+  int get offsetX() => device.position.x + devicePin.x;   
   
   /** Returns the corrected absolute Y position */
-  int get offsetY() => device.yPosition + devicePin.y; 
+  int get offsetY() => device.position.y + devicePin.y;  
   
   /** returns the absolute point */
   Point get offset() => new Point(offsetX, offsetY);
   
   /** Returns true if given point is within the pin hit radius */
-  bool pinHit(int x, int y) {
-    if(x <= (offsetX + IO_HIT_RADIUS) && x >= (offsetX - IO_HIT_RADIUS)) {
-      if(y <= (offsetY + IO_HIT_RADIUS) && y >= (offsetY - IO_HIT_RADIUS)) {
+  bool pinHit(Point p) {
+    if(p.x <= (offsetX + IO_HIT_RADIUS) && p.x >= (offsetX - IO_HIT_RADIUS)) {
+      if(p.y <= (offsetY + IO_HIT_RADIUS) && p.y >= (offsetY - IO_HIT_RADIUS)) {
         return true;
       }
     }

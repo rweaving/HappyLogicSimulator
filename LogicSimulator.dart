@@ -7,20 +7,23 @@
 #import('dart:json');
 #import('dart:core');
 
-#source('LogicDevice.dart');
-#source('DeviceIO.dart');
-#source('DeviceInput.dart');
-#source('DeviceOutput.dart');
-#source('LogicDeviceTypes.dart');
 #source('Circuit.dart');
+#source('CircuitDraw.dart');
+#source('CircuitView.dart');
+#source('DeviceButton.dart');
+#source('DeviceInput.dart');
+#source('DeviceIO.dart');
+#source('DeviceOutput.dart');
+#source('DevicePin.dart');
+#source('DeviceSelector.dart');
+#source('LogicDevice.dart');
+#source('LogicDeviceTypes.dart');
+#source('LogicStyle.dart');
 #source('Wire.dart');
 #source('Wires.dart');
-#source('DevicePin.dart');
-#source('DeviceButton.dart');
-#source('DeviceSelector.dart');
 
 void main() {
   
-  new Circuit(document.query('#canvas')).start();
+  new CircuitView(document.query('#canvas')).start();
  
 }
