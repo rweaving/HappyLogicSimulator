@@ -151,7 +151,7 @@ class LogicDevice {
     if(device.acc > device.rset) {
       device.acc = 0;
       device.outputs[0].value = !device.outputs[0].value;
-      device.outputs[1].value = !device.outputs[0].value;
+
     }
     else
       device.acc++;

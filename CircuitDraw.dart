@@ -251,7 +251,7 @@ class CircuitDraw {
     context.beginPath();  
     context.lineWidth = 1;
     
-    context.arc(x, y, 7, 0, PI2, true);  
+    context.arc(x, y, 8, 0, PI2, false);  
     
     context.fill();
     context.stroke();  

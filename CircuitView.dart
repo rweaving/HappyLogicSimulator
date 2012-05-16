@@ -56,15 +56,26 @@ class CircuitView {
     canvas.on.doubleClick.add(onMouseDoubleClick);
     canvas.on.mouseMove.add(onMouseMove);
     
+    // Touch Events
+    //canvas.on.touchEnter.add((event) => onTouchEnter(event), false);
+    canvas.on.touchStart.add((event) => onTouchStart(event), false);
+    canvas.on.touchMove.add((event) => onTouchMove(event), false);
+    canvas.on.touchEnd.add((event) => onTouchEnd(event), false);
+    //canvas.on.touchCancel.add((event) => onTouchCancel(event), false);
+    //canvas.on.touchLeave.add((event) => onTouchLeave(event), false); 
+    
+    window.setInterval(f() => draw(), 50); 
+    
     document.on.keyUp.add(onKeyUp);
   }
+  
   
   /** Start the simulation */
   void start() {
     createSelectorBar();
     onResize();
     circuit.run = true;
-    window.webkitRequestAnimationFrame(animate);
+   // window.webkitRequestAnimationFrame(animate);
   }
   
   /** Stop the simulation */
@@ -74,10 +85,10 @@ class CircuitView {
   
   /** Redraw the simulation */
   void animate(int time) {
-    if (circuit.run) {
-      draw(); // Draw the circuit
-      window.webkitRequestAnimationFrame(animate); // Use animation frame 
-    }
+//    if (circuit.run) {
+//      draw(); // Draw the circuit
+//      window.webkitRequestAnimationFrame(animate); // Use animation frame 
+//    }
   }
   
   /** When the simulation is resized this is called. */
@@ -106,20 +117,25 @@ class CircuitView {
   
   /** Creates the button bar to add devices */
   void createSelectorBar() {
-    //addNewButtonDevice('clock', 'CLOCK', 0, 0);
-    //addNewButtonDevice('switch', 'SWITCH', 0, 60);
-    addNewButtonDevice('output', 'OUTPUT', 0, 0);
-    addNewButtonDevice('input', 'INPUT', 0, 60);
+    addButton('CLOCK');
+    addButton('INPUT');
+    addButton('NOT');
+    addButton('AND');
+    addButton('NAND');
+    addButton('OR');
+    addButton('NOR');
+    addButton('XOR');
+    addButton('XNOR');
+    addButton('OUTPUT');
+   // addButton('LED');
+  }
+  
+  int buttonIndex = 0;
+  void addButton(var type){
     
-    addNewButtonDevice('not', 'NOT', 0, 120);
-    addNewButtonDevice('and', 'AND', 0, 180);
-    addNewButtonDevice('nand', 'NAND', 0, 240);
-    addNewButtonDevice('or', 'OR', 0, 300);
-    addNewButtonDevice('nor', 'NOR', 0, 360);
-    addNewButtonDevice('xor', 'XOR', 0, 420);
-    addNewButtonDevice('xnor', 'XNOR', 0, 480);
-    addNewButtonDevice('clock', 'CLOCK', 0, 540);
-    //addNewButtonDevice('led', 'LED', 50, 70);
+    addNewButtonDevice(type, type, 0, buttonIndex * 60);
+    
+    buttonIndex++;
   }
   
   /** add a new button type device */
@@ -157,6 +173,203 @@ class CircuitView {
       }
     }
 //    print("keyPress shift:${shift} ctrl:${ctrl} code:${code}");
+  }
+  
+  /** When the use touches the screen this is called */
+  void onTouchEnter(TouchEvent e) {
+    uiPoint.x = e.targetTouches[0].pageX;
+    uiPoint.y = e.targetTouches[0].pageY;
+    
+    e.preventDefault();
+    
+    if (uiSelect()) {
+      //e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+  
+  void onTouchStart(TouchEvent e) {
+    uiPoint.x = e.targetTouches[0].pageX;
+    uiPoint.y = e.targetTouches[0].pageY;
+    e.preventDefault();
+    
+    if (uiSelect()) {
+      e.stopPropagation();
+    }
+    //e.stopPropagation();
+  }
+  
+  void onTouchMove(TouchEvent e) {
+    uiPoint.x = e.targetTouches[0].pageX;
+    uiPoint.y = e.targetTouches[0].pageY;
+    
+    e.preventDefault();
+  
+    if (uiMove()) {
+      e.stopPropagation();
+    }
+  }
+  
+  void onTouchEnd(TouchEvent e) {
+    uiPoint.x = e.targetTouches[0].pageX;
+    uiPoint.y = e.targetTouches[0].pageY;
+    
+    e.preventDefault();
+    uiEndAction();
+  }
+  
+  void onTouchLeave(TouchEvent e) {
+    uiPoint.x = e.targetTouches[0].pageX;
+    uiPoint.y = e.targetTouches[0].pageY;
+    
+    e.preventDefault();
+    uiEndAction();
+
+  }
+  
+  void onTouchCancel(TouchEvent e) {
+    uiPoint.x = e.targetTouches[0].pageX;
+    uiPoint.y = e.targetTouches[0].pageY;
+    
+    e.preventDefault();
+    uiEndAction();
+  }
+  
+  /** Do a select a the ui point */
+  bool uiSelect() {
+    // If we are moving a device stop moving it and stick it
+    if (circuit.moveDevice != null) { 
+      circuit.moveDevice = null;
+      return true;
+    }
+    
+    if (circuit.selectedDevices.count > 0) {
+      return true;
+    } 
+    
+    // If we are adding a new wire try to add a new point to it
+    if (circuit.newWire != null) {
+      if (circuit.selectedWire != null) {
+        circuit.newWire.output = circuit.selectedWire.output;  
+      }
+      circuit.addWirePoint(circuit.newWire.lastPoint);
+      return true;
+    }
+   
+    // selectWirePoints for moving if there is any
+    if (circuit.selectWirePoints(uiPoint) > 0) {
+      return true;
+    } 
+   
+    // Try to start a wire
+    if (circuit.StartWire(uiPoint) == true) { 
+      return  true;
+    }
+   
+    // Check to see if user has pressed a device add button
+    LogicDevice selectedButton = tryButtonSelect(uiPoint);
+    if (selectedButton != null) {
+      circuit.newDeviceFrom(selectedButton, uiPoint);
+      return true;
+    }
+    
+    // Try to select a device in the simulation
+    LogicDevice selectedDevice = circuit.tryDeviceSelect(uiPoint);
+    if (selectedDevice != null) {
+      circuit.selectedDevices.selectTopAt(uiPoint);
+      selectedDevice.clicked();
+      return true;
+    }
+    
+    // Try to select a wire
+    if (circuit.tryWireSelect(uiPoint) > 0) {
+      circuit.selectedWire = circuit.circuitWires.firstSelectedWire();  
+      return true;
+    }
+    
+    return false;
+  }
+ 
+  /** Do a move on the ui point */
+  bool uiMove() {
+    // If we have points selected move them
+    if (circuit.circuitWires.pointsSelected) {
+      circuit.circuitWires.moveSelectedPoints(uiPoint);
+      return true;
+    }
+    
+    // If we have devices seleced move them to the new location
+    if (circuit.selectedDevices.count > 0) {
+      circuit.selectedDevices.moveTo(uiPoint);
+      return true;
+    }
+   
+    if (circuit.moveDevice != null) {
+      circuit.moveDevice.MoveDevice(uiPoint);
+      return true;
+    }
+      
+    // If we are moving a point update its position
+    if (circuit.movingWirePoint != null) {
+      circuit.movingWirePoint = uiPoint;
+      return true;
+    }
+   
+    // If we are adding a wire update its last point
+    if (circuit.addingWire) {
+      circuit.newWire.UpdateLast(uiPoint);
+      if (circuit.checkConnection(uiPoint)) {
+        return true;
+      }
+        
+      if (circuit.newWire.input != null) { // Snap to a wire only when connecting from an input.
+        // Try to select a wirepoint 
+        circuit.selectedWirePoint = circuit.circuitWires.selectWirePoint(uiPoint);
+        if (circuit.selectedWirePoint != null){
+          circuit.newWire.UpdateLast(uiPoint);
+        }
+        else{
+          circuit.selectedWire = circuit.circuitWires.wireHit(uiPoint);
+          if (circuit.selectedWire != null) {
+            Point p = circuit.selectedWire.getWireSnapPoint(uiPoint);
+            if(p != null) {
+              circuit.selectedWirePoint = p;
+              circuit.newWire.UpdateLast(p);
+            }
+          }
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+  
+  /** Stop the ui action that the user is doing */
+  bool uiEndAction() {
+  
+    if (circuit.selectedDevices.count > 0) { // If we are moving devices stop it
+      // Make sure that all the devices are not on our device selector bar
+      bool allowDrop = true;
+      for (LogicDevice d in circuit.selectedDevices.selectedDevices) {
+        if (d.position.x < TOOLBAR_WIDTH) {
+          allowDrop = false;
+        }
+      }
+      if (allowDrop) { // If all is good then allow the selected devices to be dropped
+        circuit.selectedDevices.clear();
+      }
+    }
+        
+    // If we have points selected deselect them on mouse up
+    if (circuit.circuitWires.pointsSelected) {
+      circuit.circuitWires.deselectWirePoints();
+    }
+    
+    if (circuit.movingWirePoint != null) { // deselect wire point 
+      circuit.movingWirePoint = null;
+    }  
+    
+    return true;
   }
   
   /** When the user presses down the mouse button */
@@ -210,7 +423,6 @@ class CircuitView {
     if (circuit.tryWireSelect(uiPoint) > 0) {
       circuit.selectedWire = circuit.circuitWires.firstSelectedWire();  
     }
-    
 }
  
   /** Called when the user releases mouse button */

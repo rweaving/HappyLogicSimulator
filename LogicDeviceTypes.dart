@@ -92,79 +92,84 @@ class LogicDeviceTypes{
   //TODO: move all of this to xml
   LoadDefaultTypes(){
     LogicDeviceType _and = AddNewType('AND');
-    _and.AddImage('images/and2.png');
-    _and.AddInput(0, 5, 15);
-    _and.AddInput(1, 5, 35);
-    _and.AddOutput(0, 95, 25);  
+    _and.AddImage('images/125dpi/and.png');
+    _and.AddInput(0, 2, 12);
+    _and.AddInput(1, 2, 32);
+    _and.AddOutput(0, 90, 22);  
     
     LogicDeviceType _nand = AddNewType('NAND');
-    _nand.AddImage('images/nand2.png');
-    _nand.AddInput(0, 10, 20);
-    _nand.AddInput(1, 10, 40);
-    _nand.AddOutput(0, 100, 30);  
-    
-    LogicDeviceType _switch = AddNewType('SWITCH');
-    _switch.AddImage("images/01Switch_Low.png");
-    _switch.AddImage("images/01Switch_High.png");
-    _switch.AddInput(0, -1, -1);
-    _switch.AddOutput(0, 21, 0);
-    _switch.updateable = true;
+    _nand.AddImage('images/125dpi/nand.png');
+    _nand.AddInput(0, 2, 12);
+    _nand.AddInput(1, 2, 32);
+    _nand.AddOutput(0, 90, 22);  
+//    
+//    LogicDeviceType _switch = AddNewType('SWITCH');
+//    _switch.AddImage("images/01Switch_Low.png");
+//    _switch.AddImage("images/01Switch_High.png");
+//    _switch.AddInput(0, -1, -1);
+//    _switch.AddOutput(0, 21, 0);
+//    _switch.updateable = true;
     
     LogicDeviceType _input = AddNewType('INPUT');
-    _input.AddImage("images/in_low.png");
-    _input.AddImage("images/in_high.png");
+    _input.AddImage("images/125dpi/input_low.png");
+    _input.AddImage("images/125dpi/input_high.png");
     _input.AddInput(0, -1, -1);
-    _input.AddOutput(0, 109, 25);
+    _input.AddOutput(0, 68, 22);
     _input.updateable = true;
     
     LogicDeviceType _output = AddNewType('OUTPUT');
-    _output.AddImage("images/out_low.png");
-    _output.AddImage("images/out_high.png");
-    _output.AddInput(0, 0, 25);
+    _output.AddImage("images/125dpi/output_low.png");
+    _output.AddImage("images/125dpi/output_high.png");
+    _output.AddInput(0, 2, 22);
     _output.AddOutput(0, -1, -1);
     _output.updateable = true;
     
-    
-    LogicDeviceType _led = AddNewType('LED');
-    _led.AddImage("images/01Disp_Low.png");
-    _led.AddImage("images/01Disp_High.png");
-    _led.AddInput(0, 20, 12);
-    _led.AddOutput(0, -1, -1);
-    _led.updateable = true;
+    LogicDeviceType _clock = AddNewType('CLOCK');
+    _clock.AddImage("images/125dpi/clock_low.png");
+    _clock.AddImage("images/125dpi/clock_high.png");
+    _clock.AddInput(0, -1, -1);
+    _clock.AddOutput(0, 68, 22);
+    _clock.updateable = true;
+//    
+//    LogicDeviceType _led = AddNewType('LED');
+//    _led.AddImage("images/01Disp_Low.png");
+//    _led.AddImage("images/01Disp_High.png");
+//    _led.AddInput(0, 20, 12);
+//    _led.AddOutput(0, -1, -1);
+//    _led.updateable = true;
     
     LogicDeviceType _or = AddNewType('OR');
-    _or.AddImage("images/or.png");
-    _or.AddInput(0, 5, 15);
-    _or.AddInput(1, 5, 35);
-    _or.AddOutput(0, 95, 25);
+    _or.AddImage("images/125dpi/or.png");
+    _or.AddInput(0, 2, 12);
+    _or.AddInput(1, 2, 32);
+    _or.AddOutput(0, 90, 22);
 
     LogicDeviceType _nor = AddNewType('NOR');
-    _nor.AddImage("images/nor.png");
-    _nor.AddInput(0, 5, 15);
-    _nor.AddInput(1, 5, 35);
-    _nor.AddOutput(0, 95, 25);
+    _nor.AddImage("images/125dpi/nor.png");
+    _nor.AddInput(0, 2, 12);
+    _nor.AddInput(1, 2, 32);
+    _nor.AddOutput(0, 90, 22);
 
     LogicDeviceType _xor = AddNewType('XOR');
-    _xor.AddImage("images/xor.png");
-    _xor.AddInput(0, 5, 15);
-    _xor.AddInput(1, 5, 35);
-    _xor.AddOutput(0, 95, 25);
+    _xor.AddImage("images/125dpi/xor.png");
+    _xor.AddInput(0, 2, 12);
+    _xor.AddInput(1, 2, 32);
+    _xor.AddOutput(0, 90, 22);
 
     LogicDeviceType _xnor = AddNewType('XNOR');
-    _xnor.AddImage("images/xnor.png");
-    _xnor.AddInput(0, 5, 15);
-    _xnor.AddInput(1, 5, 35);
-    _xnor.AddOutput(0, 95, 25);
+    _xnor.AddImage("images/125dpi/xnor.png");
+    _xnor.AddInput(0, 2, 12);
+    _xnor.AddInput(1, 2, 32);
+    _xnor.AddOutput(0, 90, 22);
 
     LogicDeviceType _not = AddNewType('NOT');
-    _not.AddImage("images/not.png");
-    _not.AddInput(0, 10, 30);
-    _not.AddOutput(0, 100, 30);
+    _not.AddImage("images/125dpi/not.png");
+    _not.AddInput(0, 2, 24);
+    _not.AddOutput(0, 90, 24);
     
-    LogicDeviceType _clock = AddNewType('CLOCK');
-    _clock.AddImage("images/Clock.png");
-    _clock.AddInput(0, -1, -1);
-    _clock.AddOutput(0, 70, 21);
-    _clock.AddOutput(1, 70, 46);
+    LogicDeviceType _buffer = AddNewType('BUFFER');
+    _buffer.AddImage("images/125dpi/buffer.png");
+    _buffer.AddInput(0, 2, 24);
+    _buffer.AddOutput(0, 90, 24);
     }
 }
