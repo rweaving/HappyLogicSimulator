@@ -1,4 +1,5 @@
-//  (c) Copyright 2012 - Ryan C. Weaving    
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
 //  http://HappyLogicSimulator.com 
@@ -167,9 +168,11 @@ class LogicDeviceTypes{
     _not.AddInput(0, 2, 24);
     _not.AddOutput(0, 90, 24);
     
-    LogicDeviceType _buffer = AddNewType('BUFFER');
-    _buffer.AddImage("images/125dpi/buffer.png");
-    _buffer.AddInput(0, 2, 24);
-    _buffer.AddOutput(0, 90, 24);
+    LogicDeviceType _tff = AddNewType('TFF');
+    _tff.AddImage("images/125dpi/tff.png");
+    _tff.AddInput(0, 2, 44);
+    _tff.AddOutput(0, 93, 15);
+    _tff.AddOutput(1, 93, 72);
+    
     }
 }

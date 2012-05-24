@@ -1,4 +1,5 @@
-//  (c) Copyright 2012 - Ryan C. Weaving    
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
 //  http://HappyLogicSimulator.com 
@@ -17,8 +18,7 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
 class CircuitView {
-
- 
+  
   static final int TOOLBAR_WIDTH = 115;
   
   CanvasElement canvas;
@@ -34,10 +34,13 @@ class CircuitView {
   
   Point wireSnapPoint; // A point that holds the wiresnap pointer
   Point uiPoint;
-
+  
+  bool useAnimationFrame;
 
   bool gridSnap;
   
+  AudioElement audio;
+    
   CircuitView(this.canvas) :
     circuit = new Circuit() { // Create a circuit
 
@@ -47,6 +50,15 @@ class CircuitView {
     //context = canvas.getContext('2d');
     width = canvas.width;
     height = canvas.height;
+    
+    audio = new AudioElement(); // Audio test
+    audio.src = "sounds/poke-pikachuhappy.ogg";
+    
+//    if (audio.canPlayType("audio/ogg", "") != "") {
+//      
+//    }
+    
+    useAnimationFrame = true; // Check browser specs to see if we can use animation frame
     
     uiPoint = new Point(0,0);
     
@@ -64,7 +76,7 @@ class CircuitView {
     //canvas.on.touchCancel.add((event) => onTouchCancel(event), false);
     //canvas.on.touchLeave.add((event) => onTouchLeave(event), false); 
     
-    window.setInterval(f() => draw(), 50); 
+    window.setInterval(f() => drawUpdate(), 50); 
     
     document.on.keyUp.add(onKeyUp);
   }
@@ -75,7 +87,9 @@ class CircuitView {
     createSelectorBar();
     onResize();
     circuit.run = true;
-   // window.webkitRequestAnimationFrame(animate);
+    
+    if(useAnimationFrame)
+      window.webkitRequestAnimationFrame(animate);
   }
   
   /** Stop the simulation */
@@ -85,10 +99,19 @@ class CircuitView {
   
   /** Redraw the simulation */
   void animate(int time) {
-//    if (circuit.run) {
-//      draw(); // Draw the circuit
-//      window.webkitRequestAnimationFrame(animate); // Use animation frame 
-//    }
+    if (circuit.run) {
+      draw(); // Draw the circuit
+      window.webkitRequestAnimationFrame(animate); // Use animation frame 
+    }
+  }
+  
+  /** Called by window timer to redraw */
+  void drawUpdate() {
+    if(!useAnimationFrame) {
+      if (circuit.run) {
+        draw();
+      }
+    }
   }
   
   /** When the simulation is resized this is called. */
@@ -127,14 +150,12 @@ class CircuitView {
     addButton('XOR');
     addButton('XNOR');
     addButton('OUTPUT');
-   // addButton('LED');
+    addButton('TFF');
   }
   
   int buttonIndex = 0;
   void addButton(var type){
-    
     addNewButtonDevice(type, type, 0, buttonIndex * 60);
-    
     buttonIndex++;
   }
   
@@ -156,19 +177,24 @@ class CircuitView {
     bool ctrl = e.ctrlKey;
     
     if(code == 27) { // Esc
+      
+      audio.src = "sounds/poke-pikachuhappy.ogg";
+      //print("Audio Time:${audio.startTime} - ${audio.currentTime}");
+      audio.play();
+      
       if (circuit.addingWire) {
         circuit.abortWire();
         return;
       }
     }
     
-    if(code == 46) { // Delete 
+    if (code == 46) { // Delete 
       if (circuit.addingWire) {
         circuit.abortWire();
         return;
       }
       
-      if(circuit.circuitWires.wiresSelected){
+      if (circuit.circuitWires.wiresSelected) {
         circuit.circuitWires.deleteSelectedWires();
       }
     }
@@ -177,8 +203,8 @@ class CircuitView {
   
   /** When the use touches the screen this is called */
   void onTouchEnter(TouchEvent e) {
-    uiPoint.x = e.targetTouches[0].pageX;
-    uiPoint.y = e.targetTouches[0].pageY;
+    uiPoint.x = e.targetTouches[0].pageX.floor();
+    uiPoint.y = e.targetTouches[0].pageY.floor();
     
     e.preventDefault();
     
@@ -189,8 +215,8 @@ class CircuitView {
   }
   
   void onTouchStart(TouchEvent e) {
-    uiPoint.x = e.targetTouches[0].pageX;
-    uiPoint.y = e.targetTouches[0].pageY;
+    uiPoint.x = e.targetTouches[0].pageX.floor();
+    uiPoint.y = e.targetTouches[0].pageY.floor();
     e.preventDefault();
     
     if (uiSelect()) {
@@ -200,8 +226,8 @@ class CircuitView {
   }
   
   void onTouchMove(TouchEvent e) {
-    uiPoint.x = e.targetTouches[0].pageX;
-    uiPoint.y = e.targetTouches[0].pageY;
+    uiPoint.x = e.targetTouches[0].pageX.floor();
+    uiPoint.y = e.targetTouches[0].pageY.floor();
     
     e.preventDefault();
   
@@ -211,16 +237,16 @@ class CircuitView {
   }
   
   void onTouchEnd(TouchEvent e) {
-    uiPoint.x = e.targetTouches[0].pageX;
-    uiPoint.y = e.targetTouches[0].pageY;
+    uiPoint.x = e.targetTouches[0].pageX.floor();
+    uiPoint.y = e.targetTouches[0].pageY.floor();
     
     e.preventDefault();
     uiEndAction();
   }
   
   void onTouchLeave(TouchEvent e) {
-    uiPoint.x = e.targetTouches[0].pageX;
-    uiPoint.y = e.targetTouches[0].pageY;
+    uiPoint.x = e.targetTouches[0].pageX.floor();
+    uiPoint.y = e.targetTouches[0].pageY.floor();
     
     e.preventDefault();
     uiEndAction();
@@ -228,8 +254,8 @@ class CircuitView {
   }
   
   void onTouchCancel(TouchEvent e) {
-    uiPoint.x = e.targetTouches[0].pageX;
-    uiPoint.y = e.targetTouches[0].pageY;
+    uiPoint.x = e.targetTouches[0].pageX.floor();
+    uiPoint.y = e.targetTouches[0].pageY.floor();
     
     e.preventDefault();
     uiEndAction();
@@ -325,10 +351,10 @@ class CircuitView {
       if (circuit.newWire.input != null) { // Snap to a wire only when connecting from an input.
         // Try to select a wirepoint 
         circuit.selectedWirePoint = circuit.circuitWires.selectWirePoint(uiPoint);
-        if (circuit.selectedWirePoint != null){
+        if (circuit.selectedWirePoint != null) {
           circuit.newWire.UpdateLast(uiPoint);
         }
-        else{
+        else {
           circuit.selectedWire = circuit.circuitWires.wireHit(uiPoint);
           if (circuit.selectedWire != null) {
             Point p = circuit.selectedWire.getWireSnapPoint(uiPoint);
@@ -376,8 +402,8 @@ class CircuitView {
   void onMouseDown(MouseEvent e) {
     e.preventDefault();
     
-    uiPoint.x = e.offsetX;
-    uiPoint.y = e.offsetY;
+    uiPoint.x = e.offsetX.floor();
+    uiPoint.y = e.offsetY.floor();
     
     // If we are moving a device stop moving it and stick it
     if (circuit.moveDevice != null) { 
@@ -462,8 +488,8 @@ class CircuitView {
  
   /** Called when the user is moving the mouse */
   void onMouseMove(MouseEvent e) {
-    uiPoint.x = e.offsetX;
-    uiPoint.y = e.offsetY;
+    uiPoint.x = e.offsetX.floor();
+    uiPoint.y = e.offsetY.floor();
         
     // If we have points selected move them
     if (circuit.circuitWires.pointsSelected) {
@@ -501,7 +527,7 @@ class CircuitView {
         if (circuit.selectedWirePoint != null){
           circuit.newWire.UpdateLast(uiPoint);
         }
-        else{
+        else {
           circuit.selectedWire = circuit.circuitWires.wireHit(uiPoint);
           if (circuit.selectedWire != null) {
             Point p = circuit.selectedWire.getWireSnapPoint(uiPoint);
@@ -522,7 +548,7 @@ class CircuitView {
     
     // Try to select a wirepoint 
     circuit.selectedWirePoint = circuit.circuitWires.selectWirePoint(uiPoint);
-    if (circuit.selectedWirePoint != null){
+    if (circuit.selectedWirePoint != null) {
       return;
     }
     

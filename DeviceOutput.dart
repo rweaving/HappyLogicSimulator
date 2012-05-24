@@ -1,4 +1,5 @@
-//  (c) Copyright 2012 - Ryan C. Weaving    
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
 //  http://HappyLogicSimulator.com 
@@ -20,7 +21,9 @@ class DeviceOutput  { //extends DeviceIO
  static final int IO_HIT_RADIUS = 9; // Pin hit radius 
   
   LogicDevice device; // parent device  
-  DevicePin devicePin; // the pin that we connect to 
+  DevicePin devicePin; // the pin that we connect to
+  Logic subLogicGate;
+  int subLogicPin;
     
   bool value; // The IO value
   bool _connectable;

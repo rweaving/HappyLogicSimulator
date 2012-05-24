@@ -1,4 +1,5 @@
-//  (c) Copyright 2012 - Ryan C. Weaving    
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
 //  http://HappyLogicSimulator.com 

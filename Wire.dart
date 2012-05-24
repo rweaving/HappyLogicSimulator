@@ -1,4 +1,5 @@
-//  (c) Copyright 2012 - Ryan C. Weaving    
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
 //  http://HappyLogicSimulator.com 
@@ -111,7 +112,6 @@ class Wire {
   /** Returns a point that is snapped to the wire */
   Point getWireSnapPoint(Point p) {
     WirePoint wp1, wp2; 
-    //Point p = new Point(x, y);
     wp1 = contains(p); // get upstream point
     
     if(wp1 != null) {
@@ -124,7 +124,7 @@ class Wire {
       num xp = length * Math.cos(angle) + wp1.x;
       num yp = length * Math.sin(angle) + wp1.y;
       
-      return new Point(xp, yp);
+      return new Point(xp.floor(), yp.floor());
     }
     return null;
   }
@@ -133,11 +133,7 @@ class Wire {
   num distance(Point a, Point b) {
     return Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x));
   }
-  
-//  num distance(num x1, num y1, num x2, num y2) {
-//    return Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
-//  }
-  
+
   /** Returns a wirepoint if it exists at the given point */
   WirePoint getWirePoint(Point p) {
     for (WirePoint point in wirePoints) {
@@ -158,7 +154,6 @@ class Wire {
   /** Clear the wire of all the wire points */
   void clear() {
     wirePoints.clear();
-    
     lastX = null;
     lastY = null;
   }
@@ -186,7 +181,6 @@ class Wire {
   connect a wire to another wire */
   void setKnot(WirePoint p, bool drawKnot) {
     p.drawKnot = drawKnot;
-    
     if (p.drawKnot) {
       wireKnot = p;
     }
@@ -194,19 +188,7 @@ class Wire {
       wireKnot = null;
     }
   }
-  
-//  /** Check to see if first or last point is here */
-//  bool HasStartEndPoint(int x, int y) {
-//    if(wirePoints.length >= 2) {
-//      if(wirePoints[0].x == x && wirePoints[0].y == y) { 
-//        return true;
-//      }
-//      if(wirePoints.last().x == x && wirePoints.last().y == y) {
-//        return true;
-//      }
-//    }
-//  }
-//  
+
   /** Updates the last point in the wire */
   void UpdateLast(Point p) {
     if(wirePoints.length >= 2) { // at least 2 points
@@ -241,7 +223,7 @@ class Wire {
     endWire = wirePoints.getRange(wi, wirePoints.length - wi); // Store the end of the wire
     wirePoints.removeRange(wi, wirePoints.length - wi); // Remove the end
     
-    WirePoint wp = new WirePoint(this, p.x, p.y); // Add our new point
+    WirePoint wp = new WirePoint(this, p.x.floor(), p.y.floor()); // Add our new point
     wirePoints.add(wp);
     
     for (WirePoint wpe in endWire) { // Stick the end of the wire back on

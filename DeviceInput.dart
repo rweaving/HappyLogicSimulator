@@ -1,4 +1,5 @@
-//  (c) Copyright 2012 - Ryan C. Weaving    
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
 //  http://HappyLogicSimulator.com 
@@ -15,14 +16,15 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
+
 class DeviceInput {
   
  static final int IO_HIT_RADIUS = 9; // Pin hit radius 
   
   LogicDevice device; // parent device  
-  DevicePin devicePin; // the pin that we connect to 
-    
+  DevicePin devicePin; // the pin that we connect to
+  Logic subLogicGate;
+  
   bool _value; // The IO value
   bool _connectable;
   var id; // the IO's id 

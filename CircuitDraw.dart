@@ -1,3 +1,22 @@
+//  (c) Copyright 2012 - Ryan C. Weaving
+//  https://plus.google.com/111607634508834917317
+//
+//  This file is part of Happy Logic Simulator.
+//  http://HappyLogicSimulator.com 
+//
+//  Happy Logic Simulator is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+//  
+//  Happy Logic Simulator is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+//  
+//  You should have received a copy of the GNU General Public License
+//  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
+
 class CircuitDraw {
   
   static final PI2 = Math.PI * 2;
@@ -165,7 +184,7 @@ class CircuitDraw {
   void drawKnot(int x, int y) {
     context.beginPath();
     context.lineWidth = 2;
-    context.arc(x, y, 6, 0, PI2, false);
+    context.arc(x, y, 6.1, 0, PI2, false);
     context.fill();
     context.stroke();
     context.closePath(); 
@@ -250,13 +269,11 @@ class CircuitDraw {
     
     context.beginPath();  
     context.lineWidth = 1;
-    
-    context.arc(x, y, 8, 0, PI2, false);  
+                                            // possible bug in arc function, only with with subpixels
+    context.arc(x, y, 8.1, 0, PI2, false);  // Doesnt not draw correctly at 8 in dart vm
     
     context.fill();
     context.stroke();  
     context.closePath(); 
   }
-  
-  
 }
