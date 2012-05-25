@@ -20,7 +20,7 @@
 /** There is one instance of the logic device for each logic device that is displayed */
 class LogicDevice {
 
-  Point position;
+  CanvasPoint position;
 
   bool selected;
   bool selectable;
@@ -52,14 +52,14 @@ class LogicDevice {
       outputs.add(new DeviceOutput(this, devicePin.id, devicePin));
     }
     
-    position = new Point(0,0);
+    position = new CanvasPoint(0,0);
     visible = true;
     selectable = true;
     
-    buildTestDevice(); // build a test sublogic device 
+    loadSublogic();
   }
  
-  DeviceInput InputPinHit(Point p) {
+  DeviceInput InputPinHit(CanvasPoint p) {
     for (DeviceInput input in inputs) {
       if(input.connectable){
         if(input.pinHit(p))
@@ -69,7 +69,7 @@ class LogicDevice {
     return null;
   }
   
-  DeviceOutput OutputPinHit(Point p) {
+  DeviceOutput OutputPinHit(CanvasPoint p) {
     for (DeviceOutput output in outputs) {
       if(output.connectable){
         if(output.pinHit(p))
@@ -79,12 +79,12 @@ class LogicDevice {
     return null;
   }    
     
-  bool DeviceHit(Point p) {
+  bool deviceHit(CanvasPoint p) {
     return contains(p);
   }
    
   // Move the device to a new location
-  void MoveDevice(Point p) { 
+  void moveDevice(CanvasPoint p) { 
       position.x = p.x;
       position.y = p.y;
   }
@@ -101,7 +101,7 @@ class LogicDevice {
   }
   
 //   Id the given point within our image
-  bool contains(Point p) {
+  bool contains(CanvasPoint p) {
     if ((p.x > position.x && p.x < position.x + deviceType.images[0].width) && 
           (p.y > position.y && p.y < position.y + deviceType.images[0].height)) {
       return true;
@@ -111,7 +111,8 @@ class LogicDevice {
     }
   }
   
-  void Calculate() {
+  /** Calculate the logic state of this device */
+  void calculate() {
     if(!calculated) {
       calculated = true;
       
@@ -119,31 +120,13 @@ class LogicDevice {
           input.updated = false;
       }
       
-      bool outputState = outputs[0].value;
-      
-      switch (deviceType.type){
-        case 'AND':     outputs[0].value = inputs[0].value && inputs[1].value; break;
-        case 'NAND':    outputs[0].value = !(inputs[0].value && inputs[1].value); break;
-        case 'OR':      outputs[0].value = inputs[0].value || inputs[1].value; break;
-        case 'NOR':     outputs[0].value = !(inputs[0].value || inputs[1].value); break;
-        case 'XOR':     outputs[0].value = (inputs[0].value != inputs[1].value); break;
-        case 'XNOR':    outputs[0].value = !(inputs[0].value != inputs[1].value); break;
-        case 'NOT':     outputs[0].value = !(inputs[0].value); break;
-        case 'SWITCH':  outputs[0].value = outputs[0].value; break;
-        
-        case 'INPUT':  outputs[0].value = outputs[0].value; break; // Dummy output for device design
-        case 'OUTPUT': outputs[0].value = inputs[0].value; break; // Dummy input for device design
-        
-        case 'DLOGO':
-        case 'LED':     outputs[0].value = inputs[0].value; break;
-        case 'CLOCK':   CalcClock(this); break;
-        case 'TFF':     subCalc(); break;
-       }
-      
-      if(outputState != outputs[0].value){ 
-        updated = true;
+      // Set output values to check for changes
+      for(DeviceOutput output in outputs) {
+        output.previous_value = output.value;
       }
       
+      subCalc();
+
       // Check inputs to see if that have devices connected to them that have updated
       for(DeviceInput input in inputs) { 
         input.checkUpdate();
@@ -151,20 +134,10 @@ class LogicDevice {
     }
   }
 
-  Function CalcClock(LogicDevice device) {
-    if(device.acc > device.rset) {
-      device.acc = 0;
-      device.outputs[0].value = !device.outputs[0].value;
-
-    }
-    else
-      device.acc++;
-  }
-  
   /** Preform logic calculation on sublogic circuit */
   void subCalc() {
-    for (Logic sl in subLogic) { // clear calc status
-      sl.calculated = false;
+    for (Logic gate in subLogic) { // clear calc status
+      gate.calculated = false;
     }
     
     for(DeviceInput input in inputs) { // Set inputs
@@ -178,8 +151,8 @@ class LogicDevice {
       }
     }
     
-    for (Logic sl in subLogic) { // Calc sublogic
-      sl.calc();
+    for (Logic gate in subLogic) { // Calc sublogic
+      gate.calc();
     }
     
     for (DeviceOutput output in outputs) { // Set outputs
@@ -189,33 +162,32 @@ class LogicDevice {
     }
   }
   
-  
-  // TFF
-  void buildTestDevice() {
+  /** Load the devices subLogicGates */
+  void loadSublogic() {
     subLogic.clear();
     
-    addGate('NOT',  9, 9); // 0    
-    addGate('NAND', 9, 8);  // 1
-    addGate('NAND', 9, 7);  // 2
-    addGate('NAND', 1, 4);  // 3
-    addGate('NAND', 2, 3);  // 4
-    addGate('NAND', 3, 0);  // 5
-    addGate('NAND', 4, 0);  // 6
-    addGate('NAND', 5, 8);  // 7 
-    addGate('NAND', 6, 7);  // 8 
-    inputs[0].subLogicGate = addGate('IN', -1, -1);  // 9
-    outputs[0].subLogicGate = addGate('OUT', 7, -1); // 10
-    
-    if(outputs.length >= 2)
-      outputs[1].subLogicGate = addGate('OUT', 8, -1); // 11
-    
-    setConnections();
+    for (SubLogicGate gate in deviceType.subLogicGates) {
+      if (gate.gateType == 'IN') { // set the external connections for sublogic input
+        if (gate.connection2 >= 0 && gate.connection2 < inputs.length) {
+          inputs[gate.connection2].subLogicGate = addGate('IN', -1, -1);  
+        }
+        continue;
+      }
+      if (gate.gateType == 'OUT') { // set the external connections for sublogic output
+        if (gate.connection2 >= 0 && gate.connection2 < outputs.length) {
+          outputs[gate.connection2].subLogicGate = addGate('OUT', gate.connection1, -1);  
+        }
+        continue;
+      } 
+      addGate(gate.gateType, gate.connection1, gate.connection2);  
+    }
+    setConnections(); // connect the devices using preloads
   }
+ 
   
   /** After all the sublogic devices are created set their connections */
   void setConnections() {
     for (Logic sl in subLogic) {
-      //print("${sl.name}, ${sl.ig1}, ${sl.ig2}");
       if (sl.ig1 >= 0 && sl.ig1 < subLogic.length) {
         sl.inGate1 = subLogic[sl.ig1];
       }
@@ -227,20 +199,22 @@ class LogicDevice {
     
   /** Add a sublogic gate */
   Logic addGate(var gateType, int inGate1, int inGate2) {
+    
     Logic newGate;
     
     switch (gateType) {
-      case 'IN':      newGate = new pIn(); break;
-      case 'OUT':     newGate = new pOut(); break;
-      case 'AND':     newGate = new pAnd(); break;
-      case 'NAND':    newGate = new pNand(); break;
-      case 'OR':      newGate = new pOr(); break;
-      case 'NOR':     newGate = new pNor(); break;
-      case 'XOR':     newGate = new pXor(); break;
-      case 'XNOR':    newGate = new pXnor(); break;
-      case 'NOT':     newGate = new pNot(); break;
+      case 'IN':      newGate = new pIn();     break;
+      case 'OUT':     newGate = new pOut();    break;
+      case 'AND':     newGate = new pAnd();    break;
+      case 'NAND':    newGate = new pNand();   break;
+      case 'OR':      newGate = new pOr();     break;
+      case 'NOR':     newGate = new pNor();    break;
+      case 'XOR':     newGate = new pXor();    break;
+      case 'XNOR':    newGate = new pXnor();   break;
+      case 'NOT':     newGate = new pNot();    break;
+      case 'BUFFER':  newGate = new pBuffer(); break;
       case 'SWITCH':  newGate = new pSwitch(); break;
-      case 'CLOCK':   newGate = new pClock(); break;
+      case 'CLOCK':   newGate = new pClock();  break;
     }
     
     if (newGate != null) {
@@ -248,6 +222,7 @@ class LogicDevice {
       newGate.ig2 = inGate2;
       newGate.inGate1 = newGate;
       newGate.inGate2 = newGate;
+      newGate.out = false;
       subLogic.add(newGate);
     }
     return newGate;

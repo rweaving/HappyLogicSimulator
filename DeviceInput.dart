@@ -39,10 +39,10 @@ class DeviceInput {
   int get offsetY() => device.position.y + devicePin.y;  
   
   /** returns the absolute point */
-  Point get offset() => new Point(offsetX, offsetY);
+  CanvasPoint get offset() => new CanvasPoint(offsetX, offsetY);
   
   /** Returns true if given point is within the pin hit radius */
-  bool pinHit(Point p) {
+  bool pinHit(CanvasPoint p) {
     if(p.x <= (offsetX + IO_HIT_RADIUS) && p.x >= (offsetX - IO_HIT_RADIUS)) {
       if(p.y <= (offsetY + IO_HIT_RADIUS) && p.y >= (offsetY - IO_HIT_RADIUS)) {
         return true;
@@ -78,7 +78,7 @@ class DeviceInput {
   /** Check to see if any connected output has been updated */
   void checkUpdate() {
     if(connectedOutput != null) {
-      updated = connectedOutput.device.updated;
+      updated = connectedOutput.updated;// .device.updated;
     }
     else
       updated = false;
@@ -117,7 +117,7 @@ class DeviceInput {
         return false;
     }
     
-    if(!connectedWire.output.calculated) {
+    if(connectedWire.output.calculated == false) {
       connectedWire.output.calculate();
     }
     return connectedWire.output.value;

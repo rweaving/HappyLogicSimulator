@@ -46,16 +46,16 @@ class Circuit {
     circuitWires = new Wires();
     selectedDevices = new SelectedDevices(logicDevices, circuitWires);
 
-    window.setInterval(f() => tick(), 50); // Create a timer to update the simulation tick
+    window.setInterval(f() => tick(), 5); // Create a timer to update the simulation tick
   }
   
   /** Creates a new device from a given device and adds it to the circuit */
-  LogicDevice newDeviceFrom(LogicDevice device, Point position) {
+  LogicDevice newDeviceFrom(LogicDevice device, CanvasPoint position) {
     LogicDevice newDevice = new LogicDevice(device.deviceType); 
     logicDevices.add(newDevice);
-    newDevice.MoveDevice(device.position);
+    newDevice.moveDevice(device.position);
     selectedDevices.clear();
-    selectedDevices.add(newDevice, new Point((device.position.x - position.x), (device.position.y - position.y)));
+    selectedDevices.add(newDevice, new CanvasPoint((device.position.x - position.x), (device.position.y - position.y)));
     return newDevice;
   }
   
@@ -71,12 +71,12 @@ class Circuit {
       device.calculated = false;               // device  
     }
     for (LogicDevice device in logicDevices) { // Calculate the device
-      device.Calculate();
+      device.calculate();
     }
   }
   
   /** Try to select a logic device at given point */
-  LogicDevice tryDeviceSelect(Point p) {
+  LogicDevice tryDeviceSelect(CanvasPoint p) {
     for (LogicDevice device in logicDevices) {  
       if (device.contains(p)) {
         return device;
@@ -86,7 +86,7 @@ class Circuit {
   }
   
   /** Try to select a logic device input at given point*/
-  DeviceInput tryInputSelect(Point p) {
+  DeviceInput tryInputSelect(CanvasPoint p) {
     for (LogicDevice device in logicDevices) { 
       if (device.InputPinHit(p) != null) {
         return device.InputPinHit(p);
@@ -96,7 +96,7 @@ class Circuit {
   }
   
   /** Try to select a logic device output at given point */
-  DeviceOutput tryOutputSelect(Point p) {
+  DeviceOutput tryOutputSelect(CanvasPoint p) {
     for (LogicDevice device in logicDevices) { 
       if (device.OutputPinHit(p) != null) {
         return device.OutputPinHit(p);
@@ -114,17 +114,17 @@ class Circuit {
   }
   
   /** Select wire points at a give point */
-  int selectWirePoints(Point p) {
+  int selectWirePoints(CanvasPoint p) {
     return circuitWires.selectWirePoints(p);
   }
   
   /** Try to select a wire at a given point */
-  int tryWireSelect(Point p) { 
+  int tryWireSelect(CanvasPoint p) { 
     return circuitWires.selectWire(p);
   }
 
  /** Check to see if this point is a vaild connection when adding a wire */
- bool checkConnection(Point p) {
+ bool checkConnection(CanvasPoint p) {
    if (!addingWire) return false;
    
    // Looking for a vaild input
@@ -150,7 +150,7 @@ class Circuit {
  }
  
  /** Check to see if this point is vaild */
- bool checkValid(Point p) {
+ bool checkValid(CanvasPoint p) {
      
    if (newWire != null) { // We are adding a wire
      return checkConnection(p);  
@@ -174,7 +174,7 @@ class Circuit {
  }
  
  /** Try to start adding a wire, returns true if a wire is started */
- bool StartWire(Point p) {
+ bool StartWire(CanvasPoint p) {
     
     DeviceInput input = tryInputSelect(p);
     // If we have a vaild point then continue adding a wire
@@ -207,7 +207,7 @@ class Circuit {
  / Add a new point to the wire and end it if vaild connection
  / returns true if wire point is added and false if wire connection ends
  */
- bool addWirePoint(Point p) {
+ bool addWirePoint(CanvasPoint p) {
    if(newWire == null) return false;
 
    newWire.UpdateLast(p);
@@ -273,7 +273,7 @@ class Circuit {
      // Check on wire
      Wire w = circuitWires.wireHit(p);
      if (w != null) {
-       Point sp = selectedWire.getWireSnapPoint(p);
+       CanvasPoint sp = selectedWire.getWireSnapPoint(p);
        if(sp != null) {
          newWire.output = w.output;
          newWire.UpdateLast(sp);

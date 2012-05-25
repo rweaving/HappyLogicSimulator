@@ -19,7 +19,8 @@
 
 /** 
 This is the base logic class for devices, It allow logic devices to use
-derivive circuits for their core logic */
+derivive circuits for their core logic.  This is where the magic happens
+all devices are based on 2 input logic gates */
 class Logic {
 
   static final int NC = -1;
@@ -43,15 +44,9 @@ class Logic {
   Logic inGate1; // Pointer to connected gate
   Logic inGate2;
   
-  Logic() { 
-    
-  }
+  Logic() {}
   
   bool get status() => out;
-  
-  setDelay(int count) {
-    
-  }
   
   void calc() { 
     calculated = true;
@@ -64,7 +59,6 @@ class Logic {
       inGate2.calc();
     }
   }
-  
 }
 
 /**External input */
@@ -72,6 +66,7 @@ class pIn extends Logic {
   pIn(){name='IN';}
   void calc() {
     calculated = true;
+   // out = inGate1.out;
   }
 }
 
@@ -138,12 +133,21 @@ class pXnor extends Logic {
   }
 }
 
-/**PRIMARY Not (2 in - 1 out) */
+/**PRIMARY Not (1 in - 1 out) */
 class pNot extends Logic { 
   pXNot(){name='NOT';}
   void calc() {
     calculated = true;
     out = !inGate1.out;
+  }
+}
+
+/**PRIMARY Buffer (1 in - 1 out) */
+class pBuffer extends Logic { 
+  pBuffer(){name='BUFFER';}
+  void calc() {
+    calculated = true;
+    out = inGate1.out;
   }
 }
 
@@ -157,20 +161,15 @@ class pSwitch extends Logic {
 
 /**PRIMARY CLOCK (0 in - 1 out) */
 class pClock extends Logic { 
-  
   pClock() { 
     name = 'CLOCK';
-    duration = 10; 
-    delay = 10;
+    duration = 50; 
+    delay = 50;
     ticks = 0;
   }
-  
-  set delay(int d) => delay = d;
-  set duration(int d) => duration = d;
-  
-  /* Calculate the clock state */
   void calc() {
-      ticks++;
+    calculated = true;
+    ticks++;
     
     if(out && ticks > duration) {
       out = false;
@@ -178,11 +177,10 @@ class pClock extends Logic {
       return;
     }
     
-    if(out && ticks > delay) {
+    if(!out && ticks > delay) {
       out = true;
       ticks = 0;
       return;
     }  
   }
-  
 }

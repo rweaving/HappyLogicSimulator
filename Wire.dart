@@ -18,7 +18,7 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
 
-class WirePoint  implements Point {
+class WirePoint  implements CanvasPoint {
   int x;
   int y;
   bool drawKnot;
@@ -110,7 +110,7 @@ class Wire {
   }
   
   /** Returns a point that is snapped to the wire */
-  Point getWireSnapPoint(Point p) {
+  CanvasPoint getWireSnapPoint(CanvasPoint p) {
     WirePoint wp1, wp2; 
     wp1 = contains(p); // get upstream point
     
@@ -124,18 +124,18 @@ class Wire {
       num xp = length * Math.cos(angle) + wp1.x;
       num yp = length * Math.sin(angle) + wp1.y;
       
-      return new Point(xp.floor(), yp.floor());
+      return new CanvasPoint(xp.floor(), yp.floor());
     }
     return null;
   }
   
   /** Distance between two points */
-  num distance(Point a, Point b) {
+  num distance(CanvasPoint a, CanvasPoint b) {
     return Math.sqrt((b.y - a.y) * (b.y - a.y) + (b.x - a.x) * (b.x - a.x));
   }
 
   /** Returns a wirepoint if it exists at the given point */
-  WirePoint getWirePoint(Point p) {
+  WirePoint getWirePoint(CanvasPoint p) {
     for (WirePoint point in wirePoints) {
       if (p.x >= (point.x - WIREPOINT_HIT_RADIUS) && p.x <= (point.x + WIREPOINT_HIT_RADIUS)) {
         if (p.y >= (point.y - WIREPOINT_HIT_RADIUS) && p.y <= (point.y + WIREPOINT_HIT_RADIUS)) {
@@ -169,7 +169,7 @@ class Wire {
   }
    
   /** Add a new point to the wire returns the point that was created */
-  WirePoint AddPoint(Point p) {
+  WirePoint AddPoint(CanvasPoint p) {
     UpdateLast(p);
     WirePoint wp = new WirePoint(this, p.x, p.y);
     wirePoints.add(wp);
@@ -190,7 +190,7 @@ class Wire {
   }
 
   /** Updates the last point in the wire */
-  void UpdateLast(Point p) {
+  void UpdateLast(CanvasPoint p) {
     if(wirePoints.length >= 2) { // at least 2 points
       wirePoints.last().x = p.x;
       wirePoints.last().y = p.y;
@@ -198,7 +198,7 @@ class Wire {
   }
   
   /** Get a segment between two points */
-  WireSegment getSegment(Point p) {
+  WireSegment getSegment(CanvasPoint p) {
     WirePoint wp1 = contains(p);
     int wpi1 = wirePoints.indexOf(wp1);
     
@@ -214,7 +214,7 @@ class Wire {
   }
   
   /** Insert a point in a wire segment an returns the rest of the wire*/
-  List<WirePoint> insertPoint(WireSegment ws, Point p) {
+  List<WirePoint> insertPoint(WireSegment ws, CanvasPoint p) {
     if (ws == null || p == null) return null;
     
     List<WirePoint> endWire = new List<WirePoint>();
@@ -249,7 +249,7 @@ class Wire {
   
   /** Check to see of the wire contains a given point and returns
       the upstream point */
-  WirePoint contains(Point p) { 
+  WirePoint contains(CanvasPoint p) { 
     if(wirePoints.length >= 2) {
       int x1, x2, y1, y2;
       var d1;

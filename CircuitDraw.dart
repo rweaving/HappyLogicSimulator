@@ -62,6 +62,7 @@ class CircuitDraw {
   void drawBorder() {
     context.beginPath();
     context.rect(CircuitView.TOOLBAR_WIDTH, 0, width, height);
+
     context.fillStyle = Style.GRID_BACKGROUND_COLOR;
     context.lineWidth = Style.BORDER_LINE_WIDTH;
     context.strokeStyle = Style.GRID_BACKGROUND_COLOR;
@@ -82,22 +83,7 @@ class CircuitDraw {
       context.drawImage(device.deviceType.getImage(device.outputs[0].value), device.position.x, device.position.y);   
     }
   }
-  
-//  /** Redraw all of the device buttons */
-//  void drawDeviceButtons(){
-//    for (LogicDevice device in deviceButtons) {
-//       context.drawImage(device.deviceType.getImage(device.outputs[0].value), device.position.x, device.position.y);   
-//     }
-//   }
-  
-//  /** Redraw all of the devices */
-//  void drawLogicDevices(){
-//    drawDevices(circuit.logicDevices);
-//    for (LogicDevice device in circuit.logicDevices) {
-//      context.drawImage(device.deviceType.getImage(device.outputs[0].value), device.position.x, device.position.y);  
-//    }
-//  }
-  
+
   /** Draw all the wires in the simulation */
   void drawWires() {
     for (Wire wire in circuit.circuitWires.wires) { 
@@ -142,7 +128,6 @@ class CircuitDraw {
   
   /** Draw a given wire using its internal state */
   void drawWire(Wire wire) {
-    if(wire == null) return;  
 
     context.beginPath();
     context.lineWidth = Style.WIRE_WIDTH;
@@ -151,14 +136,14 @@ class CircuitDraw {
     context.lineJoin = 'round';
     context.miterLimit = 10;
 
-    if(wire.input == null || wire.output == null){
+    if(wire.input == null || wire.output == null) {
       context.strokeStyle = Style.WIRE_INVALID;
     }
-    else{
-      if(wire.output.value == true){ // High
+    else {
+      if(wire.output.value == true) { // High
         context.strokeStyle = Style.WIRE_HIGH;
       }
-      else{
+      else {
         context.strokeStyle = Style.WIRE_LOW;
       }
     }

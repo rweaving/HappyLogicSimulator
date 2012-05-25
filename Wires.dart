@@ -87,7 +87,7 @@ class Wires {
   }
   
   /** Try to select a wire point at a given point */
-  WirePoint selectWirePoint(Point p) {
+  WirePoint selectWirePoint(CanvasPoint p) {
     for (Wire wire in wires) { 
       if(wire.getWirePoint(p) != null) {
         return wire.getWirePoint(p);
@@ -97,10 +97,10 @@ class Wires {
   }
   
   /** Try to select a wire points at a given point */
-  int selectWirePoints(Point p) {
+  int selectWirePoints(CanvasPoint p) {
     selectedWirePoints.clear();
     
-    Point firstPoint;
+    CanvasPoint firstPoint;
     
     for (Wire wire in wires) { 
       for (WirePoint point in wire.wirePoints) {
@@ -134,7 +134,7 @@ class Wires {
   }
   
   /** Moves selected wire points to new location */
-  void moveSelectedPoints(Point p) {
+  void moveSelectedPoints(CanvasPoint p) {
     for (WirePoint wp in selectedWirePoints) {
       wp.x = p.x;
       wp.y = p.y;
@@ -147,7 +147,7 @@ class Wires {
   }
   
   /** Returns the first wire hit if any */
-  Wire wireHit(Point p) {
+  Wire wireHit(CanvasPoint p) {
     for (Wire wire in wires) { 
       if (wire.contains(p) != null) {
         return wire;
@@ -157,7 +157,7 @@ class Wires {
   }
   
   /** Returns two points on both sides of given point */
-  WireSegment getWireSegment(Point p) {
+  WireSegment getWireSegment(CanvasPoint p) {
     Wire w = wireHit(p);
     if(w != null) {
       return w.getSegment(p);
@@ -166,7 +166,7 @@ class Wires {
   }
   
   /** tries to select a wire at a give point */
-  int selectWire(Point p) {
+  int selectWire(CanvasPoint p) {
     selectedWires.clear();
     
     for (Wire wire in wires) { 

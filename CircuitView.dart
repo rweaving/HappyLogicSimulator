@@ -32,14 +32,13 @@ class CircuitView {
   
   List<LogicDevice> deviceButtons; 
   
-  Point wireSnapPoint; // A point that holds the wiresnap pointer
-  Point uiPoint;
+  CanvasPoint wireSnapPoint; // A point that holds the wiresnap pointer
+  CanvasPoint uiPoint;
   
   bool useAnimationFrame;
 
   bool gridSnap;
-  
-  AudioElement audio;
+
     
   CircuitView(this.canvas) :
     circuit = new Circuit() { // Create a circuit
@@ -51,16 +50,12 @@ class CircuitView {
     width = canvas.width;
     height = canvas.height;
     
-    audio = new AudioElement(); // Audio test
-    audio.src = "sounds/poke-pikachuhappy.ogg";
+
+
     
-//    if (audio.canPlayType("audio/ogg", "") != "") {
-//      
-//    }
+    useAnimationFrame = false; // Check browser specs to see if we can use animation frame
     
-    useAnimationFrame = true; // Check browser specs to see if we can use animation frame
-    
-    uiPoint = new Point(0,0);
+    uiPoint = new CanvasPoint(0,0);
     
     window.on.resize.add((event) => onResize(), true);
     canvas.on.mouseDown.add(onMouseDown);
@@ -89,7 +84,7 @@ class CircuitView {
     circuit.run = true;
     
     if(useAnimationFrame)
-      window.webkitRequestAnimationFrame(animate);
+      window.requestAnimationFrame(animate);
   }
   
   /** Stop the simulation */
@@ -101,7 +96,7 @@ class CircuitView {
   void animate(int time) {
     if (circuit.run) {
       draw(); // Draw the circuit
-      window.webkitRequestAnimationFrame(animate); // Use animation frame 
+      window.requestAnimationFrame(animate);// .webkitRequestAnimationFrame(animate); // Use animation frame 
     }
   }
   
@@ -151,6 +146,7 @@ class CircuitView {
     addButton('XNOR');
     addButton('OUTPUT');
     addButton('TFF');
+    //addButton('CLOCKED_RSFF');
   }
   
   int buttonIndex = 0;
@@ -166,7 +162,7 @@ class CircuitView {
         LogicDevice newDevice = new LogicDevice(deviceType); 
         deviceButtons.add(newDevice);
         newDevice.selectable = false;
-        newDevice.MoveDevice(new Point(x, y));
+        newDevice.moveDevice(new CanvasPoint(x, y));
         return newDevice;
     }
   }
@@ -178,8 +174,7 @@ class CircuitView {
     
     if(code == 27) { // Esc
       
-      audio.src = "sounds/poke-pikachuhappy.ogg";
-      //print("Audio Time:${audio.startTime} - ${audio.currentTime}");
+      AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
       audio.play();
       
       if (circuit.addingWire) {
@@ -331,7 +326,7 @@ class CircuitView {
     }
    
     if (circuit.moveDevice != null) {
-      circuit.moveDevice.MoveDevice(uiPoint);
+      circuit.moveDevice.moveDevice(uiPoint);
       return true;
     }
       
@@ -357,7 +352,7 @@ class CircuitView {
         else {
           circuit.selectedWire = circuit.circuitWires.wireHit(uiPoint);
           if (circuit.selectedWire != null) {
-            Point p = circuit.selectedWire.getWireSnapPoint(uiPoint);
+            CanvasPoint p = circuit.selectedWire.getWireSnapPoint(uiPoint);
             if(p != null) {
               circuit.selectedWirePoint = p;
               circuit.newWire.UpdateLast(p);
@@ -504,7 +499,7 @@ class CircuitView {
     }
    
     if (circuit.moveDevice != null) {
-      circuit.moveDevice.MoveDevice(uiPoint);
+      circuit.moveDevice.moveDevice(uiPoint);
       return;
     }
       
@@ -530,7 +525,7 @@ class CircuitView {
         else {
           circuit.selectedWire = circuit.circuitWires.wireHit(uiPoint);
           if (circuit.selectedWire != null) {
-            Point p = circuit.selectedWire.getWireSnapPoint(uiPoint);
+            CanvasPoint p = circuit.selectedWire.getWireSnapPoint(uiPoint);
             if(p != null) {
               circuit.selectedWirePoint = p;
               circuit.newWire.UpdateLast(p);
@@ -555,7 +550,7 @@ class CircuitView {
  }
  
  /** Check the button type devices to see if any have the given point */
- LogicDevice tryButtonSelect(Point p) {
+ LogicDevice tryButtonSelect(CanvasPoint p) {
    for (LogicDevice device in deviceButtons) {
       if(device.contains(p)) {
          return device;

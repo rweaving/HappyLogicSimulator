@@ -25,15 +25,15 @@ class SelectedDevices {
   Wires allWires;
   
   List<LogicDevice> selectedDevices;
-  List<Point> offsetPoints;
+  List<CanvasPoint> offsetPoints;
   List<WirePoint> selectedWirePoints;
-  List<Point> selectedWireOffsetPoints;
+  List<CanvasPoint> selectedWireOffsetPoints;
   
   SelectedDevices(this.allDevices, this.allWires) {
     selectedDevices = new List<LogicDevice>();
-    offsetPoints = new List<Point>();
+    offsetPoints = new List<CanvasPoint>();
     selectedWirePoints = new List<WirePoint>();
-    selectedWireOffsetPoints = new List<Point>();
+    selectedWireOffsetPoints = new List<CanvasPoint>();
   }
   
   /** Returns the number of devices that we have selected */
@@ -51,21 +51,21 @@ class SelectedDevices {
   }
   
   /** Add a device to the list of selected devices */
-  void add(device, Point p){
+  void add(device, CanvasPoint p){
     selectedDevices.add(device);
     offsetPoints.add(p);
     print('${p.x},${p.y}');
   }
   
   /** Select all the devices at a give point */
-  int selectAllAt(Point p) {
+  int selectAllAt(CanvasPoint p) {
     selectedDevices.clear();
     for (LogicDevice device in allDevices) {  
       if(device.selectable){
         if(device.contains(p)) {
           //p.x = device.position.x - p.x;
           //p.y = device.position.y - p.y;
-          add(device, new Point((device.position.x - p.x), (device.position.y - p.y)));
+          add(device, new CanvasPoint((device.position.x - p.x), (device.position.y - p.y)));
         }
       }
     }
@@ -73,14 +73,14 @@ class SelectedDevices {
   }
   
   /** Select the top most device at a give point */
-  int selectTopAt(Point p) {
+  int selectTopAt(CanvasPoint p) {
     selectedDevices.clear();
     for (int t = allDevices.length - 1; t >= 0; t--) {  
       if(allDevices[t].selectable) {
         if(allDevices[t].contains(p)) {
           //p.x = allDevices[t].position.x - p.x;
           //p.y = allDevices[t].position.y - p.y;
-          add(allDevices[t], new Point((allDevices[t].position.x - p.x), (allDevices[t].position.y - p.y)));
+          add(allDevices[t], new CanvasPoint((allDevices[t].position.x - p.x), (allDevices[t].position.y - p.y)));
           
           selectWirePoints(allDevices[t], p);
           break;
@@ -91,11 +91,11 @@ class SelectedDevices {
   }
   
   /** Move selected devices to a new point */
-  void moveTo(Point p) {
+  void moveTo(CanvasPoint p) {
     for (int t=0; t < selectedDevices.length; t++) {
-      Point op = new Point((p.x + offsetPoints[t].x), (p.y + offsetPoints[t].y));
-      selectedDevices[t].MoveDevice(op);
-      print('MoveTo(${p.x},${p.y})');
+      CanvasPoint op = new CanvasPoint((p.x + offsetPoints[t].x), (p.y + offsetPoints[t].y));
+      selectedDevices[t].moveDevice(op);
+      //print('MoveTo(${p.x},${p.y})');
     }
     
     // Move the selected wire points with the device
@@ -106,14 +106,14 @@ class SelectedDevices {
   }
   
   /** Get all the wirepoints connected to the given devices */
-  int selectWirePoints(LogicDevice device, Point p) {
+  int selectWirePoints(LogicDevice device, CanvasPoint p) {
     // Get all the wirepoints that match the device input point
     for (DeviceInput input in device.inputs) { 
       for (Wire wire in allWires.wires) {
         for(WirePoint wp in wire.wirePoints) {
           if(wp.x == input.offsetX && wp.y == input.offsetY) {
             addWirePoint(wp, 
-              new Point((wire.input.offsetX - p.x), 
+              new CanvasPoint((wire.input.offsetX - p.x), 
                         (wire.input.offsetY - p.y)));
           }
         }
@@ -126,7 +126,7 @@ class SelectedDevices {
         for(WirePoint wp in wire.wirePoints) {
           if(wp.x == output.offsetX && wp.y == output.offsetY) {
             addWirePoint(wp, 
-              new Point((wire.output.offsetX - p.x), 
+              new CanvasPoint((wire.output.offsetX - p.x), 
                         (wire.output.offsetY - p.y)));
           }
         }

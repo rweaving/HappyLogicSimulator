@@ -26,11 +26,17 @@ class DeviceOutput  { //extends DeviceIO
   int subLogicPin;
     
   bool value; // The IO value
+  bool previous_value; // The previous value;
   bool _connectable;
-  var id; // the IO's id TODO:use hashcode
+  var id; // the IO's id 
   
   /** True if this IO's value has been updated */
-  bool updated; 
+  bool get updated() {
+    if (value != previous_value)
+      return true;
+    
+    return false;
+  }
   
   /** Returns the corrected absolute X position */
   int get offsetX() => device.position.x + devicePin.x;   
@@ -39,10 +45,10 @@ class DeviceOutput  { //extends DeviceIO
   int get offsetY() => device.position.y + devicePin.y;  
   
   /** returns the absolute point */
-  Point get offset() => new Point(offsetX, offsetY);
+  CanvasPoint get offset() => new CanvasPoint(offsetX, offsetY);
   
   /** Returns true if given point is within the pin hit radius */
-  bool pinHit(Point p) {
+  bool pinHit(CanvasPoint p) {
     if(p.x <= (offsetX + IO_HIT_RADIUS) && p.x >= (offsetX - IO_HIT_RADIUS)) {
       if(p.y <= (offsetY + IO_HIT_RADIUS) && p.y >= (offsetY - IO_HIT_RADIUS)) {
         return true;
@@ -61,7 +67,7 @@ class DeviceOutput  { //extends DeviceIO
     }
   }
   
-  set connectable(bool c){
+  set connectable(bool c) {
     _connectable = c;
   }
 
@@ -80,7 +86,7 @@ class DeviceOutput  { //extends DeviceIO
   
   /** Call the devices' calculation function */
   void calculate() {
-    device.Calculate();
+    device.calculate();
   }
   
 }

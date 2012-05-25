@@ -17,11 +17,17 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
    
+class CanvasPoint {
+  num x;
+  num y;
+  CanvasPoint(this.x, this.y){}
+}
+
 /** A connection point that belongs to an input or output */
-class DevicePin implements Point{
+class DevicePin implements CanvasPoint{
   var id;
-  int x;
-  int y;
+  num x;
+  num y;
   
   DevicePin(this.id, this.x, this.y){}
 }

@@ -25,7 +25,9 @@ class DeviceIO {
   DevicePin devicePin; // the pin that we connect to 
     
   bool value; // The IO value
+  bool previous_value; // The previous value;
   bool _connectable;
+  
   var id; // the IO's id TODO:use hashcode
   
   /** True if this IO's value has been updated */
@@ -38,10 +40,10 @@ class DeviceIO {
   int get offsetY() => device.position.y + devicePin.y;  
   
   /** returns the absolute point */
-  Point get offset() => new Point(offsetX, offsetY);
+  CanvasPoint get offset() => new CanvasPoint(offsetX, offsetY);
   
   /** Returns true if given point is within the pin hit radius */
-  bool pinHit(Point p) {
+  bool pinHit(CanvasPoint p) {
     if(p.x <= (offsetX + IO_HIT_RADIUS) && p.x >= (offsetX - IO_HIT_RADIUS)) {
       if(p.y <= (offsetY + IO_HIT_RADIUS) && p.y >= (offsetY - IO_HIT_RADIUS)) {
         return true;
