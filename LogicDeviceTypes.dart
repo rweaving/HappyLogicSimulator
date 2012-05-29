@@ -26,6 +26,14 @@ class SubLogicGate {
   SubLogicGate(this.gateType, this.connection1, this.connection2){}
 }
 
+/** Used to map external events to device outputs */
+class OutputMap {
+  var id;
+  var type;
+  var value;
+  OutputMap(this.id, this.type, this.value){}
+}
+
 class LogicDeviceType {
   var type;
   bool updateable = false;
@@ -34,6 +42,7 @@ class LogicDeviceType {
   List<DevicePin> inputPins;
   List<DevicePin> outputPins;
   List<SubLogicGate> subLogicGates;
+  List<OutputMap> outputMaps;
 
   LogicDeviceType(this.type) {
     images = new List<ImageElement>();
@@ -56,6 +65,12 @@ class LogicDeviceType {
     outputPins.add(new DevicePin(id, x, y));
   }
   
+  /** Mapping an output allows triggering from external events e.g KeyPress */
+  void mapOutput(var mapId, var mapType, var mapValue) {
+   //outputMaps.add(new OutputMap(mapId, mapType, mapValue));
+  }
+  
+  /** Add a sublogic(base) gate to the device type */
   void addSubLogicGate(var gateType, int connection1, int connection2) {
     subLogicGates.add(new SubLogicGate(gateType, connection1, connection2));
   }
@@ -92,14 +107,14 @@ class LogicDeviceTypes {
   }
   
   //Add a new device type
-  LogicDeviceType AddNewType(var type){
+  LogicDeviceType AddNewType(var type) {
     LogicDeviceType newType = new LogicDeviceType(type);
     deviceTypes.add(newType);
     return newType;
   }
     
   //Get a specifided device type
-  LogicDeviceType getDeviceType(var type){
+  LogicDeviceType getDeviceType(var type) {
     for(LogicDeviceType deviceType in deviceTypes)
       if(deviceType.type == type)
         return deviceType;
@@ -236,7 +251,20 @@ class LogicDeviceTypes {
     _clkedRS.addSubLogicGate('IN',  -1, 2);  // 6  Reset
     _clkedRS.addSubLogicGate('OUT',  2, 0);  // 7  Q
 
-    
+    LogicDeviceType _makey = AddNewType('MAKEY');
+    _makey.AddImage("images/MaKey_MaKey.png");
+    _clkedRS.AddOutput(0, 35, 78);
+    _clkedRS.AddOutput(1, 177, 78);
+    _clkedRS.AddOutput(2, 106, 7);
+    _clkedRS.AddOutput(3, 106, 149);
+    _clkedRS.AddOutput(4, 238, 37);
+    _clkedRS.AddOutput(5, 313, 37);
+    _clkedRS.mapOutput(0, 'KEY', 'w');
+    _clkedRS.mapOutput(1, 'KEY', 's');
+    _clkedRS.mapOutput(2, 'KEY', 'a');
+    _clkedRS.mapOutput(3, 'KEY', 'd');
+    _clkedRS.mapOutput(4, 'KEY', ' ');
+    _clkedRS.mapOutput(5, 'MOUSE', 'CLICK');
     
   }
 }

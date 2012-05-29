@@ -32,7 +32,7 @@ class Wires {
   List<Wire> selectedWires;
   List<WirePoint> selectedWirePoints;
   
-  Wires(){ 
+  Wires() { 
     wires = new List<Wire>();
     selectedWires = new List<Wire>();
     selectedWirePoints = new List<WirePoint>();

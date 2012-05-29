@@ -54,6 +54,8 @@ class Wire {
   
   List<WirePoint> wirePoints;
   
+  bool valid;
+  
   Wire() {
     wirePoints = new List<WirePoint>();
   }

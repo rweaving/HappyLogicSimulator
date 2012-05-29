@@ -132,14 +132,16 @@ class CircuitDraw {
     context.beginPath();
     context.lineWidth = Style.WIRE_WIDTH;
     
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    context.miterLimit = 10;
+    //context.lineCap = 'round';
+    //context.lineJoin = 'round';
+    //context.miterLimit = 10;
 
-    if(wire.input == null || wire.output == null) {
-      context.strokeStyle = Style.WIRE_INVALID;
-    }
-    else {
+    //if(wire.input == null || wire.output == null) {
+     // context.strokeStyle = Style.WIRE_INVALID;
+    //}
+    //else {
+    
+    if(wire.valid) {
       if(wire.output.value == true) { // High
         context.strokeStyle = Style.WIRE_HIGH;
       }
@@ -147,6 +149,10 @@ class CircuitDraw {
         context.strokeStyle = Style.WIRE_LOW;
       }
     }
+    else {
+      context.strokeStyle = Style.WIRE_INVALID;
+    }
+
 
     context.fillStyle = context.strokeStyle;
     

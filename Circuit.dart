@@ -314,6 +314,7 @@ class Circuit {
   /** Finish adding a wire to the simulation */
   void finishWire() {
     if (newWire.input != null && newWire.output != null) {
+      newWire.valid = true;
       circuitWires.addWire(newWire);
       newWire = null;
     }

@@ -100,6 +100,14 @@ class LogicDevice {
     }
   }
   
+  void keyDown() {
+    
+  }
+  
+  void keyUp() {
+    
+  }
+  
 //   Id the given point within our image
   bool contains(CanvasPoint p) {
     if ((p.x > position.x && p.x < position.x + deviceType.images[0].width) && 

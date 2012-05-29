@@ -24,7 +24,11 @@ class DeviceOutput  { //extends DeviceIO
   DevicePin devicePin; // the pin that we connect to
   Logic subLogicGate;
   int subLogicPin;
-    
+  
+  var mapType;
+  var mapValue;
+  
+  bool mapped;
   bool value; // The IO value
   bool previous_value; // The previous value;
   bool _connectable;
@@ -88,5 +92,18 @@ class DeviceOutput  { //extends DeviceIO
   void calculate() {
     device.calculate();
   }
+  
+  /** Set a output map that is triggered by an external event */
+  void setMap(var mType, var mValue) {
+    mapType = mType;
+    mapValue = mValue;
+  }
+  
+  /** Clear any output maps */
+  void clearMap() {
+    mapType = '';
+    mapValue = '';
+  }
+  
   
 }
