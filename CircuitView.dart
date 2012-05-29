@@ -50,10 +50,7 @@ class CircuitView {
     width = canvas.width;
     height = canvas.height;
     
-
-
-    
-    useAnimationFrame = false; // Check browser specs to see if we can use animation frame
+    useAnimationFrame = true;//false; // Check browser specs to see if we can use animation frame
     
     uiPoint = new CanvasPoint(0,0);
     
@@ -74,6 +71,7 @@ class CircuitView {
     window.setInterval(f() => drawUpdate(), 50); 
     
     document.on.keyUp.add(onKeyUp);
+    document.on.keyDown.add(onKeyDown);
   }
   
   
@@ -146,6 +144,7 @@ class CircuitView {
     addButton('XNOR');
     addButton('OUTPUT');
     addButton('TFF');
+    addButton('MAKEY');
     //addButton('CLOCKED_RSFF');
   }
   
@@ -167,15 +166,23 @@ class CircuitView {
     }
   }
   
+  /** Triggered when the user presses down a key */
+  void onKeyDown(KeyboardEvent e) {
+    circuit.keyDown(e.keyCode);
+  }
+  
+  /** Triggered when the user lets up on a key */
   void onKeyUp(KeyboardEvent e) {
     int code = e.keyCode;
     bool shift = e.shiftKey;
     bool ctrl = e.ctrlKey;
     
+    circuit.keyUp(e.keyCode);
+    
     if(code == 27) { // Esc
       
-      AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
-      audio.play();
+      //AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
+      //audio.play();
       
       if (circuit.addingWire) {
         circuit.abortWire();
@@ -183,7 +190,7 @@ class CircuitView {
       }
     }
     
-    if (code == 46) { // Delete 
+    if (code == 46) { // Delete
       if (circuit.addingWire) {
         circuit.abortWire();
         return;
@@ -193,7 +200,6 @@ class CircuitView {
         circuit.circuitWires.deleteSelectedWires();
       }
     }
-//    print("keyPress shift:${shift} ctrl:${ctrl} code:${code}");
   }
   
   /** When the use touches the screen this is called */
@@ -204,7 +210,6 @@ class CircuitView {
     e.preventDefault();
     
     if (uiSelect()) {
-      //e.preventDefault();
       e.stopPropagation();
     }
   }
@@ -217,7 +222,6 @@ class CircuitView {
     if (uiSelect()) {
       e.stopPropagation();
     }
-    //e.stopPropagation();
   }
   
   void onTouchMove(TouchEvent e) {

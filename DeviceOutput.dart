@@ -24,9 +24,8 @@ class DeviceOutput  { //extends DeviceIO
   DevicePin devicePin; // the pin that we connect to
   Logic subLogicGate;
   int subLogicPin;
-  
-  var mapType;
-  var mapValue;
+  OutputMap outputMap;
+  ImageMap imageMap;
   
   bool mapped;
   bool value; // The IO value
@@ -41,6 +40,18 @@ class DeviceOutput  { //extends DeviceIO
     
     return false;
   }
+  
+  /** return the approprate mapped value */
+  get mappedImage() {
+    if (imageMap != null) {
+      if (value == true) {
+        return imageMap.highImage;
+      }
+      return imageMap.lowImage;
+    }
+    return null;
+  }
+  
   
   /** Returns the corrected absolute X position */
   int get offsetX() => device.position.x + devicePin.x;   
@@ -91,19 +102,9 @@ class DeviceOutput  { //extends DeviceIO
   /** Call the devices' calculation function */
   void calculate() {
     device.calculate();
+//    if(outputMap == null) {
+//      device.calculate();
+//    }
   }
-  
-  /** Set a output map that is triggered by an external event */
-  void setMap(var mType, var mValue) {
-    mapType = mType;
-    mapValue = mValue;
-  }
-  
-  /** Clear any output maps */
-  void clearMap() {
-    mapType = '';
-    mapValue = '';
-  }
-  
   
 }

@@ -29,10 +29,13 @@ class LogicDevice {
   bool updated;
   bool visible;
   bool updateable;
-
+  bool hasOutputMaps;
+  bool hasInputMaps;
+  
   List<DeviceInput> inputs;
   List<DeviceOutput> outputs;
   List<Logic> subLogic;
+  List<ImageElement> images;
   
   LogicDeviceType deviceType;
 
@@ -43,6 +46,7 @@ class LogicDevice {
     inputs = new List<DeviceInput>();
     outputs = new List<DeviceOutput>();
     subLogic = new List<Logic>();
+    images = new List<ImageElement>();
     
     //Configure IO for this new device from a DeviceType
     for(DevicePin devicePin in deviceType.inputPins) {
@@ -51,14 +55,66 @@ class LogicDevice {
     for(DevicePin devicePin in deviceType.outputPins) {
       outputs.add(new DeviceOutput(this, devicePin.id, devicePin));
     }
+    for(ImageMap outImage in deviceType.outputImages) {
+      for(DeviceOutput output in outputs) {
+        if(output.id == outImage.id) {
+          output.imageMap = outImage;
+        }
+      }
+    }
+    for(ImageMap inImage in deviceType.inputImages) {
+      for(DeviceInput input in inputs) {
+        if(input.id == inImage.id) {
+          input.imageMap = inImage;
+        }
+      }
+    }
+    for(OutputMap outMap in deviceType.outputMaps) {
+      for(DeviceOutput output in outputs) {
+        if(output.id == outMap.id) {
+          output.outputMap = outMap;
+          hasOutputMaps = true;
+        }
+      }
+    }
+    for(InputMap inMap in deviceType.inputMaps) {
+      for(DeviceInput input in inputs) {
+        if(input.id == inMap.id) {
+          input.inputMap = inMap;
+          hasInputMaps = true;
+        }
+      }
+    }
     
     position = new CanvasPoint(0,0);
     visible = true;
     selectable = true;
     
     loadSublogic();
+    buildImageList();
   }
- 
+  
+  /** Build the stack of images to render for device */
+  void buildImageList() {
+    images.clear();
+    
+    if (deviceType.baseImage != null) {
+      images.add(deviceType.baseImage);  
+    }
+    
+    for (DeviceInput input in inputs) {
+      if (input.mappedImage != null) {
+          images.add(input.mappedImage);
+      }
+    }  
+    for (DeviceOutput output in outputs) {
+      if (output.mappedImage != null) {
+          images.add(output.mappedImage);
+      }
+    }
+  }
+  
+  
   DeviceInput InputPinHit(CanvasPoint p) {
     for (DeviceInput input in inputs) {
       if(input.connectable){
@@ -100,18 +156,39 @@ class LogicDevice {
     }
   }
   
-  void keyDown() {
-    
+  /** When the user presses key*/
+  void keyDown(int keyCode) {
+    for (DeviceOutput output in outputs) {
+      if(output.outputMap != null) {
+        if(output.outputMap.type == 'KEY') {
+          if(output.outputMap.value ==  keyCode) {
+            output.value = true;  
+          }
+        }
+      }
+    }  
+    buildImageList();
   }
   
-  void keyUp() {
-    
+  /** When the user releases key */
+  void keyUp(int keyCode) {
+    for (DeviceOutput output in outputs) {
+      if(output.outputMap != null) {
+        if(output.outputMap.type == 'KEY') {
+          if(output.outputMap.value ==  keyCode) {
+            output.value = false;            
+          }
+        }
+      }
+    }
+    buildImageList();
   }
   
-//   Id the given point within our image
+  
+  /** Returns true if the image has this point */
   bool contains(CanvasPoint p) {
-    if ((p.x > position.x && p.x < position.x + deviceType.images[0].width) && 
-          (p.y > position.y && p.y < position.y + deviceType.images[0].height)) {
+    if ((p.x > position.x && p.x < position.x + deviceType.baseImage.width) && 
+          (p.y > position.y && p.y < position.y + deviceType.baseImage.height)) {
       return true;
     } 
     else {
@@ -123,6 +200,7 @@ class LogicDevice {
   void calculate() {
     if(!calculated) {
       calculated = true;
+      updated = false;
       
       for(DeviceInput input in inputs) {
           input.updated = false;
@@ -132,12 +210,27 @@ class LogicDevice {
       for(DeviceOutput output in outputs) {
         output.previous_value = output.value;
       }
-      
+            
       subCalc();
 
       // Check inputs to see if that have devices connected to them that have updated
       for(DeviceInput input in inputs) { 
         input.checkUpdate();
+        if(input.updated) {
+          updated = true;
+          break;
+        }
+      }
+      
+      for(DeviceOutput output in outputs) {
+        if(output.previous_value != output.value) {
+          updated = true;
+          break;
+        }
+      }
+      
+      if(updated) {
+        buildImageList();
       }
     }
   }

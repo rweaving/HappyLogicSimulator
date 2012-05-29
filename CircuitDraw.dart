@@ -79,8 +79,11 @@ class CircuitDraw {
   
   /** draw a list of devices */
   void drawDevices(List<LogicDevice> devices){
-   for (LogicDevice device in devices) {
-      context.drawImage(device.deviceType.getImage(device.outputs[0].value), device.position.x, device.position.y);   
+   for (LogicDevice device in devices) { //device.outputs[0].value
+     //context.drawImage(device.deviceType.getImage(false), device.position.x, device.position.y);
+     for (ImageElement image in device.images) {
+       context.drawImage(image, device.position.x, device.position.y);
+     }
     }
   }
 

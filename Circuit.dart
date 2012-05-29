@@ -75,6 +75,24 @@ class Circuit {
     }
   }
   
+  /** Send keydown to approprate devices */
+  void keyDown(int keyCode) {
+    for (LogicDevice device in logicDevices) { 
+      if (device.hasOutputMaps) {
+        device.keyDown(keyCode);   
+      }
+    }
+  }
+
+  /** Send keyUp to approprate devices */
+  void keyUp(int keyCode) {
+    for (LogicDevice device in logicDevices) {
+      if (device.hasOutputMaps) {
+        device.keyUp(keyCode);   
+      }
+    }
+  }
+  
   /** Try to select a logic device at given point */
   LogicDevice tryDeviceSelect(CanvasPoint p) {
     for (LogicDevice device in logicDevices) {  

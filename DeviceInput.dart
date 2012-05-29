@@ -24,13 +24,18 @@ class DeviceInput {
   LogicDevice device; // parent device  
   DevicePin devicePin; // the pin that we connect to
   Logic subLogicGate;
+  ImageMap imageMap;
+  InputMap inputMap;
   
-  bool _value; // The IO value
+ // bool _value; // The IO value
   bool _connectable;
   var id; // the IO's id 
   
   /** True if this IO's value has been updated */
   bool updated; 
+  
+  /** The previous value */
+  bool previous_value; 
   
   /** Returns the corrected absolute X position */
   int get offsetX() => device.position.x + devicePin.x;   
@@ -40,6 +45,17 @@ class DeviceInput {
   
   /** returns the absolute point */
   CanvasPoint get offset() => new CanvasPoint(offsetX, offsetY);
+  
+  /** return the approprate mapped value */
+  get mappedImage() {
+    if (imageMap != null) {
+      if (value == true) {
+        return imageMap.highImage;
+      }
+      return imageMap.lowImage;
+    }
+    return null;
+  }
   
   /** Returns true if given point is within the pin hit radius */
   bool pinHit(CanvasPoint p) {
