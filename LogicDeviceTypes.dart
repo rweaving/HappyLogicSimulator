@@ -218,18 +218,15 @@ class LogicDeviceTypes {
     _nand.addSubLogicGate('OUT',   0, 0); // 3 
 
     LogicDeviceType _input = addNewType('INPUT');
-    _input.setBaseImage("images/125dpi/input_low.png");
+    _input.setBaseImage('images/125dpi/input_low.png');
     _input.setIconImage('images/125dpi/input_low.png');
-
-    _input.addInputImage(0, null, "images/125dpi/input_high.png", 0, 0);
-    _input.addInput(0, -1, -1);
+    _input.addOutputImage(0, 'images/125dpi/input_low.png', "images/125dpi/input_high.png",0,0);
     _input.addOutput(0, 68, 22);
     _input.updateable = true;
     
     LogicDeviceType _output = addNewType('OUTPUT');
     _output.setBaseImage("images/125dpi/output_low.png");
     _output.setIconImage("images/125dpi/output_low.png");
-
     _output.addOutputImage(0, null, "images/125dpi/output_high.png",0,0);
     _output.addInput(0, 2, 22);
     _output.addOutput(0, -1, -1);
@@ -360,7 +357,7 @@ class LogicDeviceTypes {
     LogicDeviceType _arrowpad = addNewType('ARROWPAD');
     _arrowpad.setBaseImage("images/arrowpad/arrow_pad.png");
     _arrowpad.setIconImage("images/arrowpad/arrow_pad.png");
-    _arrowpad.addOutput(0, 0, 810);
+    _arrowpad.addOutput(0, 0, 80);
     _arrowpad.addOutput(1, 160, 80);
     _arrowpad.addOutput(2, 80, 0);
     _arrowpad.addOutput(3, 80, 160);

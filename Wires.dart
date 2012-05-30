@@ -104,6 +104,14 @@ class Wires {
     
     for (Wire wire in wires) { 
       for (WirePoint point in wire.wirePoints) {
+        
+        if (wire.wirePoints.indexOf(point) == 0) // Dont select first point
+          continue;
+        
+        if (wire.wirePoints.indexOf(point) == wire.wirePoints.length-1) // or the last point
+          continue;
+        
+        
         if (p.x >= (point.x - Wire.WIREPOINT_HIT_RADIUS) && p.x <= (point.x + Wire.WIREPOINT_HIT_RADIUS)) {
           if (p.y >= (point.y - Wire.WIREPOINT_HIT_RADIUS) && p.y <= (point.y + Wire.WIREPOINT_HIT_RADIUS)) {
             if (firstPoint == null) {

@@ -72,9 +72,11 @@ class DeviceInput {
     if (devicePin.x < 0) { 
       return false; 
     }
-    else { 
+    if (connectedWire == null) {
       return true;
     }
+
+    return false;
   }
   
   set connectable(bool c){

@@ -107,6 +107,7 @@ class LogicDevice {
           images.add(input.mappedImage);
       }
     }  
+    
     for (DeviceOutput output in outputs) {
       if (output.mappedImage != null) {
           images.add(output.mappedImage);
@@ -149,11 +150,15 @@ class LogicDevice {
   void clicked() {
     switch (deviceType.type) {
       case 'INPUT': 
+        outputs[0].value = !outputs[0].value; 
+        updated = true; 
+        break;
       case 'SWITCH': 
         outputs[0].value = !outputs[0].value; 
         updated = true; 
         break;
     }
+    buildImageList();
   }
   
   /** When the user presses key*/

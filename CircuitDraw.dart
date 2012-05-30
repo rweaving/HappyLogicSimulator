@@ -199,7 +199,7 @@ class CircuitDraw {
     }
     
     if(circuit.selectedWirePoint != null){
-      drawHighlightPin(circuit.selectedWirePoint.x , circuit.selectedWirePoint.y, 'VALID'); 
+      drawHighlightPin(circuit.selectedWirePoint.x , circuit.selectedWirePoint.y, 'WIREPOINT'); 
     }
         
     // If we are adding a wire draw acceptable connection points

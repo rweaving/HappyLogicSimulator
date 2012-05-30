@@ -188,15 +188,13 @@ class Circuit {
    
    selectedInput = tryInputSelect(p); 
   
-   if (selectedInput != null){
-     //drawHighlightPin(selectedInput.offsetX, selectedInput.offsetY, "VALID");  
+   if (selectedInput != null) {
      return true;
    }
    
    selectedOutput = tryOutputSelect(p);
    
-   if (selectedOutput != null){
-     //drawHighlightPin(selectedOutput.offsetX, selectedOutput.offsetY, "VALID");  
+   if (selectedOutput != null) {
      return true;
    }
    
