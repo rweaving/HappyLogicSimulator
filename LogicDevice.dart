@@ -35,7 +35,7 @@ class LogicDevice {
   List<DeviceInput> inputs;
   List<DeviceOutput> outputs;
   List<Logic> subLogic;
-  List<ImageElement> images;
+  List<OffsetImage> images;
   
   LogicDeviceType deviceType;
 
@@ -46,7 +46,7 @@ class LogicDevice {
     inputs = new List<DeviceInput>();
     outputs = new List<DeviceOutput>();
     subLogic = new List<Logic>();
-    images = new List<ImageElement>();
+    images = new List<OffsetImage>();
     
     //Configure IO for this new device from a DeviceType
     for(DevicePin devicePin in deviceType.inputPins) {
@@ -187,8 +187,8 @@ class LogicDevice {
   
   /** Returns true if the image has this point */
   bool contains(CanvasPoint p) {
-    if ((p.x > position.x && p.x < position.x + deviceType.baseImage.width) && 
-          (p.y > position.y && p.y < position.y + deviceType.baseImage.height)) {
+    if ((p.x > position.x && p.x < position.x + deviceType.baseImage.image.width) && 
+          (p.y > position.y && p.y < position.y + deviceType.baseImage.image.height)) {
       return true;
     } 
     else {

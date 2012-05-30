@@ -44,22 +44,33 @@ class InputMap {
   InputMap(this.id, this.type, this.value) {}
 }
 
+/** Contains an ImageElement with an offset point */
+class OffsetImage {
+  CanvasPoint offsetPoint;
+  ImageElement image;
+  
+  OffsetImage(var imageSrc, int offsetLeft, int offsetTop) {
+    offsetPoint = new CanvasPoint(offsetLeft, offsetTop); 
+    image = new Element.tag('img'); 
+    image.src = imageSrc;
+  }
+}
+
 /** Used to map internal inputs to displayable events i.g. image updates*/
 class ImageMap {
   var id;
   var type;
-  ImageElement highImage;
-  ImageElement lowImage;
+  OffsetImage highImage;
+  OffsetImage lowImage;
   
-  ImageMap(this.id, var mapLowImage, var mapHighImage) { 
+  ImageMap(this.id, var mapLowImage, var mapHighImage, int offsetX, int offsetY) {
+    
     if (mapLowImage != null) {
-      lowImage = new Element.tag('img'); 
-      lowImage.src = mapLowImage;
+      lowImage = new OffsetImage(mapLowImage, offsetX, offsetY);
     }
     
     if (mapHighImage != null) {
-      highImage = new Element.tag('img'); 
-      highImage.src = mapHighImage;
+      highImage = new OffsetImage(mapHighImage, offsetX, offsetY);
     }
   }
 }
@@ -79,11 +90,10 @@ class LogicDeviceType {
   List<ImageMap> inputImages;
   List<ImageMap> outputImages;
   
-  ImageElement baseImage;
-  ImageElement iconImage;
-  ImageElement disabledImage;
-  ImageElement selectedImage;
-  
+  OffsetImage baseImage;
+  OffsetImage iconImage;
+  OffsetImage disabledImage;
+  OffsetImage selectedImage;
   
   LogicDeviceType(this.type) {
     images = new List<ImageElement>();
@@ -102,11 +112,11 @@ class LogicDeviceType {
    
   // The x and y are in relation to the image
   /** Add an input to this type */
-  void AddInput(var id, int x, int y) {
+  void addInput(var id, int x, int y) {
     inputPins.add(new DevicePin(id, x, y));
   }
   
-  void AddOutput(var id, int x, int y) {
+  void addOutput(var id, int x, int y) {
     outputPins.add(new DevicePin(id, x, y));
   }
   
@@ -123,13 +133,13 @@ class LogicDeviceType {
   }
   
   /** These are images that are drawn based on an input value */
-  void addInputImage(var inputID, var lowImage, var highImage) {
-    inputImages.add(new ImageMap(inputID, lowImage, highImage));
+  void addInputImage(var inputID, var lowImage, var highImage, int offsetX, int offsetY) {
+    inputImages.add(new ImageMap(inputID, lowImage, highImage, offsetX, offsetY));
   }
  
   /** These are images that are drawn based on an output value */
-  void addOutputImage(var outputID, var lowImage, var highImage) {
-    outputImages.add(new ImageMap(outputID, lowImage, highImage));
+  void addOutputImage(var outputID, var lowImage, var highImage, int offsetX, int offsetY) {
+    outputImages.add(new ImageMap(outputID, lowImage, highImage, offsetX, offsetY));
   }
   
   
@@ -139,46 +149,23 @@ class LogicDeviceType {
   }
   
   void setBaseImage(var imageSrc) {
-    baseImage = new Element.tag('img'); 
-    baseImage.src = imageSrc;
+    baseImage = new OffsetImage(imageSrc, 0, 0);
   }
   
   void setIconImage(var imageSrc) {
-    iconImage = new Element.tag('img'); 
-    iconImage.src = imageSrc;
+    iconImage = new OffsetImage(imageSrc, 0, 0);
   }
   
   void setDisabledImage(var imageSrc) {
-    disabledImage = new Element.tag('img'); 
-    disabledImage.src = imageSrc;
+    disabledImage = new OffsetImage(imageSrc, 0, 0);
   }
   
   void setSelectedImage(var imageSrc) {
-    selectedImage = new Element.tag('img'); 
-    selectedImage.src = imageSrc;
+    selectedImage = new OffsetImage(imageSrc, 0, 0);
   }
-//  
-//  void AddImage(var imageSrc) {
-//    ImageElement _elem;
-//    _elem = new Element.tag('img'); 
-//    _elem.src = imageSrc;
-//    images.add(_elem);  
-//  }
-//  
+
   int get ImageCount() => images.length;
-  
-  // TODO: create output to image mappings
-  ImageElement getImage(var state) {
-    if(images.length == 1) 
-      return images[0];
-    
-    switch(state){
-      case 0: return images[0];
-      case 1: return images[1];
-      case false: return images[0];
-      case true:  return images[1];
-      }
-  }
+
 }
 
 class LogicDeviceTypes {
@@ -186,11 +173,11 @@ class LogicDeviceTypes {
   
   LogicDeviceTypes() {
     deviceTypes = new List<LogicDeviceType>();
-    LoadDefaultTypes();
+    loadDefaultTypes();
   }
   
   //Add a new device type
-  LogicDeviceType AddNewType(var type) {
+  LogicDeviceType addNewType(var type) {
     LogicDeviceType newType = new LogicDeviceType(type);
     deviceTypes.add(newType);
     return newType;
@@ -206,119 +193,119 @@ class LogicDeviceTypes {
   }
   
   //TODO: move all of this to xml
-  LoadDefaultTypes() {
+  loadDefaultTypes() {
     
-    LogicDeviceType _and = AddNewType('AND');
+    LogicDeviceType _and = addNewType('AND');
     _and.setBaseImage('images/125dpi/and.png');
     _and.setIconImage('images/125dpi/and_d.png');
-    _and.AddInput(0, 2, 12);
-    _and.AddInput(1, 2, 32);
-    _and.AddOutput(0, 90, 22); 
+    _and.addInput(0, 2, 12);
+    _and.addInput(1, 2, 32);
+    _and.addOutput(0, 90, 22); 
     _and.addSubLogicGate('AND',   1, 2); // 0
     _and.addSubLogicGate('IN',   -1, 0); // 1 
     _and.addSubLogicGate('IN',   -1, 1); // 2 
     _and.addSubLogicGate('OUT',   0, 0); // 3 
     
-    LogicDeviceType _nand = AddNewType('NAND');
+    LogicDeviceType _nand = addNewType('NAND');
     _nand.setBaseImage('images/125dpi/nand.png');
     _nand.setIconImage('images/125dpi/nand_d.png');
-    _nand.AddInput(0, 2, 12);
-    _nand.AddInput(1, 2, 32);
-    _nand.AddOutput(0, 90, 22);  
+    _nand.addInput(0, 2, 12);
+    _nand.addInput(1, 2, 32);
+    _nand.addOutput(0, 90, 22);  
     _nand.addSubLogicGate('NAND',  1, 2); // 0
     _nand.addSubLogicGate('IN',   -1, 0); // 1 
     _nand.addSubLogicGate('IN',   -1, 1); // 2 
     _nand.addSubLogicGate('OUT',   0, 0); // 3 
 
-    LogicDeviceType _input = AddNewType('INPUT');
+    LogicDeviceType _input = addNewType('INPUT');
     _input.setBaseImage("images/125dpi/input_low.png");
     _input.setIconImage('images/125dpi/input_low.png');
 
-    _input.addInputImage(0, null, "images/125dpi/input_high.png");
-    _input.AddInput(0, -1, -1);
-    _input.AddOutput(0, 68, 22);
+    _input.addInputImage(0, null, "images/125dpi/input_high.png", 0, 0);
+    _input.addInput(0, -1, -1);
+    _input.addOutput(0, 68, 22);
     _input.updateable = true;
     
-    LogicDeviceType _output = AddNewType('OUTPUT');
+    LogicDeviceType _output = addNewType('OUTPUT');
     _output.setBaseImage("images/125dpi/output_low.png");
     _output.setIconImage("images/125dpi/output_low.png");
 
-    _output.addOutputImage(0, null, "images/125dpi/output_high.png");
-    _output.AddInput(0, 2, 22);
-    _output.AddOutput(0, -1, -1);
+    _output.addOutputImage(0, null, "images/125dpi/output_high.png",0,0);
+    _output.addInput(0, 2, 22);
+    _output.addOutput(0, -1, -1);
     _output.updateable = true;
     _output.addSubLogicGate('IN',  -1, 0); // 0 
     _output.addSubLogicGate('OUT',  0, 0); // 1 
     
-    LogicDeviceType _clock = AddNewType('CLOCK');
+    LogicDeviceType _clock = addNewType('CLOCK');
     _clock.setBaseImage("images/125dpi/clock_low.png");
     _clock.setIconImage("images/125dpi/clock_low.png");
-    _clock.addOutputImage(0, null, "images/125dpi/clock_high.png");
-    _clock.AddInput(0, -1, -1);
-    _clock.AddOutput(0, 68, 22);
+    _clock.addOutputImage(0, null, "images/125dpi/clock_high.png",0,0);
+    _clock.addInput(0, -1, -1);
+    _clock.addOutput(0, 68, 22);
     _clock.updateable = true;
     _clock.addSubLogicGate('CLOCK', -1, -1); // 0
     _clock.addSubLogicGate('OUT',    0,  0); // 1
     
-    LogicDeviceType _or = AddNewType('OR');
+    LogicDeviceType _or = addNewType('OR');
     _or.setBaseImage("images/125dpi/or.png");
     _or.setIconImage("images/125dpi/or_d.png");
-    _or.AddInput(0, 2, 12);
-    _or.AddInput(1, 2, 32);
-    _or.AddOutput(0, 90, 22);
+    _or.addInput(0, 2, 12);
+    _or.addInput(1, 2, 32);
+    _or.addOutput(0, 90, 22);
     _or.addSubLogicGate('OR',    1, 2); // 0
     _or.addSubLogicGate('IN',   -1, 0); // 1 
     _or.addSubLogicGate('IN',   -1, 1); // 2 
     _or.addSubLogicGate('OUT',   0, 0); // 3 
 
-    LogicDeviceType _nor = AddNewType('NOR');
+    LogicDeviceType _nor = addNewType('NOR');
     _nor.setBaseImage("images/125dpi/nor.png");
     _nor.setIconImage("images/125dpi/nor_d.png");
-    _nor.AddInput(0, 2, 12);
-    _nor.AddInput(1, 2, 32);
-    _nor.AddOutput(0, 90, 22);
+    _nor.addInput(0, 2, 12);
+    _nor.addInput(1, 2, 32);
+    _nor.addOutput(0, 90, 22);
     _nor.addSubLogicGate('NOR',   1, 2); // 0
     _nor.addSubLogicGate('IN',   -1, 0); // 1 
     _nor.addSubLogicGate('IN',   -1, 1); // 2 
     _nor.addSubLogicGate('OUT',   0, 0); // 3 
     
-    LogicDeviceType _xor = AddNewType('XOR');
+    LogicDeviceType _xor = addNewType('XOR');
     _xor.setBaseImage("images/125dpi/xor.png");
     _xor.setIconImage("images/125dpi/xor_d.png");
-    _xor.AddInput(0, 2, 12);
-    _xor.AddInput(1, 2, 32);
-    _xor.AddOutput(0, 90, 22);
+    _xor.addInput(0, 2, 12);
+    _xor.addInput(1, 2, 32);
+    _xor.addOutput(0, 90, 22);
     _xor.addSubLogicGate('XOR',   1, 2); // 0
     _xor.addSubLogicGate('IN',   -1, 0); // 1 
     _xor.addSubLogicGate('IN',   -1, 1); // 2 
     _xor.addSubLogicGate('OUT',   0, 0); // 3 
     
-    LogicDeviceType _xnor = AddNewType('XNOR');
+    LogicDeviceType _xnor = addNewType('XNOR');
     _xnor.setBaseImage("images/125dpi/xnor.png");
     _xnor.setIconImage("images/125dpi/xnor_d.png");
-    _xnor.AddInput(0, 2, 12);
-    _xnor.AddInput(1, 2, 32);
-    _xnor.AddOutput(0, 90, 22);
+    _xnor.addInput(0, 2, 12);
+    _xnor.addInput(1, 2, 32);
+    _xnor.addOutput(0, 90, 22);
     _xnor.addSubLogicGate('XNOR',  1, 2); // 0
     _xnor.addSubLogicGate('IN',   -1, 0); // 1 
     _xnor.addSubLogicGate('IN',   -1, 1); // 2 
     _xnor.addSubLogicGate('OUT',   0, 0); // 3 
     
-    LogicDeviceType _not = AddNewType('NOT');
+    LogicDeviceType _not = addNewType('NOT');
     _not.setBaseImage("images/125dpi/not.png");
     _not.setIconImage("images/125dpi/not_d.png");
-    _not.AddInput(0, 2, 24);
-    _not.AddOutput(0, 90, 24);
+    _not.addInput(0, 2, 24);
+    _not.addOutput(0, 90, 24);
     _not.addSubLogicGate('NOT',   1, -1); // 0
     _not.addSubLogicGate('IN',   -1,  0); // 1 
     _not.addSubLogicGate('OUT',   0,  0); // 2 
     
-    LogicDeviceType _tff = AddNewType('TFF');
+    LogicDeviceType _tff = addNewType('TFF');
     _tff.setBaseImage("images/125dpi/tff.png");
     _tff.setIconImage("images/125dpi/tff.png");
-    _tff.AddInput(0, 2, 44);
-    _tff.AddOutput(0, 93, 15);
-    _tff.AddOutput(1, 93, 72);
+    _tff.addInput(0, 2, 44);
+    _tff.addOutput(0, 93, 15);
+    _tff.addOutput(1, 93, 72);
     _tff.addSubLogicGate('NOT',  9, 9);  // 0   Buid the device logic
     _tff.addSubLogicGate('NAND', 9, 8);  // 1   This defines the internal
     _tff.addSubLogicGate('NAND', 9, 7);  // 2   connections that make up 
@@ -332,13 +319,13 @@ class LogicDeviceTypes {
     _tff.addSubLogicGate('OUT',  7, 0);  // 10  Q
     _tff.addSubLogicGate('OUT',  8, 1);  // 11  !Q
     
-    LogicDeviceType _clkedRS = AddNewType('CLOCKED_RSFF');
+    LogicDeviceType _clkedRS = addNewType('CLOCKED_RSFF');
     _clkedRS.setBaseImage("images/125dpi/tff.png");
     _clkedRS.setIconImage("images/125dpi/tff.png");
-    _clkedRS.AddInput(0, 2, 22);
-    _clkedRS.AddInput(1, 2, 44);
-    _clkedRS.AddInput(2, 2, 66);
-    _clkedRS.AddOutput(0, 93, 15);
+    _clkedRS.addInput(0, 2, 22);
+    _clkedRS.addInput(1, 2, 44);
+    _clkedRS.addInput(2, 2, 66);
+    _clkedRS.addOutput(0, 93, 15);
     _clkedRS.addSubLogicGate('NAND', 4, 5);  // 0
     _clkedRS.addSubLogicGate('NAND', 6, 5);  // 1
     _clkedRS.addSubLogicGate('NAND', 0, 3);  // 2
@@ -348,36 +335,43 @@ class LogicDeviceTypes {
     _clkedRS.addSubLogicGate('IN',  -1, 2);  // 6  Reset
     _clkedRS.addSubLogicGate('OUT',  2, 0);  // 7  Q
 
-    LogicDeviceType _makey = AddNewType('MAKEY');
+    LogicDeviceType _makey = addNewType('MAKEY');
     _makey.setBaseImage("images/makey/makey_base.png");
     _makey.setIconImage("images/makey/makey_icon.png");
-    _makey.AddOutput(0, 35, 78);
-    _makey.AddOutput(1, 177, 78);
-    _makey.AddOutput(2, 106, 7);
-    _makey.AddOutput(3, 106, 149);
-    _makey.AddOutput(4, 238, 37);
-    _makey.AddOutput(5, 313, 37);
-    _makey.AddInput(0, -1, -1);
-    _makey.AddInput(1, -1, -1);
-    _makey.AddInput(2, -1, -1);
-    _makey.AddInput(3, -1, -1);
-    _makey.AddInput(4, -1, -1);
-    _makey.AddInput(5, -1, -1);
+    _makey.addOutput(0, 35, 78);
+    _makey.addOutput(1, 177, 78);
+    _makey.addOutput(2, 106, 7);
+    _makey.addOutput(3, 106, 149);
+    _makey.addOutput(4, 238, 37);
+    _makey.addOutput(5, 313, 37);
     _makey.mapOutput(0, 'KEY', 37); // Left
     _makey.mapOutput(1, 'KEY', 39); // Right
     _makey.mapOutput(2, 'KEY', 38); // Up
     _makey.mapOutput(3, 'KEY', 40); // Down
     _makey.mapOutput(4, 'KEY', 32); // Space
     _makey.mapOutput(5, 'MOUSE', 'LEFTCLICK');
-    _makey.addOutputImage(0, null, "images/makey/makey_left.png");
-    _makey.addOutputImage(1, null, "images/makey/makey_right.png");
-    _makey.addOutputImage(2, null, "images/makey/makey_up.png");
-    _makey.addOutputImage(3, null, "images/makey/makey_down.png");
-    _makey.addOutputImage(4, null, "images/makey/makey_space.png");
-    _makey.addOutputImage(5, null, "images/makey/makey_mouse.png");
+    _makey.addOutputImage(0, null, "images/makey/makey_left.png",0,0);
+    _makey.addOutputImage(1, null, "images/makey/makey_right.png",0,0);
+    _makey.addOutputImage(2, null, "images/makey/makey_up.png",0,0);
+    _makey.addOutputImage(3, null, "images/makey/makey_down.png",0,0);
+    _makey.addOutputImage(4, null, "images/makey/makey_space.png",0,0);
+    _makey.addOutputImage(5, null, "images/makey/makey_mouse.png",0,0);
     
-    
-    
-    
+    LogicDeviceType _arrowpad = addNewType('ARROWPAD');
+    _arrowpad.setBaseImage("images/arrowpad/arrow_pad.png");
+    _arrowpad.setIconImage("images/arrowpad/arrow_pad.png");
+    _arrowpad.addOutput(0, 0, 810);
+    _arrowpad.addOutput(1, 160, 80);
+    _arrowpad.addOutput(2, 80, 0);
+    _arrowpad.addOutput(3, 80, 160);
+    _arrowpad.mapOutput(0, 'KEY', 37); // Left
+    _arrowpad.mapOutput(1, 'KEY', 39); // Right
+    _arrowpad.mapOutput(2, 'KEY', 38); // Up
+    _arrowpad.mapOutput(3, 'KEY', 40); // Down
+    _arrowpad.addOutputImage(0, "images/arrowpad/arrow_left_low.png", "images/arrowpad/arrow_left_high.png", 8, 60);
+    _arrowpad.addOutputImage(1, "images/arrowpad/arrow_right_low.png", "images/arrowpad/arrow_right_high.png", 98, 61);
+    _arrowpad.addOutputImage(2, "images/arrowpad/arrow_up_low.png", "images/arrowpad/arrow_up_high.png", 61, 8);
+    _arrowpad.addOutputImage(3, "images/arrowpad/arrow_down_low.png", "images/arrowpad/arrow_down_high.png", 62, 98);
+   
   }
 }

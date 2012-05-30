@@ -59,6 +59,18 @@ class Circuit {
     return newDevice;
   }
   
+  /** Creates a new device from a given device and adds it at given point */
+  LogicDevice newDeviceAt(var type, CanvasPoint position) {
+    LogicDeviceType deviceType = deviceTypes.getDeviceType(type);
+    if (deviceType != null) {
+      LogicDevice newDevice = new LogicDevice(deviceType); 
+      logicDevices.add(newDevice);
+      newDevice.moveDevice(position);
+      return newDevice;
+    }
+    return null;
+  }
+  
   /** Clears the circuit of all devices */
   void ClearCircuit() {
     logicDevices.clear();

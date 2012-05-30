@@ -46,7 +46,6 @@ class CircuitView {
     circuitDraw = new CircuitDraw(circuit, canvas);
     deviceButtons = new List<LogicDevice>();
         
-    //context = canvas.getContext('2d');
     width = canvas.width;
     height = canvas.height;
     
@@ -61,15 +60,12 @@ class CircuitView {
     canvas.on.mouseMove.add(onMouseMove);
     
     // Touch Events
-    //canvas.on.touchEnter.add((event) => onTouchEnter(event), false);
     canvas.on.touchStart.add((event) => onTouchStart(event), false);
     canvas.on.touchMove.add((event) => onTouchMove(event), false);
     canvas.on.touchEnd.add((event) => onTouchEnd(event), false);
-    //canvas.on.touchCancel.add((event) => onTouchCancel(event), false);
-    //canvas.on.touchLeave.add((event) => onTouchLeave(event), false); 
     
-    window.setInterval(f() => drawUpdate(), 50); 
-    
+    window.setInterval(f() => drawUpdate(), 50);
+
     document.on.keyUp.add(onKeyUp);
     document.on.keyDown.add(onKeyDown);
   }
@@ -144,7 +140,9 @@ class CircuitView {
     addButton('XNOR');
     addButton('OUTPUT');
     addButton('TFF');
-    addButton('MAKEY');
+    
+    circuit.newDeviceAt('ARROWPAD', new CanvasPoint(175, 50));
+    //addButton
     //addButton('CLOCKED_RSFF');
   }
   
@@ -168,6 +166,8 @@ class CircuitView {
   
   /** Triggered when the user presses down a key */
   void onKeyDown(KeyboardEvent e) {
+    e.preventDefault();
+      
     circuit.keyDown(e.keyCode);
   }
   
@@ -176,6 +176,8 @@ class CircuitView {
     int code = e.keyCode;
     bool shift = e.shiftKey;
     bool ctrl = e.ctrlKey;
+    
+    e.preventDefault();
     
     circuit.keyUp(e.keyCode);
     
