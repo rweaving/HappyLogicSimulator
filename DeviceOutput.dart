@@ -27,10 +27,11 @@ class DeviceOutput  { //extends DeviceIO
   OutputMap outputMap;
   ImageMap imageMap;
   
-  bool mapped;
-  bool value; // The IO value
-  bool previous_value; // The previous value;
-  bool _connectable;
+  bool mapped = false;
+  bool value = false; // The IO value
+  bool previous_value = false; // The previous value;
+  bool _connectable = true;
+  bool triggered = false; 
   var id; // the IO's id 
   
   /** True if this IO's value has been updated */

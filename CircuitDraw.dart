@@ -44,7 +44,7 @@ class CircuitDraw {
     width = canvas.width;
     height = canvas.height;
     
-    showGrid = false;
+    showGrid = true;
   }
   
   /** When the circuit view is resized this is called */
@@ -77,11 +77,10 @@ class CircuitDraw {
     context.fillRect(CircuitView.TOOLBAR_WIDTH, 0, width, height);  
   }
   
-  /** draw a list of devices */
-  void drawDevices(List<LogicDevice> devices){
-   for (LogicDevice device in devices) { //device.outputs[0].value
-     //context.drawImage(device.deviceType.getImage(false), device.position.x, device.position.y);
-     for (OffsetImage img in device.images) {
+  /** Draw all the devices */
+  void drawDevices(List<LogicDevice> devices) {
+   for (LogicDevice device in devices) { 
+     for (OffsetImage img in device.images) {  // Draw the stack of images
        context.drawImage(img.image, device.position.x + img.offsetPoint.x, device.position.y + img.offsetPoint.y);
      }
     }
@@ -89,8 +88,8 @@ class CircuitDraw {
 
   /** Draw all the wires in the simulation */
   void drawWires() {
-    for (Wire wire in circuit.circuitWires.wires) { 
-      drawWire(wire);
+    for (Wire wire in circuit.circuitWires.wires) {
+       drawWire(wire);
     }
     if (circuit.newWire != null){
       drawWire(circuit.newWire);
@@ -131,21 +130,17 @@ class CircuitDraw {
   
   /** Draw a given wire using its internal state */
   void drawWire(Wire wire) {
-
+    if(wire == null) return;  
+    
     context.beginPath();
     context.lineWidth = Style.WIRE_WIDTH;
     
-    //context.lineCap = 'round';
-    //context.lineJoin = 'round';
-    //context.miterLimit = 10;
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.miterLimit = 10;
 
-    //if(wire.input == null || wire.output == null) {
-     // context.strokeStyle = Style.WIRE_INVALID;
-    //}
-    //else {
-    
-    if(wire.valid) {
-      if(wire.output.value == true) { // High
+   if(wire.valid) {
+      if(wire.output.value == true) { 
         context.strokeStyle = Style.WIRE_HIGH;
       }
       else {
@@ -175,7 +170,7 @@ class CircuitDraw {
   }
   
   /** Draws a knot (wire to wire connection point) at a given point */
-  void drawKnot(int x, int y) {
+  void drawKnot(num x, num y) {
     context.beginPath();
     context.lineWidth = 2;
     context.arc(x, y, 6.1, 0, PI2, false);
@@ -187,38 +182,43 @@ class CircuitDraw {
  
   /** Draw the device's visual pin indicators */
   void drawPinSelectors() {
-    if(circuit.selectedOutput != null){
+    
+    if (circuit.selectedOutput != null) {
       drawHighlightPin(circuit.selectedOutput.offsetX, circuit.selectedOutput.offsetY, 'VALID'); 
     }
     
-    if (circuit.selectedInput != null){
-      if (circuit.selectedInput.connected)
+    if (circuit.selectedInput != null) {
+      if (circuit.selectedInput.connected) {
         drawHighlightPin(circuit.selectedInput.offsetX, circuit.selectedInput.offsetY, 'CONNECTED');
-      else
+      }
+      else {
         drawHighlightPin(circuit.selectedInput.offsetX, circuit.selectedInput.offsetY, 'VALID');
+      }
     }
     
-    if(circuit.selectedWirePoint != null){
+    if (circuit.selectedWirePoint != null) {
       drawHighlightPin(circuit.selectedWirePoint.x , circuit.selectedWirePoint.y, 'WIREPOINT'); 
     }
         
     // If we are adding a wire draw acceptable connection points
-    if(circuit.newWire != null){
-      if(circuit.newWire.input == null) { // Looking for a vaild input
+    if (circuit.newWire != null) {
+      if (circuit.newWire.input == null) { // Looking for a vaild input
         drawConnectableInputPins();
       }
-      if(circuit.newWire.output == null) { // Looking for a vaild output
+      if (circuit.newWire.output == null) { // Looking for a vaild output
         drawConnectableOutputPins();
       }
     }
+    
   }
   
   /** Draw the output pins that we can connect to */
   void drawConnectableOutputPins() {
     for (LogicDevice device in circuit.logicDevices) {
       for (DeviceOutput output in device.outputs) {
-        if(output.connectable == true)
+        if (output.connectable == true) {
           drawHighlightPin(output.offsetX, output.offsetY, 'CONNECTABLE'); 
+        }
       }
     }      
   }
@@ -227,14 +227,15 @@ class CircuitDraw {
   void drawConnectableInputPins() {
     for (LogicDevice device in circuit.logicDevices) {
       for (DeviceInput input in device.inputs) {
-        if(input.connected == false && input.connectable == true)    
-          drawHighlightPin(input.offsetX, input.offsetY, 'CONNECTABLE'); 
+        if(input.connected == false && input.connectable == true) {    
+          drawHighlightPin(input.offsetX, input.offsetY, 'CONNECTABLE');
+        }
       }
     }      
   }
   
   /** Draw the highlight pin at a given coordinate */
-  void drawHighlightPin(int x, int y, var highlightMode) {
+  void drawHighlightPin(num x, num y, var highlightMode) {
     
     switch(highlightMode){
       case 'VALID':       context.strokeStyle = '#00AA00'; 
@@ -253,8 +254,8 @@ class CircuitDraw {
                           context.fillStyle = 'hsla(240, 100%, 50%, 0.25)'; 
                           break;
                           
-      case 'CONNECTABLE': context.strokeStyle = 'hsla(270, 75%, 50%, 1)';//'#4000AA'; 
-                          context.fillStyle = 'hsla(270, 75%, 50%, 0.25)';// 'rgba(64, 0, 170, 0.25)';
+      case 'CONNECTABLE': context.strokeStyle = 'hsla(270, 75%, 50%, 1)';
+                          context.fillStyle = 'hsla(270, 75%, 50%, 0.25)';
                           break; 
                           
       default:            context.strokeStyle = '#000000';
@@ -263,8 +264,8 @@ class CircuitDraw {
     
     context.beginPath();  
     context.lineWidth = 1;
-                                            // possible bug in arc function, only with with subpixels
-    context.arc(x, y, 8.1, 0, PI2, false);  // Doesnt not draw correctly at 8 in dart vm
+                                      
+    context.arc(x, y, 8.1, 0, PI2, false);  
     
     context.fill();
     context.stroke();  

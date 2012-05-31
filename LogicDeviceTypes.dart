@@ -357,18 +357,47 @@ class LogicDeviceTypes {
     LogicDeviceType _arrowpad = addNewType('ARROWPAD');
     _arrowpad.setBaseImage("images/arrowpad/arrow_pad.png");
     _arrowpad.setIconImage("images/arrowpad/arrow_pad.png");
-    _arrowpad.addOutput(0, 0, 80);
-    _arrowpad.addOutput(1, 160, 80);
-    _arrowpad.addOutput(2, 80, 0);
-    _arrowpad.addOutput(3, 80, 160);
+    _arrowpad.addOutput(0, 1, 91);
+    _arrowpad.addOutput(1, 181, 91);
+    _arrowpad.addOutput(2, 91, 1);
+    _arrowpad.addOutput(3, 91, 181);
     _arrowpad.mapOutput(0, 'KEY', 37); // Left
     _arrowpad.mapOutput(1, 'KEY', 39); // Right
     _arrowpad.mapOutput(2, 'KEY', 38); // Up
     _arrowpad.mapOutput(3, 'KEY', 40); // Down
-    _arrowpad.addOutputImage(0, "images/arrowpad/arrow_left_low.png", "images/arrowpad/arrow_left_high.png", 8, 60);
-    _arrowpad.addOutputImage(1, "images/arrowpad/arrow_right_low.png", "images/arrowpad/arrow_right_high.png", 98, 61);
-    _arrowpad.addOutputImage(2, "images/arrowpad/arrow_up_low.png", "images/arrowpad/arrow_up_high.png", 61, 8);
-    _arrowpad.addOutputImage(3, "images/arrowpad/arrow_down_low.png", "images/arrowpad/arrow_down_high.png", 62, 98);
-   
+    _arrowpad.addOutputImage(0, "images/arrowpad/arrow_left_low.png", "images/arrowpad/arrow_left_high.png", 18, 70);
+    _arrowpad.addOutputImage(1, "images/arrowpad/arrow_right_low.png", "images/arrowpad/arrow_right_high.png", 108, 71);
+    _arrowpad.addOutputImage(2, "images/arrowpad/arrow_up_low.png", "images/arrowpad/arrow_up_high.png", 71, 18);
+    _arrowpad.addOutputImage(3, "images/arrowpad/arrow_down_low.png", "images/arrowpad/arrow_down_high.png", 72, 108);
+    
+    LogicDeviceType _soundtrigger1 = addNewType('SOUNDTRIGGER_4BIT');
+    _soundtrigger1.setBaseImage("images/soundtrigger/soundtrigger_4bit.png");
+    _soundtrigger1.setIconImage("images/soundtrigger/soundtrigger_4bit.png");
+    _soundtrigger1.addInput(0, 1, 11);
+    _soundtrigger1.addInput(1, 1, 31);
+    _soundtrigger1.addInput(2, 1, 51);
+    _soundtrigger1.addInput(3, 1, 71);
+    _soundtrigger1.addOutput(0, -1, -1);
+    _soundtrigger1.addOutput(1, -1, -1);
+    _soundtrigger1.addOutput(2, -1, -1);
+    _soundtrigger1.addOutput(3, -1, -1);
+    _soundtrigger1.addOutputImage(0, null, "images/soundtrigger/sound_high.png",16,3);
+    _soundtrigger1.addOutputImage(1, null, "images/soundtrigger/sound_high.png",16,23);
+    _soundtrigger1.addOutputImage(2, null, "images/soundtrigger/sound_high.png",16,43);
+    _soundtrigger1.addOutputImage(3, null, "images/soundtrigger/sound_high.png",16,63);
+    _soundtrigger1.mapInput(0, 'SOUND', 'sounds/beep1000.wav');
+    _soundtrigger1.mapInput(1, 'SOUND', 'sounds/drip1.wav');
+    _soundtrigger1.mapInput(2, 'SOUND', 'sounds/drip1.wav');
+    _soundtrigger1.mapInput(3, 'SOUND', 'sounds/poke-pikachuhappy.ogg');
+    _soundtrigger1.addSubLogicGate('IN',  -1, 0); // 0 
+    _soundtrigger1.addSubLogicGate('IN',  -1, 1); // 1 
+    _soundtrigger1.addSubLogicGate('IN',  -1, 2); // 2 
+    _soundtrigger1.addSubLogicGate('IN',  -1, 3); // 3 
+    _soundtrigger1.addSubLogicGate('OUT',  0, 0); // 4 
+    _soundtrigger1.addSubLogicGate('OUT',  1, 1); // 5 
+    _soundtrigger1.addSubLogicGate('OUT',  2, 2); // 6 
+    _soundtrigger1.addSubLogicGate('OUT',  3, 3); // 7 
+    _soundtrigger1.updateable = true;
+       
   }
 }

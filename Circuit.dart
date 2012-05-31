@@ -27,7 +27,7 @@ class Circuit {
   
   DeviceInput selectedInput;
   DeviceOutput selectedOutput;
-  WirePoint selectedWirePoint;
+  CanvasPoint selectedWirePoint;
   WirePoint movingWirePoint;
   Wires circuitWires; // Holds all the wires for the simulation
   Wire newWire; // Pointer to our new wire if adding one
@@ -36,7 +36,7 @@ class Circuit {
   LogicDevice moveDevice;
   LogicDevice selectedDevice;
   
-  bool run;
+  bool run = true;
   
   Circuit() : 
     deviceTypes = new LogicDeviceTypes(), 

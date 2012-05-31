@@ -22,15 +22,15 @@ class LogicDevice {
 
   CanvasPoint position;
 
-  bool selected;
-  bool selectable;
-  bool enabled;
-  bool calculated; 
-  bool updated;
-  bool visible;
-  bool updateable;
-  bool hasOutputMaps;
-  bool hasInputMaps;
+  bool selected = false;
+  bool selectable = false;
+  bool enabled = false;
+  bool calculated = false; 
+  bool updated = false;
+  bool visible = false;
+  bool updateable = false;
+  bool hasOutputMaps = false;
+  bool hasInputMaps = false;
   
   List<DeviceInput> inputs;
   List<DeviceOutput> outputs;
@@ -39,9 +39,6 @@ class LogicDevice {
   
   LogicDeviceType deviceType;
 
-  int acc=0;
-  int rset=4;
- 
   LogicDevice(this.deviceType) { 
     inputs = new List<DeviceInput>();
     outputs = new List<DeviceOutput>();
@@ -49,37 +46,42 @@ class LogicDevice {
     images = new List<OffsetImage>();
     
     //Configure IO for this new device from a DeviceType
-    for(DevicePin devicePin in deviceType.inputPins) {
+    for (DevicePin devicePin in deviceType.inputPins) {
       inputs.add(new DeviceInput(this, devicePin.id, devicePin));
     }
-    for(DevicePin devicePin in deviceType.outputPins) {
+    
+    for (DevicePin devicePin in deviceType.outputPins) {
       outputs.add(new DeviceOutput(this, devicePin.id, devicePin));
     }
-    for(ImageMap outImage in deviceType.outputImages) {
-      for(DeviceOutput output in outputs) {
-        if(output.id == outImage.id) {
+    
+    for (ImageMap outImage in deviceType.outputImages) {
+      for (DeviceOutput output in outputs) {
+        if (output.id == outImage.id) {
           output.imageMap = outImage;
         }
       }
     }
-    for(ImageMap inImage in deviceType.inputImages) {
-      for(DeviceInput input in inputs) {
-        if(input.id == inImage.id) {
+    
+    for (ImageMap inImage in deviceType.inputImages) {
+      for (DeviceInput input in inputs) {
+        if (input.id == inImage.id) {
           input.imageMap = inImage;
         }
       }
     }
-    for(OutputMap outMap in deviceType.outputMaps) {
-      for(DeviceOutput output in outputs) {
-        if(output.id == outMap.id) {
+    
+    for (OutputMap outMap in deviceType.outputMaps) {
+      for (DeviceOutput output in outputs) {
+        if (output.id == outMap.id) {
           output.outputMap = outMap;
           hasOutputMaps = true;
         }
       }
     }
-    for(InputMap inMap in deviceType.inputMaps) {
-      for(DeviceInput input in inputs) {
-        if(input.id == inMap.id) {
+    
+    for (InputMap inMap in deviceType.inputMaps) {
+      for (DeviceInput input in inputs) {
+        if (input.id == inMap.id) {
           input.inputMap = inMap;
           hasInputMaps = true;
         }
@@ -113,6 +115,24 @@ class LogicDevice {
           images.add(output.mappedImage);
       }
     }
+  }
+  
+  /** Check to see if there are any sounds that need to be triggered */
+  void checkSoundEvents() {
+//    
+//    for (DeviceInput input in inputs) {
+//      if (input.inputMap != null) {
+//        if (input.inputMap.type == 'SOUND') { 
+//          if (input.value == true) {
+//            if (!input.triggered) {
+//              input
+//            }
+//          }
+//          
+//        }
+//      }
+//    }   
+    
   }
   
   

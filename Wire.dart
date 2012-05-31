@@ -19,9 +19,9 @@
    
 
 class WirePoint  implements CanvasPoint {
-  int x;
-  int y;
-  bool drawKnot;
+  num x;
+  num y;
+  bool drawKnot = false;
   Wire wire;
   
   WirePoint(this.wire, this.x, this.y) {}
@@ -54,7 +54,7 @@ class Wire {
   
   List<WirePoint> wirePoints;
   
-  bool valid;
+  bool valid = false;
   
   Wire() {
     wirePoints = new List<WirePoint>();
@@ -253,8 +253,8 @@ class Wire {
       the upstream point */
   WirePoint contains(CanvasPoint p) { 
     if(wirePoints.length >= 2) {
-      int x1, x2, y1, y2;
-      var d1;
+      num x1, x2, y1, y2, d1;
+      
       for(int t=0; t < wirePoints.length - 1; t++) { 
         x1 = wirePoints[t].x;
         x2 = wirePoints[t+1].x;

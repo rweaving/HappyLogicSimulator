@@ -27,15 +27,16 @@ class DeviceInput {
   ImageMap imageMap;
   InputMap inputMap;
   
- // bool _value; // The IO value
-  bool _connectable;
+  bool _connectable = true;
+  bool triggered = false; 
+  
   var id; // the IO's id 
   
   /** True if this IO's value has been updated */
-  bool updated; 
+  bool updated = false; 
   
   /** The previous value */
-  bool previous_value; 
+  bool previous_value = false; 
   
   /** Returns the corrected absolute X position */
   int get offsetX() => device.position.x + devicePin.x;   
@@ -75,9 +76,9 @@ class DeviceInput {
     if (connectedWire == null) {
       return true;
     }
-
     return false;
   }
+  
   
   set connectable(bool c){
     _connectable = c;

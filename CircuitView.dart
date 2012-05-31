@@ -66,6 +66,8 @@ class CircuitView {
     
     window.setInterval(f() => drawUpdate(), 50);
 
+    //window.requestAnimationFrame(animate)); 
+    
     document.on.keyUp.add(onKeyUp);
     document.on.keyDown.add(onKeyDown);
   }
@@ -78,8 +80,8 @@ class CircuitView {
     circuit.run = true;
     
     if(useAnimationFrame)
-      window.requestAnimationFrame(animate);
-  }
+      window.requestAnimationFrame(animate); 
+   }
   
   /** Stop the simulation */
   void stop() {
@@ -87,11 +89,13 @@ class CircuitView {
   }
   
   /** Redraw the simulation */
-  void animate(int time) {
-    if (circuit.run) {
+  animate(num highResTime) {
+    
+    if(highResTime >= 16) { 
       draw(); // Draw the circuit
-      window.requestAnimationFrame(animate);// .webkitRequestAnimationFrame(animate); // Use animation frame 
     }
+    
+    window.requestAnimationFrame(animate); 
   }
   
   /** Called by window timer to redraw */
@@ -142,7 +146,8 @@ class CircuitView {
     addButton('TFF');
     
     circuit.newDeviceAt('ARROWPAD', new CanvasPoint(175, 50));
-    //addButton
+    //circuit.newDeviceAt('SOUNDTRIGGER_4BIT', new CanvasPoint(600, 50));
+
     //addButton('CLOCKED_RSFF');
   }
   
