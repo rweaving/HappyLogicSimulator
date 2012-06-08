@@ -17,13 +17,14 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
+
 class SubLogicGate {
   var gateType;
   int connection1 = -1;
   int connection2 = -1;
   int external = -1;
   
-  SubLogicGate(this.gateType, this.connection1, this.connection2){}
+  SubLogicGate(this.gateType, this.connection1, this.connection2);
 }
 
 /** Used to map external events to device outputs i.g. KeyPress */
@@ -32,7 +33,7 @@ class OutputMap {
   var type;
   var value;
   
-  OutputMap(this.id, this.type, this.value) {}
+  OutputMap(this.id, this.type, this.value);
 }
 
 /** Used to map internal inputs to events i.g. sounds */
@@ -41,19 +42,7 @@ class InputMap {
   var type;
   var value;
   
-  InputMap(this.id, this.type, this.value) {}
-}
-
-/** Contains an ImageElement with an offset point */
-class OffsetImage {
-  CanvasPoint offsetPoint;
-  ImageElement image;
-  
-  OffsetImage(var imageSrc, int offsetLeft, int offsetTop) {
-    offsetPoint = new CanvasPoint(offsetLeft, offsetTop); 
-    image = new Element.tag('img'); 
-    image.src = imageSrc;
-  }
+  InputMap(this.id, this.type, this.value);
 }
 
 /** Used to map internal inputs to displayable events i.g. image updates*/
@@ -141,7 +130,6 @@ class LogicDeviceType {
   void addOutputImage(var outputID, var lowImage, var highImage, int offsetX, int offsetY) {
     outputImages.add(new ImageMap(outputID, lowImage, highImage, offsetX, offsetY));
   }
-  
   
   /** Add a sublogic(base) gate to the device type */
   void addSubLogicGate(var gateType, int connection1, int connection2) {
@@ -365,10 +353,10 @@ class LogicDeviceTypes {
     _arrowpad.mapOutput(1, 'KEY', 39); // Right
     _arrowpad.mapOutput(2, 'KEY', 38); // Up
     _arrowpad.mapOutput(3, 'KEY', 40); // Down
-    _arrowpad.addOutputImage(0, "images/arrowpad/arrow_left_low.png", "images/arrowpad/arrow_left_high.png", 18, 70);
-    _arrowpad.addOutputImage(1, "images/arrowpad/arrow_right_low.png", "images/arrowpad/arrow_right_high.png", 108, 71);
-    _arrowpad.addOutputImage(2, "images/arrowpad/arrow_up_low.png", "images/arrowpad/arrow_up_high.png", 71, 18);
-    _arrowpad.addOutputImage(3, "images/arrowpad/arrow_down_low.png", "images/arrowpad/arrow_down_high.png", 72, 108);
+    _arrowpad.addOutputImage(0, "images/arrowpad/arrow_left_low.png", "images/arrowpad/arrow_left_high.png", 18, 71);
+    _arrowpad.addOutputImage(1, "images/arrowpad/arrow_right_low.png", "images/arrowpad/arrow_right_high.png", 109, 71);
+    _arrowpad.addOutputImage(2, "images/arrowpad/arrow_up_low.png", "images/arrowpad/arrow_up_high.png", 72, 18);
+    _arrowpad.addOutputImage(3, "images/arrowpad/arrow_down_low.png", "images/arrowpad/arrow_down_high.png", 73, 108);
     
     LogicDeviceType _soundtrigger1 = addNewType('SOUNDTRIGGER_4BIT');
     _soundtrigger1.setBaseImage("images/soundtrigger/soundtrigger_4bit.png");

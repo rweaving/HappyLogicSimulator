@@ -37,14 +37,14 @@ class Logic {
   int ig1; // holds input gate index for preconnecting
   int ig2;
   
-  bool in1;
-  bool in2;
-  bool out;
+  bool in1 = false;
+  bool in2 = false;
+  bool out = false;
   
   Logic inGate1; // Pointer to connected gate
   Logic inGate2;
   
-  Logic() {}
+  Logic();
   
   bool get status() => out;
   

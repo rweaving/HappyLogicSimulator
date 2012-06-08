@@ -40,6 +40,7 @@ class LogicDevice {
   LogicDeviceType deviceType;
 
   LogicDevice(this.deviceType) { 
+    
     inputs = new List<DeviceInput>();
     outputs = new List<DeviceOutput>();
     subLogic = new List<Logic>();

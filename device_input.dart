@@ -39,10 +39,10 @@ class DeviceInput {
   bool previous_value = false; 
   
   /** Returns the corrected absolute X position */
-  int get offsetX() => device.position.x + devicePin.x;   
+  num get offsetX() => device.position.x + devicePin.x;   
   
   /** Returns the corrected absolute Y position */
-  int get offsetY() => device.position.y + devicePin.y;  
+  num get offsetY() => device.position.y + devicePin.y;  
   
   /** returns the absolute point */
   CanvasPoint get offset() => new CanvasPoint(offsetX, offsetY);
@@ -95,7 +95,7 @@ class DeviceInput {
   }
   
   /** Check to see if any connected output has been updated */
-  void checkUpdate() {
+  checkUpdate() {
     if(connectedOutput != null) {
       updated = connectedOutput.updated;// .device.updated;
     }

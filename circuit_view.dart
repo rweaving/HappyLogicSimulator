@@ -22,7 +22,7 @@ class CircuitView {
   static final int TOOLBAR_WIDTH = 115;
   
   CanvasElement canvas;
-  
+  DeviceCreator deviceCreator;
   
   Circuit circuit; // Handles the circuit simulation
   CircuitDraw circuitDraw; // Draws the simulation
@@ -45,6 +45,7 @@ class CircuitView {
 
     circuitDraw = new CircuitDraw(circuit, canvas);
     deviceButtons = new List<LogicDevice>();
+    deviceCreator = new DeviceCreator();
         
     width = canvas.width;
     height = canvas.height;
@@ -145,7 +146,7 @@ class CircuitView {
     addButton('OUTPUT');
     addButton('TFF');
     
-    circuit.newDeviceAt('ARROWPAD', new CanvasPoint(175, 50));
+    //circuit.newDeviceAt('ARROWPAD', new CanvasPoint(175, 50));
     //circuit.newDeviceAt('SOUNDTRIGGER_4BIT', new CanvasPoint(600, 50));
 
     //addButton('CLOCKED_RSFF');
@@ -190,6 +191,7 @@ class CircuitView {
       
       //AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
       //audio.play();
+      deviceCreator.createDevice(circuit.logicDevices);
       
       if (circuit.addingWire) {
         circuit.abortWire();

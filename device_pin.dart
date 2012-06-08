@@ -16,19 +16,30 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
+  
+/** Contains a point on our canvas */
 class CanvasPoint {
   num x;
   num y;
-  CanvasPoint(this.x, this.y){}
+  CanvasPoint(this.x, this.y);
 }
 
 /** A connection point that belongs to an input or output */
-class DevicePin implements CanvasPoint{
+class DevicePin implements CanvasPoint {
   var id;
   num x;
   num y;
-  
-  DevicePin(this.id, this.x, this.y){}
+  DevicePin(this.id, this.x, this.y);
 }
 
+/** Contains an ImageElement with an offset point */
+class OffsetImage {
+  CanvasPoint offsetPoint;
+  ImageElement image;
+  
+  OffsetImage(var imageSrc, num offsetLeft, num offsetTop) {
+    offsetPoint = new CanvasPoint(offsetLeft, offsetTop); 
+    image = new Element.tag('img'); 
+    image.src = imageSrc;
+  }
+}
