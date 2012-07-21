@@ -17,6 +17,17 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
+#library('device_input');
+
+#import('canvas_point.dart');
+#import('device_map.dart');
+#import('device_pin.dart');
+#import('device_output.dart');
+#import('logic_device.dart');
+#import('logic.dart');
+#import('wire_point.dart');
+#import('wire.dart');
+
 class DeviceInput {
   
  static final int IO_HIT_RADIUS = 9; // Pin hit radius 

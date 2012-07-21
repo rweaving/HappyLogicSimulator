@@ -16,7 +16,17 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
+
+#library('device_selector');
+#import('canvas_point.dart');
+#import('logic_device.dart');
+#import('wire.dart');
+#import('wires.dart');
+#import('device_map.dart');
+#import('device_pin.dart');
+#import('wire_point.dart');
+#import('device_input.dart');
+#import('device_output.dart');
 
 /** Handles the selection of logic devices */
 class SelectedDevices {

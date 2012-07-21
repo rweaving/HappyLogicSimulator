@@ -16,16 +16,14 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
 
-class WirePoint  implements CanvasPoint {
-  num x;
-  num y;
-  bool drawKnot = false;
-  Wire wire;
-  
-  WirePoint(this.wire, this.x, this.y) {}
-}
+#library('wire');
+
+#import('wire_point.dart');
+#import('wires.dart');
+#import('device_input.dart');
+#import('device_output.dart');
+#import('canvas_point.dart');
 
 /** A wire contains a list of wire points and connects logic devices together */
 class Wire {

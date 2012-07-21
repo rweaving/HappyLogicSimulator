@@ -17,6 +17,16 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
+#library('circuit_view');
+
+#import('dart:html');
+#import('device_creator.dart');
+#import('circuit.dart');
+#import('circuit_draw.dart');
+#import('logic_device.dart');
+#import('canvas_point.dart');
+#import('device_type.dart');
+
 class CircuitView {
   
   static final int TOOLBAR_WIDTH = 115;
@@ -134,17 +144,35 @@ class CircuitView {
   
   /** Creates the button bar to add devices */
   void createSelectorBar() {
-    addButton('CLOCK');
+//    addButton('CLOCK');
     addButton('INPUT');
     addButton('NOT');
     addButton('AND');
+   // addButton('AND3');
     addButton('NAND');
-    addButton('OR');
-    addButton('NOR');
-    addButton('XOR');
-    addButton('XNOR');
+//    addButton('OR');
+//    addButton('NOR');
+//    addButton('XOR');
+//    addButton('XNOR');
     addButton('OUTPUT');
     addButton('TFF');
+    
+    var element = document.query('device');
+    
+    if (element != null) {
+      print("image:${element.attributes['image']}");  
+    }
+    else {
+      print("NOPE");
+    }
+//    var element = new Element.tag('div');
+//    
+//    element.classes.add('device');
+//    element.attributes['name'] = "AND";
+//    element.attributes['base'] = "images/125dpi/and.png";
+//    element.attributes['icon'] = "images/125dpi/and_d.png";
+//    element.attributes['data'] = """"inputs":[{"y":12,"id":0,"x":2},{"y":32,"id":1,"x":2}],"outputs":[{"y":22,"id":3,"x":90}],"subdevices":[{"c2":0,"id":0,"type":"IN","c1":-1},{"c2":1,"id":1,"type":"IN","c1":-1},{"c2":1,"id":2,"type":"AND","c1":0},{"c2":0,"id":3,"type":"OUT","c1":2}]}""";
+//    document.body.nodes.add(element);
     
     //circuit.newDeviceAt('ARROWPAD', new CanvasPoint(175, 50));
     //circuit.newDeviceAt('SOUNDTRIGGER_4BIT', new CanvasPoint(600, 50));

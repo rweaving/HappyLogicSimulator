@@ -18,26 +18,9 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
 #import('dart:html');
-#import('dart:json');
 #import('dart:core');
 
-#source('circuit.dart');
-#source('circuit_draw.dart');
-#source('circuit_view.dart');
-#source('logic_device_types.dart');
-#source('logic.dart');
-#source('logic_device.dart');
-#source('device_creator.dart');
-#source('device_input.dart');
-#source('device_io.dart');
-#source('device_output.dart');
-#source('device_pin.dart');
-#source('device_selector.dart');
-
-
-#source('logic_style.dart');
-#source('wire.dart');
-#source('wires.dart');
+#import('circuit_view.dart');
 
 void main() {
   new CircuitView(document.query('#canvas')).start();

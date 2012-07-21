@@ -16,6 +16,17 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
+#library('circuit_draw');
+
+#import('dart:html');
+#import('circuit.dart');
+#import('circuit_view.dart');
+#import('device_input.dart');
+#import('device_output.dart');
+#import('offset_image.dart');
+#import('logic_device.dart');
+#import('wire.dart');
+#import('wire_point.dart');
 
 class CircuitDraw {
   
@@ -272,3 +283,24 @@ class CircuitDraw {
     context.closePath(); 
   }
 }
+
+class Style {
+  
+  static final int BORDER_LINE_WIDTH = 1;
+  static final String BORDER_LINE_COLOR = '#000000';
+  static final int    NEW_WIRE_WIDTH = 3;
+  static final String NEW_WIRE_COLOR = '#990000';
+  static final String NEW_WIRE_VALID = '#009900';
+  static final String NEW_WIRE_INVALID = '#999999';
+  static final String WIRE_HIGH = 'hsl(0, 100%, 50%)';
+  static final String WIRE_LOW =  'hsl(0, 100%, 5%)';
+  static final String WIRE_SELECT_STYLE = 'hsla(270, 100%, 60%, 0.75)';
+  static final String WIRE_INVALID = '#999999';
+  static final int    WIRE_WIDTH = 4;
+  static final int GRID_SIZE = 10;
+  static final int GRID_POINT_SIZE = 1;
+  static final String GRID_COLOR = '#999493';
+  static final String GRID_BACKGROUND_COLOR = '#eeeeee';
+  
+}
+

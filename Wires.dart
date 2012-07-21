@@ -16,7 +16,13 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-   
+ 
+#library('wires');
+#import('wire.dart');
+#import('canvas_point.dart');
+#import('wire_point.dart');
+
+
 /** Holds two points of a wire representing a segment of that wire */  
 class WireSegment {
   WirePoint inputSide;
