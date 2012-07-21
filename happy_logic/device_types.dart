@@ -16,10 +16,99 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-#library('device_types');
 
-#import('dart:json');
-#import('device_type.dart');
+
+
+class LogicDeviceType {
+  var type;
+  bool updateable = false;
+  bool hasOutputMaps = false;
+  bool hasInputMaps = false;
+  
+  List<ImageElement> images;
+  List<DevicePin> inputPins;
+  List<DevicePin> outputPins;
+  List<SubLogicGate> subLogicGates;
+  List<OutputMap> outputMaps;
+  List<InputMap> inputMaps;
+  List<ImageMap> inputImages;
+  List<ImageMap> outputImages;
+  
+  OffsetImage baseImage;
+  OffsetImage iconImage;
+  OffsetImage disabledImage;
+  OffsetImage selectedImage;
+  
+  LogicDeviceType(this.type) {
+    images = new List<ImageElement>();
+    inputPins = new List<DevicePin>();
+    outputPins = new List<DevicePin>();
+    subLogicGates = new List<SubLogicGate>();
+    outputMaps = new List<OutputMap>();
+    inputMaps = new List<InputMap>();
+    inputImages = new List<ImageMap>();
+    outputImages = new List<ImageMap>();
+  }
+  
+  int get inputCount() => inputPins.length;
+  int get outputCount() => outputPins.length;
+  int get gateCount() => subLogicGates.length;
+   
+  // The x and y are in relation to the image
+  /** Add an input to this type */
+  void addInput(var id, int x, int y) {
+    inputPins.add(new DevicePin(id, x, y));
+  }
+  
+  void addOutput(var id, int x, int y) {
+    outputPins.add(new DevicePin(id, x, y));
+  }
+  
+  /** Mapping an output allows triggering from external events e.g KeyPress */
+  void mapOutput(var mapId, var mapType, var mapValue) {
+    outputMaps.add(new OutputMap(mapId, mapType, mapValue));
+    hasOutputMaps = true;
+  }
+  
+  /** Mapping an output allows triggering from external events e.g KeyPress */
+  void mapInput(var mapId, var mapType, var mapValue) {
+    inputMaps.add(new InputMap(mapId, mapType, mapValue));
+    hasInputMaps = true;
+  }
+  
+  /** These are images that are drawn based on an input value */
+  void addInputImage(var inputID, var lowImage, var highImage, int offsetX, int offsetY) {
+    inputImages.add(new ImageMap(inputID, lowImage, highImage, offsetX, offsetY));
+  }
+ 
+  /** These are images that are drawn based on an output value */
+  void addOutputImage(var outputID, var lowImage, var highImage, int offsetX, int offsetY) {
+    outputImages.add(new ImageMap(outputID, lowImage, highImage, offsetX, offsetY));
+  }
+  
+  /** Add a sublogic(base) gate to the device type */
+  void addSubLogicGate(var gateType, int connection1, int connection2) {
+    subLogicGates.add(new SubLogicGate(gateType, connection1, connection2));
+  }
+
+  void setBaseImage(var imageSrc) {
+    baseImage = new OffsetImage(imageSrc, 0, 0);
+  }
+  
+  void setIconImage(var imageSrc) {
+    iconImage = new OffsetImage(imageSrc, 0, 0);
+  }
+  
+  void setDisabledImage(var imageSrc) {
+    disabledImage = new OffsetImage(imageSrc, 0, 0);
+  }
+  
+  void setSelectedImage(var imageSrc) {
+    selectedImage = new OffsetImage(imageSrc, 0, 0);
+  }
+
+  int get ImageCount() => images.length;
+}
 
 class LogicDeviceTypes {
   

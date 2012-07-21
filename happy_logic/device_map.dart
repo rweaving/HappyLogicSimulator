@@ -1,5 +1,3 @@
-#library('device_map');
-#import('offset_image.dart');
 
 /** Used to map internal inputs to displayable events i.g. image updates*/
 class ImageMap {

@@ -17,13 +17,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-#library('device_creator');
-
-#import('dart:html');
-#import('logic_device.dart');
-#import('device_input.dart');
-#import('device_output.dart');
-
 /** This class is fore creating deritive devices */
 class DeviceCreator {
   

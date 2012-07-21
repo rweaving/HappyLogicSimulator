@@ -17,10 +17,11 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-#import('dart:html');
-#import('dart:core');
 
-#import('circuit_view.dart');
+#import('happy_logic.dart');
+
+#import('dart:html');
+
 
 void main() {
   new CircuitView(document.query('#canvas')).start();

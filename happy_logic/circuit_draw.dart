@@ -16,17 +16,6 @@
 //  
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
-#library('circuit_draw');
-
-#import('dart:html');
-#import('circuit.dart');
-#import('circuit_view.dart');
-#import('device_input.dart');
-#import('device_output.dart');
-#import('offset_image.dart');
-#import('logic_device.dart');
-#import('wire.dart');
-#import('wire_point.dart');
 
 class CircuitDraw {
   

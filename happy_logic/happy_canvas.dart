@@ -1,6 +1,10 @@
-#library('offset_image');
-#import('canvas_point.dart');
-#import('dart:html');
+
+/** Contains a point on our canvas */
+class CanvasPoint {
+  num x;
+  num y;
+  CanvasPoint(this.x, this.y);
+}
 
 /** Contains an ImageElement with an offset point */
 class OffsetImage {

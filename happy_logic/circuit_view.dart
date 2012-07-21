@@ -17,16 +17,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-#library('circuit_view');
-
-#import('dart:html');
-#import('device_creator.dart');
-#import('circuit.dart');
-#import('circuit_draw.dart');
-#import('logic_device.dart');
-#import('canvas_point.dart');
-#import('device_type.dart');
-
 class CircuitView {
   
   static final int TOOLBAR_WIDTH = 115;

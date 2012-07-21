@@ -18,19 +18,6 @@
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
       
 /** A circuit contains and controls the logic simulaton */
-#library('circuit');
-
-#import('dart:html');
-#import('canvas_point.dart');
-#import('logic_device.dart');
-#import('device_selector.dart');
-#import('device_input.dart');
-#import('device_output.dart');
-#import('device_type.dart');
-#import('wire.dart');
-#import('wires.dart');
-#import('wire_point.dart');
-#import('device_types.dart');
 
 class Circuit {
   LogicDeviceTypes deviceTypes; // Has all the various type of logic devices

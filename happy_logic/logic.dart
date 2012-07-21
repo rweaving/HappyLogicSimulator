@@ -17,8 +17,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-#library('logic'); 
-
 /** 
 This is the base logic class for devices, It allow logic devices to use
 derivive circuits for their core logic.  This is where the magic happens
