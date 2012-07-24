@@ -17,6 +17,14 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
+/** A connection point that belongs to an input or output */
+class DevicePin implements CanvasPoint {
+  var id;
+  num x;
+  num y;
+  DevicePin(this.id, this.x, this.y);
+}
+
 class DeviceIO { 
   static final int IO_HIT_RADIUS = 9; // Pin hit radius 
   
@@ -27,7 +35,7 @@ class DeviceIO {
   bool previous_value; // The previous value;
   bool _connectable;
   
-  var id; // the IO's id TODO:use hashcode
+  var id; // the IO's id 
   
   /** True if this IO's value has been updated */
   bool updated; 

@@ -180,7 +180,7 @@ class CircuitView {
   LogicDevice addNewButtonDevice(var id, var type, int x, int y) {
     LogicDeviceType deviceType = circuit.deviceTypes.getDeviceType(type);
     if(deviceType != null){
-        LogicDevice newDevice = new LogicDevice(deviceType); 
+        LogicDevice newDevice = new LogicDevice(deviceType, id); 
         deviceButtons.add(newDevice);
         newDevice.selectable = false;
         newDevice.moveDevice(new CanvasPoint(x, y));
@@ -209,12 +209,24 @@ class CircuitView {
       
       //AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
       //audio.play();
-      deviceCreator.createDevice(circuit.logicDevices);
+      
+      //deviceCreator.createDevice(circuit.logicDevices, document);
+      
+      circuit.saveCircuit(document);
       
       if (circuit.addingWire) {
         circuit.abortWire();
         return;
       }
+    }
+    
+    //print("${code}");
+    
+    if (code == 76)  {
+      circuit.loadCircuit("And2", document);
+    }
+    if (code == 84)  {
+      circuit.loadCircuit("Tff", document);
     }
     
     if (code == 46) { // Delete

@@ -124,10 +124,10 @@ class SelectedDevices {
     for (DeviceOutput output in device.outputs) { 
       for (Wire wire in allWires.wires) {
         for(WirePoint wp in wire.wirePoints) {
-          if(wp.x == output.offsetX && wp.y == output.offsetY) {
-            addWirePoint(wp, 
-              new CanvasPoint((wire.output.offsetX - p.x), 
-                        (wire.output.offsetY - p.y)));
+          if(wire.output != null) {
+            if(wp.x == output.offsetX && wp.y == output.offsetY) {
+              addWirePoint(wp, new CanvasPoint((wire.output.offsetX - p.x),(wire.output.offsetY - p.y)));
+            }
           }
         }
       }

@@ -55,7 +55,10 @@ class Wire {
   static final KNOT_RADIUS = 6;
   
   DeviceInput input;
+ // var inputID;
+  
   DeviceOutput output;
+ // var outputID;
   
   WirePoint inputPoint;
   WirePoint outputPoint;
@@ -182,6 +185,14 @@ class Wire {
   /** Add a new point to the wire returns the point that was created */
   WirePoint AddPoint(CanvasPoint p) {
     UpdateLast(p);
+    WirePoint wp = new WirePoint(this, p.x, p.y);
+    wirePoints.add(wp);
+    return wp;
+  }
+  
+  /** Add a new point to the wire returns the point that was created */
+  WirePoint addNewPoint(CanvasPoint p) {
+    //UpdateLast(p);
     WirePoint wp = new WirePoint(this, p.x, p.y);
     wirePoints.add(wp);
     return wp;

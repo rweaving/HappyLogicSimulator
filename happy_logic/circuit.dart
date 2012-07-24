@@ -52,7 +52,8 @@ class Circuit {
   
   /** Creates a new device from a given device and adds it to the circuit */
   LogicDevice newDeviceFrom(LogicDevice device, CanvasPoint position) {
-    LogicDevice newDevice = new LogicDevice(device.deviceType); 
+    var deviceID = "${logicDevices.length}";
+    LogicDevice newDevice = new LogicDevice(device.deviceType, deviceID); 
     logicDevices.add(newDevice);
     newDevice.moveDevice(device.position);
     selectedDevices.clear();
@@ -61,10 +62,12 @@ class Circuit {
   }
   
   /** Creates a new device from a given device and adds it at given point */
-  LogicDevice newDeviceAt(var type, CanvasPoint position) {
+  LogicDevice newDeviceAt(var type, var id, CanvasPoint position) {
     LogicDeviceType deviceType = deviceTypes.getDeviceType(type);
     if (deviceType != null) {
-      LogicDevice newDevice = new LogicDevice(deviceType); 
+      var deviceID = id;//"${logicDevices.length}";
+      
+      LogicDevice newDevice = new LogicDevice(deviceType, deviceID); 
       logicDevices.add(newDevice);
       newDevice.moveDevice(position);
       return newDevice;
@@ -354,6 +357,171 @@ class Circuit {
     // Remove the new wire if we abort adding the wire
     if(newWire != null){
       newWire = null;
+    }
+  }
+  
+  /** Get a device input by inputID */
+  DeviceInput getDeviceInput(var inputID) {
+    for (LogicDevice d in logicDevices) {
+      for (DeviceInput i in d.inputs) {
+        if (i.id == inputID) {
+          return i;
+        }
+      }
+    }
+    return null;
+  }
+  
+  /** Get a device output by outputID */
+  DeviceOutput getDeviceOutput(var outputID) {
+    for (LogicDevice d in logicDevices) {
+      for (DeviceOutput o in d.outputs) {
+        if (o.id == outputID) {
+          return o;
+        }
+      }
+    }
+    return null;
+  }
+    
+//    var filteredDevices = logicDevices.filter((f) => f.id == deviceID);
+//    print("getDeviceOutput deviceCnt = ${filteredDevices.length}");
+//    
+//    for (LogicDevice d in filteredDevices) {
+//
+//      for (DeviceOutput o in d.outputs) {
+//        print("outputID ${pinID} == ${o.id}?");
+//        if (o.id == pinID) {
+//          print("YES");
+//          return o;
+//        }
+//      }
+//    }
+//    return null;
+
+  
+  /** Saves the circuit to the given document*/
+  void saveCircuit(Document doc) {
+    var element = new Element.tag('circuit');
+    element.attributes['name'] = "Default";
+    element.attributes['description'] = "Default Description";
+    
+    // save devices
+    for (LogicDevice d in logicDevices) {
+      var e = new Element.tag('device');
+      e.attributes['id'] = logicDevices.indexOf(d).toString();
+      e.attributes['type'] = d.deviceType.type;
+      e.attributes['x'] = d.position.x.floor().toString();
+      e.attributes['y'] = d.position.y.floor().toString();
+      element.nodes.add(e);  
+    }
+    
+    // Save wires
+    for (Wire w in circuitWires.wires) {
+      var e = new Element.tag('wire');
+      e.attributes['id'] = circuitWires.wires.indexOf(w).toString();
+      e.attributes['start'] = w.input.id;
+      e.attributes['end'] = w.output.id;
+      
+//      e.attributes['in'] = logicDevices.indexOf(w.input.device).toString();
+//      e.attributes['inpin'] = w.input.id;
+//      e.attributes['out'] = logicDevices.indexOf(w.output.device).toString();
+//      e.attributes['outpin'] = w.output.id;
+//      
+      for (WirePoint wp in w.wirePoints) {
+        var we = new Element.tag('points');
+        we.attributes['x'] = wp.x.floor().toString();
+        we.attributes['y'] = wp.y.floor().toString();
+        
+        if(wp.drawKnot == true){
+          we.attributes['k'] = "1";
+        }
+        e.nodes.add(we);  
+      }
+      element.nodes.add(e);  
+    }
+    doc.body.nodes.add(element);
+  
+  }
+
+  /** Loads a named circuit from the given document*/
+  void loadCircuit(String name, Document doc) {
+    
+    var circuitList = doc.queryAll('circuit').filter((Element f) => f.attributes['name'] == name);
+    
+    if(circuitList.length <= 0)
+      return;
+    
+    ClearCircuit();
+    
+    Element circuitElement = circuitList.first;
+ 
+    print("Load Circuit ${circuitElement.attributes['name']}");
+    
+    var deviceElements = circuitElement.queryAll('device');
+    for(Element e in deviceElements){
+      var id = e.attributes['id'];
+      var type = e.attributes['type'];
+      var x = Math.parseInt(e.attributes['x']);
+      var y = Math.parseInt(e.attributes['y']);
+      CanvasPoint position = new CanvasPoint(x,y);
+      
+      print("Device ${id} of type ${type} at position(${x},${y})");      
+      
+      LogicDevice d = newDeviceAt(type, "${id}", position);
+    }
+    
+    var wireElements = circuitElement.queryAll('wire');    
+    
+
+    for(Element e in wireElements){
+      var id = e.attributes['id'];
+      var start =  e.attributes['start'];
+      var end = e.attributes['end'];
+//      var inStart =  e.attributes['in'];
+//      var inPin = e.attributes['inpin'];
+//      var outEnd = e.attributes['out'];
+//      var outPin = e.attributes['outpin'];
+      
+      print("Wire ${id} from ${start} to ${end}");
+      
+      Wire w = new Wire();
+      
+//      w.inputID = start;
+//      w.outputID = end;
+      
+      // Connect Wire
+      w.input = getDeviceInput(start); 
+      w.output = getDeviceOutput(end); 
+
+//      if(w.input != null)
+//        print("Wire Input ${w.input.id}");
+//      
+//      if(w.output != null)
+//        print("Wire Output ${w.output.id}");
+      
+      if(w.input != null) {
+        w.input.connectedWire = w;
+        w.valid = true;
+      }
+      
+     // print("WireInput ${w.input.id}"); //${w.input.device.id}.
+     // print("WireOutput ${w.output.id}"); //${w.output.device.id}.
+          
+      
+      var pointElements = e.queryAll('points'); 
+      for(Element pe in pointElements){
+        
+        num x = Math.parseDouble(pe.attributes['x']);
+        num y = Math.parseDouble(pe.attributes['y']);
+        
+        WirePoint wp = w.addNewPoint(new CanvasPoint(x,y));
+        
+        if(pe.attributes.containsKey('k')){
+          w.setKnot(wp, true);
+        }
+      }
+      circuitWires.addWire(w);
     }
   }
 }

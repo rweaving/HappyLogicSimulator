@@ -17,8 +17,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 class LogicDeviceType {
   var type;
   bool updateable = false;
@@ -150,14 +148,16 @@ class LogicDeviceTypes {
     for(int t=0; t<parsedMap["inputs"].length; t++) {
       int x = parsedMap["inputs"][t]["x"].toInt();
       int y = parsedMap["inputs"][t]["y"].toInt();
-      newType.addInput(t, x, y);
+      var id = parsedMap["inputs"][t]["id"];
+      newType.addInput(id, x, y);
     }
     
     // Add Outputs
     for(int t=0; t<parsedMap["outputs"].length; t++) {
         int x = parsedMap["outputs"][t]["x"].toInt();
         int y = parsedMap["outputs"][t]["y"].toInt();
-        newType.addOutput(t, x, y);
+        var id = parsedMap["outputs"][t]["id"];
+        newType.addOutput(id, x, y);
     }
     
     // Add Sublogic
@@ -176,46 +176,46 @@ class LogicDeviceTypes {
       "base":"images/125dpi/and.png",
       "icon":"images/125dpi/and_d.png",
       "inputs":[
-          {"y":12,"id":0,"x":2},
-          {"y":32,"id":1,"x":2}],
+          {"y":12,"id":"0","x":2},
+          {"y":32,"id":"1","x":2}],
       "outputs":[
-          {"y":22,"id":3,"x":90}],
+          {"y":22,"id":"3","x":90}],
       "subdevices":[
-          {"c2":0,"id":0,"type":"IN","c1":-1},
-          {"c2":1,"id":1,"type":"IN","c1":-1},
-          {"c2":1,"id":2,"type":"AND","c1":0},
-          {"c2":0,"id":3,"type":"OUT","c1":2}]}""";
+          {"c2":0,"id":"0","type":"IN","c1":-1},
+          {"c2":1,"id":"1","type":"IN","c1":-1},
+          {"c2":1,"id":"2","type":"AND","c1":0},
+          {"c2":0,"id":"3","type":"OUT","c1":2}]}""";
     
     String _nandJSON = """{"name":"NAND",
         "base":"images/125dpi/nand.png",
         "icon":"images/125dpi/nand_d.png",
         "inputs":[
-            {"y":12,"id":0,"x":2},
-            {"y":32,"id":1,"x":2}],
+            {"y":12,"id":"0","x":2},
+            {"y":32,"id":"1","x":2}],
         "outputs":[
-            {"y":22,"id":3,"x":90}],
+            {"y":22,"id":"3","x":90}],
         "subdevices":[
-            {"c2":0,"id":0,"type":"IN","c1":-1},
-            {"c2":1,"id":1,"type":"IN","c1":-1},
-            {"c2":1,"id":2,"type":"NAND","c1":0},
-            {"c2":0,"id":3,"type":"OUT","c1":2}]}""";
+            {"c2":0,"id":"0","type":"IN","c1":-1},
+            {"c2":1,"id":"1","type":"IN","c1":-1},
+            {"c2":1,"id":"2","type":"NAND","c1":0},
+            {"c2":0,"id":"3","type":"OUT","c1":2}]}""";
     
     String _notJSON = """{"name":"NOT",
         "base":"images/125dpi/not.png",
         "icon":"images/125dpi/not_d.png",
         "inputs":[
-            {"y":24,"id":1,"x":2}],
+            {"y":24,"id":"1","x":2}],
         "outputs":[
-            {"y":24,"id":3,"x":90}],
+            {"y":24,"id":"3","x":90}],
         "subdevices":[
-            {"c2":0,"id":0,"type":"IN","c1":-1},
-            {"c2":-1,"id":1,"type":"NOT","c1":0},
-            {"c2":0,"id":2,"type":"OUT","c1":1}]}""";
+            {"c2":0,"id":"0","type":"IN","c1":-1},
+            {"c2":-1,"id":"1","type":"NOT","c1":0},
+            {"c2":0,"id":"2","type":"OUT","c1":1}]}""";
     
     //String _tffJSON = """{"base":"images/125dpi/tff.png","icon":"images/125dpi/tff.png","outputs":[{"y":15,"id":9,"x":93},{"y":72,"id":10,"x":93}],"name":"TFF","subdevices":[{"c2":8,"id":0,"type":"NAND","c1":7},{"c2":6,"id":1,"type":"NAND","c1":8},{"c2":3,"id":2,"type":"NAND","c1":0},{"c2":1,"id":3,"type":"NAND","c1":2},{"c2":11,"id":4,"type":"NAND","c1":2},{"c2":3,"id":5,"type":"NAND","c1":11},{"c2":7,"id":6,"type":"NAND","c1":4},{"c2":5,"id":7,"type":"NAND","c1":6},{"c2":0,"id":8,"type":"IN","c1":-1},{"c2":0,"id":9,"type":"OUT","c1":6},{"c2":1,"id":10,"type":"OUT","c1":7},{"c2":-1,"id":11,"type":"NOT","c1":8}],"inputs":[{"y":44,"id":8,"x":2}]}""";
     
     
-    String _tffJSON = """{"base":"images/125dpi/tff.png","icon":"images/125dpi/tff.png","outputs":[{"y":15,"id":2,"x":93},{"y":72,"id":3,"x":93}],"name":"TFF","subdevices":[{"c2":0,"id":0,"type":"IN","c1":-1},{"c2":-1,"id":1,"type":"NOT","c1":0},{"c2":0,"id":2,"type":"OUT","c1":10},{"c2":1,"id":3,"type":"OUT","c1":11},{"c2":0,"id":4,"type":"NAND","c1":11},{"c2":10,"id":5,"type":"NAND","c1":0},{"c2":7,"id":6,"type":"NAND","c1":4},{"c2":5,"id":7,"type":"NAND","c1":6},{"c2":6,"id":8,"type":"NAND","c1":1},{"c2":1,"id":9,"type":"NAND","c1":7},{"c2":11,"id":10,"type":"NAND","c1":8},{"c2":9,"id":11,"type":"NAND","c1":10}],"inputs":[{"y":44,"id":0,"x":2}]}""";
+    String _tffJSON = """{"base":"images/125dpi/tff.png","icon":"images/125dpi/tff.png","outputs":[{"y":15,"id":"2","x":93},{"y":72,"id":"3","x":93}],"name":"TFF","subdevices":[{"c2":0,"id":"0","type":"IN","c1":-1},{"c2":-1,"id":"1","type":"NOT","c1":0},{"c2":0,"id":"2","type":"OUT","c1":10},{"c2":1,"id":"3","type":"OUT","c1":11},{"c2":0,"id":4,"type":"NAND","c1":11},{"c2":10,"id":5,"type":"NAND","c1":0},{"c2":7,"id":6,"type":"NAND","c1":4},{"c2":5,"id":7,"type":"NAND","c1":6},{"c2":6,"id":8,"type":"NAND","c1":1},{"c2":1,"id":9,"type":"NAND","c1":7},{"c2":11,"id":10,"type":"NAND","c1":8},{"c2":9,"id":11,"type":"NAND","c1":10}],"inputs":[{"y":44,"id":0,"x":2}]}""";
     
 //    String _and3JSON = """{"name":"AND3",
 //                          "base":"images/125dpi/and.png",
@@ -282,15 +282,15 @@ class LogicDeviceTypes {
     _input.setBaseImage('images/125dpi/input_low.png');
     _input.setIconImage('images/125dpi/input_low.png');
     _input.addOutputImage(0, 'images/125dpi/input_low.png', "images/125dpi/input_high.png",0,0);
-    _input.addOutput(0, 68, 22);
+    _input.addOutput('0', 68, 22);
     _input.updateable = true;
     
     LogicDeviceType _output = addNewType('OUTPUT');
     _output.setBaseImage("images/125dpi/output_low.png");
     _output.setIconImage("images/125dpi/output_low.png");
     _output.addOutputImage(0, null, "images/125dpi/output_high.png",0,0);
-    _output.addInput(0, 2, 22);
-    _output.addOutput(0, -1, -1);
+    _output.addInput('0', 2, 22);
+    _output.addOutput('0', -1, -1);
     _output.updateable = true;
     _output.addSubLogicGate('IN',  -1, 0); // 0 
     _output.addSubLogicGate('OUT',  0, 0); // 1 

@@ -17,10 +17,6 @@
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
-//#source('device_types.dart');
-
 /** There is one instance of the logic device for each logic device that is displayed */
 class LogicDevice {
 
@@ -36,6 +32,8 @@ class LogicDevice {
   bool hasOutputMaps = false;
   bool hasInputMaps = false;
   
+  var id;
+  
   List<DeviceInput> inputs;
   List<DeviceOutput> outputs;
   List<Logic> subLogic;
@@ -43,7 +41,7 @@ class LogicDevice {
   
   LogicDeviceType deviceType;
 
-  LogicDevice(this.deviceType) { 
+  LogicDevice(this.deviceType, this.id) { 
     
     inputs = new List<DeviceInput>();
     outputs = new List<DeviceOutput>();
@@ -52,16 +50,18 @@ class LogicDevice {
     
     //Configure IO for this new device from a DeviceType
     for (DevicePin devicePin in deviceType.inputPins) {
-      inputs.add(new DeviceInput(this, devicePin.id, devicePin));
+      var ioID = "${id}.I.${devicePin.id}"; //${id}.
+      inputs.add(new DeviceInput(this, ioID, devicePin));
     }
     
     for (DevicePin devicePin in deviceType.outputPins) {
-      outputs.add(new DeviceOutput(this, devicePin.id, devicePin));
+      var ioID = "${id}.O.${devicePin.id}";
+      outputs.add(new DeviceOutput(this, ioID, devicePin));
     }
     
     for (ImageMap outImage in deviceType.outputImages) {
       for (DeviceOutput output in outputs) {
-        if (output.id == outImage.id) {
+        if ("${output.id}" == "${id}.O.${outImage.id}") {
           output.imageMap = outImage;
         }
       }
@@ -69,7 +69,7 @@ class LogicDevice {
     
     for (ImageMap inImage in deviceType.inputImages) {
       for (DeviceInput input in inputs) {
-        if (input.id == inImage.id) {
+        if ("${input.id}" == "${id}.I.${inImage.id}") {// (input.id == inImage.id) {
           input.imageMap = inImage;
         }
       }
