@@ -2,61 +2,63 @@
 //  https://plus.google.com/111607634508834917317
 //
 //  This file is part of Happy Logic Simulator.
-//  http://HappyLogicSimulator.com 
+//  http://HappyLogicSimulator.com
 //
 //  Happy Logic Simulator is free software: you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
 //  the Free Software Foundation, either version 3 of the License, or
 //  (at your option) any later version.
-//  
+//
 //  Happy Logic Simulator is distributed in the hope that it will be useful,
 //  but WITHOUT ANY WARRANTY; without even the implied warranty of
 //  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 //  GNU General Public License for more details.
-//  
+//
 //  You should have received a copy of the GNU General Public License
 //  along with Happy Logic Simulator.  If not, see <http://www.gnu.org/licenses/>.
 
-/** 
+part of happy_logic;
+
+/**
 This is the base logic class for devices, It allow logic devices to use
 derivive circuits for their core logic.  This is where the magic happens
 all devices are based on 2 input logic gates */
 class Logic {
 
   static final int NC = -1;
-  
+
   int duration;
   int delay;
   int ticks;
-  
+
   var name;
   var id;
-  
+
   String label;
-  
+
   bool calculated;
-  
+
   int ig1; // holds input gate index for preconnecting
   int ig2;
-  
+
   bool in1 = false;
   bool in2 = false;
   bool out = false;
-  
+
   Logic inGate1; // Pointer to connected gate
   Logic inGate2;
-  
+
   Logic();
-  
-  bool get status() => out;
-  
-  void calc() { 
+
+  bool get status => out;
+
+  void calc() {
     calculated = true;
-    
+
     if (inGate1 != null) {
       inGate1.calc();
     }
-    
+
     if (inGate2 == null) {
       inGate2.calc();
     }
@@ -64,7 +66,7 @@ class Logic {
 }
 
 /**External input */
-class pIn extends Logic { 
+class pIn extends Logic {
   pIn(){name='IN';}
   void calc() {
     calculated = true;
@@ -73,7 +75,7 @@ class pIn extends Logic {
 }
 
 /**External output */
-class pOut extends Logic { 
+class pOut extends Logic {
   pOut(){name='OUT';}
   void calc() {
     calculated = true;
@@ -82,7 +84,7 @@ class pOut extends Logic {
 }
 
 /**PRIMARY AND (2 in - 1 out) */
-class pAnd extends Logic { 
+class pAnd extends Logic {
   pAnd(){name='AND';}
   void calc() {
     calculated = true;
@@ -91,7 +93,7 @@ class pAnd extends Logic {
 }
 
 /**PRIMARY NAND (2 in - 1 out) */
-class pNand extends Logic { 
+class pNand extends Logic {
   pNand(){name='NAND';}
   void calc() {
     calculated = true;
@@ -100,7 +102,7 @@ class pNand extends Logic {
 }
 
 /**PRIMARY OR (2 in - 1 out) */
-class pOr extends Logic { 
+class pOr extends Logic {
   pOr(){name='OR';}
   void calc() {
     calculated = true;
@@ -109,16 +111,16 @@ class pOr extends Logic {
 }
 
 /**PRIMARY NOR (2 in - 1 out) */
-class pNor extends Logic { 
+class pNor extends Logic {
   pNor(){name='NOR';}
   void calc() {
     calculated = true;
-    out = !(inGate1.out || inGate2.out);     
+    out = !(inGate1.out || inGate2.out);
   }
 }
 
 /**PRIMARY XOR (2 in - 1 out) */
-class pXor extends Logic { 
+class pXor extends Logic {
   pXor(){name='XOR';}
   void calc() {
     calculated = true;
@@ -127,7 +129,7 @@ class pXor extends Logic {
 }
 
 /**PRIMARY XNOR (2 in - 1 out) */
-class pXnor extends Logic { 
+class pXnor extends Logic {
   pXNor(){name='XNOR';}
   void calc() {
     calculated = true;
@@ -136,7 +138,7 @@ class pXnor extends Logic {
 }
 
 /**PRIMARY Not (1 in - 1 out) */
-class pNot extends Logic { 
+class pNot extends Logic {
   pXNot(){name='NOT';}
   void calc() {
     calculated = true;
@@ -145,7 +147,7 @@ class pNot extends Logic {
 }
 
 /**PRIMARY Buffer (1 in - 1 out) */
-class pBuffer extends Logic { 
+class pBuffer extends Logic {
   pBuffer(){name='BUFFER';}
   void calc() {
     calculated = true;
@@ -154,35 +156,35 @@ class pBuffer extends Logic {
 }
 
 /**PRIMARY Switch (1 in - 1 out) */
-class pSwitch extends Logic { 
+class pSwitch extends Logic {
   pSwitch(){name='SWITCH';}
   void calc() {
-    out = in1;  
+    out = in1;
   }
 }
 
 /**PRIMARY CLOCK (0 in - 1 out) */
-class pClock extends Logic { 
-  pClock() { 
+class pClock extends Logic {
+  pClock() {
     name = 'CLOCK';
-    duration = 50; 
+    duration = 50;
     delay = 50;
     ticks = 0;
   }
   void calc() {
     calculated = true;
     ticks++;
-    
+
     if(out && ticks > duration) {
       out = false;
       ticks = 0;
       return;
     }
-    
+
     if(!out && ticks > delay) {
       out = true;
       ticks = 0;
       return;
-    }  
+    }
   }
 }
