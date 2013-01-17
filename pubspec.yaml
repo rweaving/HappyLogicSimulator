@@ -1,2 +1,4 @@
 name: HappyLogicSimulator
 description: A simple digital logic simulator
+dependencies:
+    browser: any

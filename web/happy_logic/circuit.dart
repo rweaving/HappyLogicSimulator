@@ -466,8 +466,8 @@ class Circuit {
     for(Element e in deviceElements){
       var id = e.attributes['id'];
       var type = e.attributes['type'];
-      var x = Math.parseInt(e.attributes['x']);
-      var y = Math.parseInt(e.attributes['y']);
+      var x = int.parse(e.attributes['x']);
+      var y = int.parse(e.attributes['y']);
       CanvasPoint position = new CanvasPoint(x,y);
 
       print("Device ${id} of type ${type} at position(${x},${y})");
@@ -516,8 +516,8 @@ class Circuit {
       var pointElements = e.queryAll('points');
       for(Element pe in pointElements){
 
-        num x = Math.parseDouble(pe.attributes['x']);
-        num y = Math.parseDouble(pe.attributes['y']);
+        num x = double.parse(pe.attributes['x']);
+        num y = double.parse(pe.attributes['y']);
 
         WirePoint wp = w.addNewPoint(new CanvasPoint(x,y));
 
