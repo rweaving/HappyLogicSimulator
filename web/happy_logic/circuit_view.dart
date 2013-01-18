@@ -73,6 +73,16 @@ class CircuitView {
 
     document.on.keyUp.add(onKeyUp);
     document.on.keyDown.add(onKeyDown);
+    
+    query('#selectCircuitName').on.change.add((e) => userLoadCircuit());
+    query('#saveCircuitButton').on.click.add((e) => circuit.saveCircuit(document));//userLoadCircuit());
+    
+    
+  }
+  
+  void userLoadCircuit() {
+    var circuitName = query('select#selectCircuitName').value;
+    circuit.loadCircuit(circuitName, document);  
   }
 
 
