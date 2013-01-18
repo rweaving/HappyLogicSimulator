@@ -161,8 +161,13 @@ class Circuit {
 
  /** Check to see if this point is a vaild connection when adding a wire */
  bool checkConnection(CanvasPoint p) {
+   
+   // Clear io pin selection
+   selectedInput = null;
+   selectedOutput = null;
+   
    if (!addingWire) return false;
-
+   
    // Looking for a vaild input
    if (newWire.needInput) {
      DeviceInput input = tryInputSelect(p);
@@ -173,7 +178,7 @@ class Circuit {
      }
    }
 
-   // Looking for a vaild output
+    // Looking for a vaild output
    if(newWire.needOutput) {
      DeviceOutput output = tryOutputSelect(p);
      selectedOutput = output;
@@ -357,8 +362,14 @@ class Circuit {
 
   /** Abort adding a wire to the simulation */
   void abortWire() {
-    // Remove the new wire if we abort adding the wire
+    
+     // Remove the new wire if we abort adding the wire
     if(newWire != null){
+      
+      // Set the connection that was going to the new wire to null
+      if(newWire.input != null){ 
+        newWire.input.connectedWire = null;
+      }
       newWire = null;
     }
   }

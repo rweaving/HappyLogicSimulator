@@ -208,22 +208,22 @@ class CircuitView {
 
     circuit.keyUp(e.keyCode);
 
+    print("${code}");
+    
+    //AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
+    //audio.play();
+    
     if(code == 27) { // Esc
-
-      //AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
-      //audio.play();
-
-      //deviceCreator.createDevice(circuit.logicDevices, document);
-
-      circuit.saveCircuit(document);
-
       if (circuit.addingWire) {
         circuit.abortWire();
         return;
       }
     }
+    
+    //      circuit.saveCircuit(document);
+ 
+    //deviceCreator.createDevice(circuit.logicDevices, document);
 
-    //print("${code}");
 
     if (code == 76)  {
       circuit.loadCircuit("And2", document);

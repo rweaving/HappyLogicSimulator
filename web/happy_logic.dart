@@ -16,9 +16,5 @@ part 'happy_logic/circuit_draw.dart';
 part 'happy_logic/device_creator.dart';
 part 'happy_logic/device_types.dart';
 part 'happy_logic/device_selector.dart';
-
 part 'happy_logic/device_map.dart';
-
-
-
 part 'happy_logic/wire.dart';
