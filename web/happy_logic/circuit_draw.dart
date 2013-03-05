@@ -41,7 +41,7 @@ class CircuitDraw {
 
     background = new Element.tag('img');
     background.src = "images/GridBackground.png";
-    background.on.load.add((Event e) { backgroundPattern = context.createPattern(background,'repeat');});
+    background.onLoad.listen((Event e) { backgroundPattern = context.createPattern(background,'repeat');});
 
     width = canvas.width;
     height = canvas.height;

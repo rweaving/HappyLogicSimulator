@@ -1,7 +1,5 @@
 name: HappyLogicSimulator
+author: Ryan C. Weaving
 description: A simple digital logic simulator
-
 dependencies:
-    browser: any
-
-    
+  browser: any

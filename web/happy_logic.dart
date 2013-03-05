@@ -1,8 +1,9 @@
 library happy_logic;
 
-import 'dart:json';
+import 'dart:json' as JSON;
 import 'dart:html';
 import 'dart:math' as Math;
+import 'dart:async';
 
 part 'happy_logic/happy_canvas.dart';
 part 'happy_logic/logic.dart';

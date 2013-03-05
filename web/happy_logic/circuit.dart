@@ -40,6 +40,7 @@ class Circuit {
   LogicDevice selectedDevice;
 
   bool run = true;
+  Timer simTimer;
 
   Circuit() :
     deviceTypes = new LogicDeviceTypes(),
@@ -49,7 +50,12 @@ class Circuit {
     circuitWires = new Wires();
     selectedDevices = new SelectedDevices(logicDevices, circuitWires);
 
-    window.setInterval(() => tick(), 5); // Create a timer to update the simulation tick
+    simTimer = new Timer.repeating(const Duration(milliseconds: 10), (Timer t) => tick(t));
+
+//    Timer.run(tick());
+
+
+   // window.setInterval(() => tick(), 5); // Create a timer to update the simulation tick
   }
 
   /** Creates a new device from a given device and adds it to the circuit */
@@ -84,7 +90,7 @@ class Circuit {
   }
 
   /** Simulation tick */
-  void tick() {
+  void tick(Timer t) {
     for (LogicDevice device in logicDevices) { // Clear the calc status of each
       device.calculated = false;               // device
     }
@@ -161,13 +167,13 @@ class Circuit {
 
  /** Check to see if this point is a vaild connection when adding a wire */
  bool checkConnection(CanvasPoint p) {
-   
+
    // Clear io pin selection
    selectedInput = null;
    selectedOutput = null;
-   
+
    if (!addingWire) return false;
-   
+
    // Looking for a vaild input
    if (newWire.needInput) {
      DeviceInput input = tryInputSelect(p);
@@ -362,12 +368,12 @@ class Circuit {
 
   /** Abort adding a wire to the simulation */
   void abortWire() {
-    
+
      // Remove the new wire if we abort adding the wire
     if(newWire != null){
-      
+
       // Set the connection that was going to the new wire to null
-      if(newWire.input != null){ 
+      if(newWire.input != null){
         newWire.input.connectedWire = null;
       }
       newWire = null;
@@ -398,20 +404,72 @@ class Circuit {
     return null;
   }
 
-//    var filteredDevices = logicDevices.filter((f) => f.id == deviceID);
-//    print("getDeviceOutput deviceCnt = ${filteredDevices.length}");
-//
-//    for (LogicDevice d in filteredDevices) {
-//
-//      for (DeviceOutput o in d.outputs) {
-//        print("outputID ${pinID} == ${o.id}?");
-//        if (o.id == pinID) {
-//          print("YES");
-//          return o;
-//        }
-//      }
-//    }
-//    return null;
+
+  /** Saves the circuit as a device*/
+  void saveAsDevice(HtmlDocument doc, var deviceName) {
+
+    var element = new Element.tag('device');
+    element.attributes['name'] = deviceName;//"Default";
+    element.attributes['description'] = "Default Description";
+    element.attributes['image'] = "images/125dpi/and.png";
+    element.attributes['icon'] = "images/125dpi/and_d.png";
+
+    // get inputs
+    int inputCount = 0;
+    for (LogicDevice d in logicDevices) {
+      var e = new Element.tag('in');
+      if(d.deviceType.type == 'INPUT'){
+        e.attributes['id'] = d.id;
+        e.attributes['x'] = '0';
+        e.attributes['y'] = '0';
+        element.nodes.add(e);
+      }
+    }
+
+    // get outputs
+    int outputCount = 0;
+    for (LogicDevice d in logicDevices) {
+      var e = new Element.tag('out');
+      if(d.deviceType.type == 'OUTPUT'){
+        e.attributes['id'] = d.id;
+        e.attributes['x'] = '0';
+        e.attributes['y'] = '0';
+        element.nodes.add(e);
+      }
+    }
+
+    // Save sublogic
+    for (LogicDevice d in logicDevices) {
+      var e = new Element.tag('subdevice');
+      e.attributes['id'] = d.id;
+      e.attributes['type'] = d.deviceType.type;
+
+      for(DeviceInput i in d.inputs) {
+        var e2 = new Element.tag('in');
+        if(i.connected == true) {
+          e2.attributes['i${d.inputs.indexOf(i)}'] = logicDevices.indexOf(i.connectedWire.output.device).toString();
+          e.nodes.add(e2);
+        }
+      }
+      element.nodes.add(e);
+    }
+    doc.body.nodes.add(element);
+  }
+
+  /*
+  """{"name":"AND",
+  "base":"images/125dpi/and.png",
+  "icon":"images/125dpi/and_d.png",
+  "inputs":[
+  {"y":12,"id":"0","x":2},
+  {"y":32,"id":"1","x":2}],
+  "outputs":[
+  {"y":22,"id":"3","x":90}],
+  "subdevices":[
+  {"c2":0,"id":"0","type":"IN","c1":-1},
+  {"c2":1,"id":"1","type":"IN","c1":-1},
+  {"c2":1,"id":"2","type":"AND","c1":0},
+  {"c2":0,"id":"3","type":"OUT","c1":2}]}"""; */
 
 
   /** Saves the circuit to the given document*/
@@ -461,7 +519,7 @@ class Circuit {
   /** Loads a named circuit from the given document*/
   void loadCircuit(String name, Document doc) {
 
-    var circuitList = doc.queryAll('circuit').filter((Element f) => f.attributes['name'] == name);
+    var circuitList = doc.queryAll('circuit').where((Element f) => f.attributes['name'] == name).toList();
 
     if(circuitList.length <= 0) {
       return;

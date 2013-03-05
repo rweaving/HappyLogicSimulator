@@ -41,6 +41,8 @@ class CircuitView {
 
   bool gridSnap;
 
+  Timer drawTimer;
+
 
   CircuitView(this.canvas) :
     circuit = new Circuit() { // Create a circuit
@@ -56,35 +58,42 @@ class CircuitView {
 
     uiPoint = new CanvasPoint(0,0);
 
-    window.on.resize.add((event) => onResize(), true);
-    canvas.on.mouseDown.add(onMouseDown);
-    canvas.on.mouseUp.add(onMouseUp);
-    canvas.on.doubleClick.add(onMouseDoubleClick);
-    canvas.on.mouseMove.add(onMouseMove);
+    window.onResize.listen((e) => onResize());
+
+    canvas.onMouseDown.listen((e) => onMouseDown(e));
+    canvas.onMouseUp.listen((e) => onMouseUp(e));
+    canvas.onDoubleClick.listen((e) => onMouseDoubleClick(e));
+    canvas.onMouseMove.listen((e) => onMouseMove(e));
+
+    document.onKeyDown.listen((e) => onKeyDown(e));
+    document.onKeyUp.listen((e) => onKeyUp(e));
 
     // Touch Events
-    canvas.on.touchStart.add((event) => onTouchStart(event), false);
-    canvas.on.touchMove.add((event) => onTouchMove(event), false);
-    canvas.on.touchEnd.add((event) => onTouchEnd(event), false);
+    canvas.onTouchStart.listen((e) => onTouchStart(e));
+    canvas.onTouchMove.listen((e) => onTouchMove(e));
+    canvas.onTouchEnd.listen((e) => onTouchEnd(e));
 
-    window.setInterval(() => drawUpdate(), 50);
+    drawTimer = new Timer.repeating(const Duration(milliseconds: 50), (Timer t) => drawUpdate());
 
-    //window.requestAnimationFrame(animate));
-
-    document.on.keyUp.add(onKeyUp);
-    document.on.keyDown.add(onKeyDown);
-    
-    query('#selectCircuitName').on.change.add((e) => userLoadCircuit());
-    query('#saveCircuitButton').on.click.add((e) => circuit.saveCircuit(document));//userLoadCircuit());
-    
-    
+    query('#selectCircuitName').onChange.listen((e) => userLoadCircuit());
+    query('#saveCircuitButton').onClick.listen((e) => circuit.saveCircuit(document));
+    query('#saveDeviceButton').onClick.listen((e) => saveAsDevice());
   }
-  
+
   void userLoadCircuit() {
     var circuitName = query('select#selectCircuitName').value;
-    circuit.loadCircuit(circuitName, document);  
+    circuit.loadCircuit(circuitName, document);
   }
 
+  void saveAsDevice() {
+    var deviceName = query('input#saveDeviceName').value;
+
+    if(deviceName.length <= 0){
+      deviceName = "NewDevice";
+    }
+
+    circuit.saveAsDevice(document, deviceName);
+  }
 
   /** Start the simulation */
   void start() {
@@ -147,18 +156,19 @@ class CircuitView {
 
   /** Creates the button bar to add devices */
   void createSelectorBar() {
-//    addButton('CLOCK');
     addButton('INPUT');
     addButton('NOT');
     addButton('AND');
-   // addButton('AND3');
     addButton('NAND');
-//    addButton('OR');
+    addButton('OR');
+    addButton('OUTPUT');
+    addButton('TFF');
+
+//    addButton('CLOCK');
+//    addButton('AND3');
 //    addButton('NOR');
 //    addButton('XOR');
 //    addButton('XNOR');
-    addButton('OUTPUT');
-    addButton('TFF');
 
     var element = document.query('device');
 
@@ -168,19 +178,6 @@ class CircuitView {
     else {
       print("NOPE");
     }
-//    var element = new Element.tag('div');
-//
-//    element.classes.add('device');
-//    element.attributes['name'] = "AND";
-//    element.attributes['base'] = "images/125dpi/and.png";
-//    element.attributes['icon'] = "images/125dpi/and_d.png";
-//    element.attributes['data'] = """"inputs":[{"y":12,"id":0,"x":2},{"y":32,"id":1,"x":2}],"outputs":[{"y":22,"id":3,"x":90}],"subdevices":[{"c2":0,"id":0,"type":"IN","c1":-1},{"c2":1,"id":1,"type":"IN","c1":-1},{"c2":1,"id":2,"type":"AND","c1":0},{"c2":0,"id":3,"type":"OUT","c1":2}]}""";
-//    document.body.nodes.add(element);
-
-    //circuit.newDeviceAt('ARROWPAD', new CanvasPoint(175, 50));
-    //circuit.newDeviceAt('SOUNDTRIGGER_4BIT', new CanvasPoint(600, 50));
-
-    //addButton('CLOCKED_RSFF');
   }
 
   int buttonIndex = 0;
@@ -218,28 +215,11 @@ class CircuitView {
 
     circuit.keyUp(e.keyCode);
 
-    print("${code}");
-    
-    //AudioElement audio = new AudioElement("sounds/poke-pikachuhappy.ogg"); // Audio test
-    //audio.play();
-    
     if(code == 27) { // Esc
       if (circuit.addingWire) {
         circuit.abortWire();
         return;
       }
-    }
-    
-    //      circuit.saveCircuit(document);
- 
-    //deviceCreator.createDevice(circuit.logicDevices, document);
-
-
-    if (code == 76)  {
-      circuit.loadCircuit("And2", document);
-    }
-    if (code == 84)  {
-      circuit.loadCircuit("Tff", document);
     }
 
     if (code == 46) { // Delete
